@@ -25,6 +25,20 @@ interface AuthPage {
   url: () => string;
 }
 
+const emailInputSelector = [
+  'input[type="email"]',
+  'input[name*="email" i]',
+  'input[id*="email" i]',
+  'input[autocomplete="email"]',
+].join(",");
+
+const passwordInputSelector = [
+  'input[type="password"]',
+  'input[name*="password" i]',
+  'input[id*="password" i]',
+  'input[autocomplete="current-password"]',
+].join(",");
+
 function getCredential(name: string): string | null {
   const value = process.env[name]?.trim();
   return value && value.length > 0 ? value : null;
@@ -46,10 +60,24 @@ function getAuthCredentials():
   return { email, password };
 }
 
+function requireAuthCredentials(
+  credentials: ReturnType<typeof getAuthCredentials>
+): asserts credentials is { email: string; password: string } {
+  if (credentials.email && credentials.password) {
+    return;
+  }
+
+  throw new Error(
+    "Diagram Studio requires sign-in. Set SKETCHI_E2E_EMAIL and SKETCHI_E2E_PASSWORD for authenticated E2E."
+  );
+}
+
 async function pageHasSelector(page: AuthPage, selector: string) {
-  return await page.evaluate((querySelector) => {
-    return Boolean(document.querySelector(querySelector));
-  }, selector);
+  try {
+    return await page.locator(selector).first().isVisible({ timeout: 1000 });
+  } catch {
+    return false;
+  }
 }
 
 async function clickIfVisible(page: AuthPage, selector: string) {
@@ -75,6 +103,13 @@ async function pageShowsSignInCallToAction(page: AuthPage): Promise<boolean> {
       const text = node.textContent?.trim().toLowerCase();
       return text === "sign in";
     });
+  });
+}
+
+async function getPageTextPreview(page: AuthPage): Promise<string> {
+  return await page.evaluate(() => {
+    const text = document.body?.innerText ?? "";
+    return text.replace(/\s+/g, " ").trim().slice(0, 500);
   });
 }
 
@@ -124,7 +159,16 @@ async function continueFromSignedInPage(
   page: AuthPage,
   baseUrl: string
 ): Promise<boolean> {
-  const clicked = await clickIfVisible(page, 'a:has-text("Continue")');
+  const hasCredentialsForm =
+    (await pageHasSelector(page, emailInputSelector)) ||
+    (await pageHasSelector(page, passwordInputSelector));
+  if (hasCredentialsForm) {
+    return false;
+  }
+
+  const clicked =
+    (await clickIfVisible(page, 'a:has-text("Continue")')) ||
+    (await clickIfVisible(page, 'button:has-text("Continue")'));
   if (!clicked) {
     return false;
   }
@@ -158,29 +202,31 @@ async function openHostedSignInIfNeeded(page: AuthPage): Promise<void> {
 async function ensureCredentialsForm(page: AuthPage): Promise<void> {
   const reachedCredentialsForm = await waitForCondition(
     async () => {
-      const hasPassword = await pageHasSelector(page, 'input[type="password"]');
+      const hasPassword = await pageHasSelector(page, passwordInputSelector);
       if (hasPassword) {
         return true;
       }
-      return await pageHasSelector(page, 'input[type="email"]');
+      return await pageHasSelector(page, emailInputSelector);
     },
     { timeoutMs: 30_000, label: "workos-credentials-form" }
   );
   if (!reachedCredentialsForm) {
-    throw new Error("WorkOS email input did not appear.");
+    throw new Error(
+      `WorkOS email input did not appear. url=${page.url()} text=${JSON.stringify(await getPageTextPreview(page))}`
+    );
   }
 }
 
 async function submitEmailStep(page: AuthPage, email: string): Promise<void> {
   const hasPasswordFieldFirst = await pageHasSelector(
     page,
-    'input[type="password"]'
+    passwordInputSelector
   );
   if (hasPasswordFieldFirst) {
     return;
   }
 
-  await page.locator('input[type="email"]').first().fill(email);
+  await page.locator(emailInputSelector).first().fill(email);
   if (page.keyboard) {
     await page.keyboard.press("Enter");
     return;
@@ -193,13 +239,13 @@ async function submitPasswordStep(
   password: string
 ): Promise<void> {
   let hasPasswordField = await waitForCondition(
-    () => pageHasSelector(page, 'input[type="password"]'),
+    () => pageHasSelector(page, passwordInputSelector),
     { timeoutMs: 12_000, label: "workos-password-input-enter" }
   );
   if (!hasPasswordField) {
     await clickIfVisible(page, 'button[type="submit"]');
     hasPasswordField = await waitForCondition(
-      () => pageHasSelector(page, 'input[type="password"]'),
+      () => pageHasSelector(page, passwordInputSelector),
       { timeoutMs: 12_000, label: "workos-password-input-submit" }
     );
   }
@@ -208,12 +254,27 @@ async function submitPasswordStep(
     throw new Error("WorkOS password input did not appear.");
   }
 
-  await page.locator('input[type="password"]').first().fill(password);
+  await page.locator(passwordInputSelector).first().fill(password);
   if (page.keyboard) {
     await page.keyboard.press("Enter");
     return;
   }
   await clickIfVisible(page, 'button[type="submit"]');
+}
+
+async function continueOrRequireCredentialsForm(
+  page: AuthPage,
+  baseUrl: string
+): Promise<boolean> {
+  try {
+    await ensureCredentialsForm(page);
+    return false;
+  } catch (error) {
+    if (await continueFromSignedInPage(page, baseUrl)) {
+      return true;
+    }
+    throw error;
+  }
 }
 
 export async function ensureSignedInForDiagrams(
@@ -247,25 +308,22 @@ export async function ensureSignedInForDiagrams(
   );
   const continued =
     clickedContinueToSignIn || (await continueFromSignedInPage(page, baseUrl));
-  const hasCredentials = Boolean(credentials.email && credentials.password);
-  if (!(continued || hasCredentials)) {
-    throw new Error(
-      "Diagram Studio requires sign-in. Set SKETCHI_E2E_EMAIL and SKETCHI_E2E_PASSWORD for authenticated E2E."
-    );
+  if (!continued) {
+    requireAuthCredentials(credentials);
   }
 
   const stillShowsSignInCta = await pageShowsSignInCallToAction(page);
   if (!page.url().includes("/diagrams") || stillShowsSignInCta) {
     await openHostedSignInIfNeeded(page);
-    if (!(credentials.email && credentials.password)) {
-      throw new Error(
-        "Diagram Studio requires sign-in. Set SKETCHI_E2E_EMAIL and SKETCHI_E2E_PASSWORD for authenticated E2E."
-      );
+    const usedExistingSession =
+      (await continueFromSignedInPage(page, baseUrl)) ||
+      (await continueOrRequireCredentialsForm(page, baseUrl));
+    if (!usedExistingSession) {
+      requireAuthCredentials(credentials);
+      await submitEmailStep(page, credentials.email);
+      await submitPasswordStep(page, credentials.password);
+      await waitForDiagramsReturn(page, "auth-return-diagrams", baseUrl);
     }
-    await ensureCredentialsForm(page);
-    await submitEmailStep(page, credentials.email);
-    await submitPasswordStep(page, credentials.password);
-    await waitForDiagramsReturn(page, "auth-return-diagrams", baseUrl);
   }
 
   const finalSignInCta = await pageShowsSignInCallToAction(page);
