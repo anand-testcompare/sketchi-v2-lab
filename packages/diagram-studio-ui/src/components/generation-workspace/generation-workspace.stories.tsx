@@ -3,10 +3,10 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { architectureFixture, onboardingFlowFixture } from "@sketchi/diagram-core";
 
 import { GenerationWorkspace } from "./generation-workspace";
-import "./styles.css";
+import "../../styles.css";
 
 const meta = {
-  title: "Diagram Studio/Generation Workspace",
+  title: "Diagram Studio/Components/GenerationWorkspace",
   component: GenerationWorkspace,
   args: {
     diagram: onboardingFlowFixture,

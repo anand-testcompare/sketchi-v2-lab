@@ -11,6 +11,7 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 - Typed diagram intermediate representation in `packages/diagram-core`.
 - Deterministic scene renderer in `packages/diagram-renderer`.
 - Reusable React UI and Storybook in `packages/diagram-studio-ui`.
+- Workspace Nx generators in `tools/sketchi-generators`.
 
 ## Commands
 
@@ -21,6 +22,13 @@ pnpm nx build-storybook diagram-studio-ui
 pnpm nx dev web
 ```
 
+Generate new owned surfaces through the workspace plugin:
+
+```sh
+pnpm nx g @sketchi/generators:ui-component StatusBadge
+pnpm nx g @sketchi/generators:diagram-type mindmap --title "Sketchi mindmap fixture"
+```
+
 ## Workspace Shape
 
 ```text
@@ -28,5 +36,6 @@ apps/web                         TanStack Start application
 packages/diagram-core            Diagram IR, validation, fixtures
 packages/diagram-renderer        Deterministic scene generation
 packages/diagram-studio-ui       React components and Storybook
+tools/sketchi-generators         Workspace generators for components and diagram types
 docs/architecture.md             v2 architecture notes
 ```

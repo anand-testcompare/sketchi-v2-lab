@@ -18,6 +18,18 @@ Sketchi v2 should make diagram generation boring in the best way: inputs are val
 
 This makes defects local: invalid references fail in core tests, visual drift fails in renderer/UI tests, and app routing/deploy failures stay in the app boundary.
 
+## Generator Contract
+
+New UI components should be created with `@sketchi/generators:ui-component`.
+The generator expands EJS templates into a component folder with implementation,
+Vitest coverage, Storybook story, barrel export, and package export wiring.
+
+New diagram types should be created with `@sketchi/generators:diagram-type`.
+The generator updates the core diagram type registry and expands EJS templates
+for a typed fixture, core contract test, renderer contract test, and Storybook
+story. This keeps each diagram type previewable and testable before it is
+connected to generation.
+
 ## Deployment Direction
 
 The app is scaffolded for Cloudflare Workers through Vite and Wrangler. The initial lab keeps deployment config small until the runtime path is proven by a preview deployment.

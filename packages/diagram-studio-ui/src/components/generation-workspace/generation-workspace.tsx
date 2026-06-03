@@ -4,7 +4,7 @@ import {
 } from "@sketchi/diagram-core";
 import { renderIntermediateDiagram } from "@sketchi/diagram-renderer";
 
-import { DiagramPreview } from "./diagram-preview";
+import { DiagramPreview } from "../diagram-preview";
 
 export interface GenerationWorkspaceProps {
   diagram: IntermediateDiagram;

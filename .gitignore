@@ -11,3 +11,5 @@ worker-configuration.d.ts
 packages/*/src/**/*.js
 packages/*/src/**/*.d.ts
 packages/*/src/**/*.d.ts.map
+
+vitest.config.*.timestamp*

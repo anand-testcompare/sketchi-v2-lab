@@ -1,11 +1,8 @@
 import { z } from "zod";
 
-export const DiagramTypeSchema = z.enum([
-  "flowchart",
-  "sequence",
-  "architecture",
-  "state"
-]);
+import { DIAGRAM_TYPES } from "./diagram-types";
+
+export const DiagramTypeSchema = z.enum(DIAGRAM_TYPES);
 
 export const LayoutDirectionSchema = z.enum(["TB", "BT", "LR", "RL"]);
 export const EdgeRoutingSchema = z.enum(["straight", "orthogonal", "curved"]);
@@ -14,7 +11,7 @@ export const DiagramNodeSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   group: z.string().min(1).optional(),
-  metadata: z.record(z.string(), z.unknown()).default({})
+  metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
 export const DiagramEdgeSchema = z.object({
@@ -22,17 +19,23 @@ export const DiagramEdgeSchema = z.object({
   source: z.string().min(1),
   target: z.string().min(1),
   label: z.string().min(1).optional(),
-  metadata: z.record(z.string(), z.unknown()).default({})
+  metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
 export const DiagramStyleSchema = z.object({
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#2563eb"),
-  backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#ffffff")
+  accentColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .default("#2563eb"),
+  backgroundColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .default("#ffffff"),
 });
 
 export const DiagramLayoutSchema = z.object({
   direction: LayoutDirectionSchema.default("LR"),
-  edgeRouting: EdgeRoutingSchema.default("orthogonal")
+  edgeRouting: EdgeRoutingSchema.default("orthogonal"),
 });
 
 export const IntermediateDiagramSchema = z.object({
@@ -43,13 +46,13 @@ export const IntermediateDiagramSchema = z.object({
   edges: z.array(DiagramEdgeSchema).default([]),
   layout: DiagramLayoutSchema.default({
     direction: "LR",
-    edgeRouting: "orthogonal"
+    edgeRouting: "orthogonal",
   }),
   style: DiagramStyleSchema.default({
     accentColor: "#2563eb",
-    backgroundColor: "#ffffff"
+    backgroundColor: "#ffffff",
   }),
-  metadata: z.record(z.string(), z.unknown()).default({})
+  metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
 export type DiagramType = z.infer<typeof DiagramTypeSchema>;
@@ -81,13 +84,13 @@ const findDuplicate = (values: readonly string[]) => {
 };
 
 export function validateIntermediateDiagram(
-  diagram: IntermediateDiagram
+  diagram: IntermediateDiagram,
 ): IntermediateDiagram {
   const duplicateNodeId = findDuplicate(diagram.nodes.map((node) => node.id));
 
   if (duplicateNodeId) {
     throw new DiagramValidationError(
-      `Duplicate node id "${duplicateNodeId}" is not allowed.`
+      `Duplicate node id "${duplicateNodeId}" is not allowed.`,
     );
   }
 
@@ -95,7 +98,7 @@ export function validateIntermediateDiagram(
 
   if (duplicateEdgeId) {
     throw new DiagramValidationError(
-      `Duplicate edge id "${duplicateEdgeId}" is not allowed.`
+      `Duplicate edge id "${duplicateEdgeId}" is not allowed.`,
     );
   }
 
@@ -104,19 +107,19 @@ export function validateIntermediateDiagram(
   for (const edge of diagram.edges) {
     if (!nodeIds.has(edge.source)) {
       throw new DiagramValidationError(
-        `Edge "${edge.id}" references missing source node "${edge.source}".`
+        `Edge "${edge.id}" references missing source node "${edge.source}".`,
       );
     }
 
     if (!nodeIds.has(edge.target)) {
       throw new DiagramValidationError(
-        `Edge "${edge.id}" references missing target node "${edge.target}".`
+        `Edge "${edge.id}" references missing target node "${edge.target}".`,
       );
     }
 
     if (edge.source === edge.target) {
       throw new DiagramValidationError(
-        `Edge "${edge.id}" cannot connect node "${edge.source}" to itself.`
+        `Edge "${edge.id}" cannot connect node "${edge.source}" to itself.`,
       );
     }
   }

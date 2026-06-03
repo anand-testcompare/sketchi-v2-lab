@@ -1,2 +1,2 @@
-export * from "./diagram-preview";
-export * from "./generation-workspace";
+export * from "./components/diagram-preview";
+export * from "./components/generation-workspace";
