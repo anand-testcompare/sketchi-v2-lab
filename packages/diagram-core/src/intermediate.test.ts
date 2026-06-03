@@ -2,46 +2,46 @@ import { describe, expect, it } from "vitest";
 
 import {
   DiagramValidationError,
-  onboardingFlowFixture,
-  parseIntermediateDiagram
+  flowchartFixture,
+  parseIntermediateDiagram,
 } from "./index";
 
 describe("parseIntermediateDiagram", () => {
   it("accepts a valid diagram fixture", () => {
-    expect(parseIntermediateDiagram(onboardingFlowFixture)).toMatchObject({
+    expect(parseIntermediateDiagram(flowchartFixture)).toMatchObject({
       id: "onboarding-flow",
       nodes: expect.arrayContaining([
-        expect.objectContaining({ id: "prompt" })
-      ])
+        expect.objectContaining({ id: "prompt" }),
+      ]),
     });
   });
 
   it("rejects duplicate node ids", () => {
     expect(() =>
       parseIntermediateDiagram({
-        ...onboardingFlowFixture,
+        ...flowchartFixture,
         nodes: [
-          ...onboardingFlowFixture.nodes,
-          { id: "prompt", label: "Duplicate" }
-        ]
-      })
+          ...flowchartFixture.nodes,
+          { id: "prompt", label: "Duplicate" },
+        ],
+      }),
     ).toThrow(DiagramValidationError);
   });
 
   it("rejects edges that reference missing nodes", () => {
     expect(() =>
       parseIntermediateDiagram({
-        ...onboardingFlowFixture,
+        ...flowchartFixture,
         edges: [
-          ...onboardingFlowFixture.edges,
+          ...flowchartFixture.edges,
           {
             id: "missing-edge",
             source: "prompt",
             target: "missing",
-            label: "bad"
-          }
-        ]
-      })
+            label: "bad",
+          },
+        ],
+      }),
     ).toThrow('Edge "missing-edge" references missing target node "missing".');
   });
 });

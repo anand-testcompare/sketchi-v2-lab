@@ -1,20 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { onboardingFlowFixture } from "@sketchi/diagram-core";
+import { flowchartFixture } from "@sketchi/diagram-core";
 import {
   GenerationWorkspace,
-  type GenerationWorkspaceProps
+  type GenerationWorkspaceProps,
 } from "@sketchi/diagram-studio-ui";
 import "@sketchi/diagram-studio-ui/styles.css";
 
 export const Route = createFileRoute("/")({
-  component: HomeRoute
+  component: HomeRoute,
 });
 
 function HomeRoute() {
   const props = {
-    diagram: onboardingFlowFixture,
-    status: "ready"
+    diagram: flowchartFixture,
+    status: "ready",
   } satisfies GenerationWorkspaceProps;
 
   return <GenerationWorkspace {...props} />;
