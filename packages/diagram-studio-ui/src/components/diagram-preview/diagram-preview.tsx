@@ -1,6 +1,6 @@
 import type {
   ArrowSceneElement,
-  RectangleSceneElement,
+  NodeSceneElement,
   RenderedDiagramScene,
   TextSceneElement
 } from "@sketchi/diagram-renderer";
@@ -11,7 +11,7 @@ export interface DiagramPreviewProps {
 
 const isRectangle = (
   element: RenderedDiagramScene["elements"][number]
-): element is RectangleSceneElement => element.type === "rectangle";
+): element is NodeSceneElement => element.type === "node";
 
 const isText = (
   element: RenderedDiagramScene["elements"][number]
@@ -22,7 +22,7 @@ const isArrow = (
 ): element is ArrowSceneElement => element.type === "arrow";
 
 export function DiagramPreview({ scene }: DiagramPreviewProps) {
-  const rectangles = scene.elements.filter(isRectangle);
+  const nodes = scene.elements.filter(isRectangle);
   const labels = scene.elements.filter(isText);
   const arrows = scene.elements.filter(isArrow);
 
@@ -77,31 +77,76 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
         );
       })}
 
-      {rectangles.map((rectangle) => (
-        <rect
-          className="sketchi-diagram-preview__node"
-          height={rectangle.height}
-          key={rectangle.id}
-          rx="8"
-          width={rectangle.width}
-          x={rectangle.x}
-          y={rectangle.y}
-        />
-      ))}
+      {nodes.map((node) => {
+        if (node.shape === "ellipse") {
+          return (
+            <ellipse
+              className="sketchi-diagram-preview__node"
+              cx={node.x + node.width / 2}
+              cy={node.y + node.height / 2}
+              key={node.id}
+              rx={node.width / 2}
+              ry={node.height / 2}
+            />
+          );
+        }
 
-      {labels.map((label) => (
-        <text
-          className="sketchi-diagram-preview__label"
-          dominantBaseline="middle"
-          fontSize={label.fontSize}
-          key={label.id}
-          textAnchor="middle"
-          x={label.x}
-          y={label.y}
-        >
-          {label.text}
-        </text>
-      ))}
+        if (node.shape === "diamond") {
+          const points = [
+            `${node.x + node.width / 2},${node.y}`,
+            `${node.x + node.width},${node.y + node.height / 2}`,
+            `${node.x + node.width / 2},${node.y + node.height}`,
+            `${node.x},${node.y + node.height / 2}`
+          ].join(" ");
+          return (
+            <polygon
+              className="sketchi-diagram-preview__node"
+              key={node.id}
+              points={points}
+            />
+          );
+        }
+
+        return (
+          <rect
+            className="sketchi-diagram-preview__node"
+            height={node.height}
+            key={node.id}
+            rx="8"
+            width={node.width}
+            x={node.x}
+            y={node.y}
+          />
+        );
+      })}
+
+      {labels.map((label) => {
+        const lines = label.text.split("\n");
+        const lineHeight = label.fontSize * 1.35;
+        const firstLineOffset = -((lines.length - 1) * lineHeight) / 2;
+
+        return (
+          <text
+            className="sketchi-diagram-preview__label"
+            dominantBaseline="middle"
+            fontSize={label.fontSize}
+            key={label.id}
+            textAnchor="middle"
+            x={label.x}
+            y={label.y}
+          >
+            {lines.map((line, index) => (
+              <tspan
+                dy={index === 0 ? firstLineOffset : lineHeight}
+                key={`${label.id}:${index}`}
+                x={label.x}
+              >
+                {line}
+              </tspan>
+            ))}
+          </text>
+        );
+      })}
     </svg>
   );
 }

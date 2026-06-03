@@ -10,6 +10,7 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 - TanStack Start web app, prepared for Cloudflare deployment.
 - Typed diagram intermediate representation in `packages/diagram-core`.
 - Deterministic scene renderer in `packages/diagram-renderer`.
+- Real Excalidraw conversion and validation in `packages/diagram-excalidraw`.
 - Reusable React UI and Storybook in `packages/diagram-studio-ui`.
 - Workspace Nx generators in `tools/sketchi-generators`.
 
@@ -35,6 +36,7 @@ pnpm nx g @sketchi/generators:diagram-type mindmap --title "Sketchi mindmap fixt
 apps/web                         TanStack Start application
 packages/diagram-core            Diagram IR, validation, fixtures
 packages/diagram-renderer        Deterministic scene generation
+packages/diagram-excalidraw      Real Excalidraw conversion and validation
 packages/diagram-studio-ui       React components and Storybook
 tools/sketchi-generators         Workspace generators for components and diagram types
 docs/architecture.md             v2 architecture notes

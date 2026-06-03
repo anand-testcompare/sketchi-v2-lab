@@ -40,6 +40,13 @@ export default defineConfig({
         ).pathname
       },
       {
+        find: "@sketchi/diagram-excalidraw",
+        replacement: new URL(
+          "../../packages/diagram-excalidraw/src/index.ts",
+          import.meta.url
+        ).pathname
+      },
+      {
         find: "@sketchi/diagram-studio-ui",
         replacement: new URL(
           "../../packages/diagram-studio-ui/src/index.ts",

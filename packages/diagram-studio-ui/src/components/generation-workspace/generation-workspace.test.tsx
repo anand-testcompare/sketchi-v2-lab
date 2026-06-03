@@ -10,10 +10,11 @@ describe("GenerationWorkspace", () => {
     render(<GenerationWorkspace diagram={flowchartFixture} />);
 
     expect(
-      screen.getByRole("heading", { name: "Sketchi onboarding flow" }),
+      screen.getByRole("heading", { name: "Sketchi onboarding decision flow" }),
     ).toBeTruthy();
-    expect(screen.getByText("4 nodes")).toBeTruthy();
-    expect(screen.getByText("3 edges")).toBeTruthy();
-    expect(screen.getByText("Validated diagram IR")).toBeTruthy();
+    expect(screen.getByText("5 nodes")).toBeTruthy();
+    expect(screen.getByText("5 edges")).toBeTruthy();
+    expect(screen.getByText("Validated flowchart IR")).toBeTruthy();
+    expect(screen.getByText("All arrows are bound")).toBeTruthy();
   });
 });

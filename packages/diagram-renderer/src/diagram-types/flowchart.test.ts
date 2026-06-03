@@ -10,7 +10,7 @@ describe("Flowchart renderer contract", () => {
 
     expect(scene.diagramId).toBe("onboarding-flow");
     expect(
-      scene.elements.filter((element) => element.type === "rectangle"),
+      scene.elements.filter((element) => element.type === "node"),
     ).toHaveLength(flowchartFixture.nodes.length);
     expect(
       scene.elements.filter((element) => element.type === "arrow"),

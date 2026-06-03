@@ -1,8 +1,5 @@
 export const DIAGRAM_TYPES = [
-  "architecture",
   "flowchart",
-  "sequence",
-  "state",
   "mindmap",
 ] as const;
 

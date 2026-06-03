@@ -1,5 +1,5 @@
 {
-  "name": "@sketchi/diagram-studio-ui",
+  "name": "@sketchi/diagram-excalidraw",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -8,16 +8,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./styles.css": "./dist/style.css"
+    }
   },
   "dependencies": {
     "@sketchi/diagram-core": "workspace:*",
-    "@sketchi/diagram-excalidraw": "workspace:*",
     "@sketchi/diagram-renderer": "workspace:*"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
   }
 }

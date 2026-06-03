@@ -14,6 +14,7 @@ export default defineConfig({
         "react",
         "react-dom",
         "@sketchi/diagram-core",
+        "@sketchi/diagram-excalidraw",
         "@sketchi/diagram-renderer"
       ]
     }
@@ -22,6 +23,10 @@ export default defineConfig({
     alias: {
       "@sketchi/diagram-core": new URL(
         "../diagram-core/src/index.ts",
+        import.meta.url
+      ).pathname,
+      "@sketchi/diagram-excalidraw": new URL(
+        "../diagram-excalidraw/src/index.ts",
         import.meta.url
       ).pathname,
       "@sketchi/diagram-renderer": new URL(

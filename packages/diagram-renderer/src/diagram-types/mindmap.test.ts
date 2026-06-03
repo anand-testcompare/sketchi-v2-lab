@@ -9,7 +9,7 @@ describe("Mindmap renderer contract", () => {
     const scene = renderIntermediateDiagram(mindmapFixture);
 
     expect(scene.diagramId).toBe("mindmap-example");
-    expect(scene.elements.filter((element) => element.type === "rectangle"))
+    expect(scene.elements.filter((element) => element.type === "node"))
       .toHaveLength(mindmapFixture.nodes.length);
     expect(scene.elements.filter((element) => element.type === "arrow"))
       .toHaveLength(mindmapFixture.edges.length);

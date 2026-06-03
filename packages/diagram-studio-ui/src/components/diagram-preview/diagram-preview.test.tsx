@@ -13,7 +13,7 @@ describe("DiagramPreview", () => {
     render(<DiagramPreview scene={scene} />);
 
     expect(
-      screen.getByRole("img", { name: "Sketchi onboarding flow" }),
+      screen.getByRole("img", { name: "Sketchi onboarding decision flow" }),
     ).toBeTruthy();
   });
 });
