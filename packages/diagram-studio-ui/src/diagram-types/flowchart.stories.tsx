@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { flowchartFixture } from "@sketchi/diagram-core";
+import {
+  flowchartFixture,
+  pharmaBatchDispositionFlowchart
+} from "@sketchi/diagram-core";
 
 import { GenerationWorkspace } from "../components/generation-workspace";
 import "../styles.css";
@@ -19,3 +22,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Ready: Story = {};
+
+export const PharmaBatchDisposition: Story = {
+  args: {
+    diagram: pharmaBatchDispositionFlowchart
+  }
+};

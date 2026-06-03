@@ -11,6 +11,7 @@ export const DiagramNodeSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   group: z.string().min(1).optional(),
+  kind: z.string().min(1).optional(),
   metadata: z.record(z.string(), z.unknown()).default({}),
 });
 

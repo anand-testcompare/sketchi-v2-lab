@@ -1,10 +1,16 @@
 import {
   type IntermediateDiagram,
+  parseFlowchartDiagram,
   validateIntermediateDiagram
 } from "@sketchi/diagram-core";
+import {
+  convertSceneToExcalidraw,
+  validateExcalidrawScene
+} from "@sketchi/diagram-excalidraw";
 import { renderIntermediateDiagram } from "@sketchi/diagram-renderer";
 
 import { DiagramPreview } from "../diagram-preview";
+import { FlowchartValidationPanel } from "../flowchart-validation-panel";
 
 export interface GenerationWorkspaceProps {
   diagram: IntermediateDiagram;
@@ -25,13 +31,26 @@ export function GenerationWorkspace({
   let validationMessage = "Validated diagram IR";
 
   try {
-    validateIntermediateDiagram(diagram);
+    if (diagram.type === "flowchart") {
+      parseFlowchartDiagram(diagram);
+      validationMessage = "Validated flowchart IR";
+    } else {
+      validateIntermediateDiagram(diagram);
+    }
   } catch (error) {
     validationMessage =
       error instanceof Error ? error.message : "Diagram validation failed";
   }
 
   const scene = renderIntermediateDiagram(diagram);
+  const realSceneValidation = validateExcalidrawScene(
+    convertSceneToExcalidraw(scene)
+  );
+  const realSceneIssueCount = realSceneValidation.issues.length;
+  const realSceneMessage =
+    realSceneIssueCount === 0
+      ? "All arrows are bound"
+      : `${realSceneIssueCount} real-scene issues`;
 
   return (
     <section className="sketchi-generation-workspace">
@@ -45,11 +64,13 @@ export function GenerationWorkspace({
         </span>
       </header>
 
-      <div className="sketchi-generation-workspace__meta">
-        <span>{diagram.nodes.length} nodes</span>
-        <span>{diagram.edges.length} edges</span>
-        <span>{validationMessage}</span>
-      </div>
+      <FlowchartValidationPanel
+        edgeCount={diagram.edges.length}
+        intermediateMessage={validationMessage}
+        nodeCount={diagram.nodes.length}
+        realSceneIssueCount={realSceneIssueCount}
+        realSceneMessage={realSceneMessage}
+      />
 
       <DiagramPreview scene={scene} />
     </section>

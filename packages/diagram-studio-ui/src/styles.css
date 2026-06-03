@@ -46,16 +46,25 @@
   white-space: nowrap;
 }
 
-.sketchi-generation-workspace__meta {
+.sketchi-flowchart-validation-panel {
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
   color: #334155;
+  display: grid;
+  font-size: 14px;
+  gap: 10px;
+  padding: 12px;
+}
+
+.sketchi-flowchart-validation-panel div {
   display: flex;
   flex-wrap: wrap;
-  font-size: 14px;
   gap: 10px;
 }
 
-.sketchi-generation-workspace__meta span {
-  background: #ffffff;
+.sketchi-flowchart-validation-panel span {
+  background: #f8fafc;
   border: 1px solid #dbe3ef;
   border-radius: 8px;
   padding: 8px 10px;
