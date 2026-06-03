@@ -40,6 +40,15 @@
       "dependsOn": [
         "^build"
       ]
+    },
+    "typecheck-tsgo": {
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "analytics": false

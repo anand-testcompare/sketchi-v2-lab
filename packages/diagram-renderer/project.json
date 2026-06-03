@@ -24,6 +24,12 @@
       "options": {
         "command": "tsc -p packages/diagram-renderer/tsconfig.json --noEmit"
       }
+    },
+    "typecheck-tsgo": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsgo -p packages/diagram-renderer/tsconfig.json --noEmit"
+      }
     }
   }
 }

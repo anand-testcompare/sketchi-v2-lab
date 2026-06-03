@@ -28,22 +28,22 @@ export default defineConfig({
       {
         find: "@sketchi/diagram-core",
         replacement: new URL(
-        "../../packages/diagram-core/src/index.ts",
-        import.meta.url
+          "../../packages/diagram-core/src/index.ts",
+          import.meta.url
         ).pathname
       },
       {
         find: "@sketchi/diagram-renderer",
         replacement: new URL(
-        "../../packages/diagram-renderer/src/index.ts",
-        import.meta.url
+          "../../packages/diagram-renderer/src/index.ts",
+          import.meta.url
         ).pathname
       },
       {
         find: "@sketchi/diagram-studio-ui",
         replacement: new URL(
-        "../../packages/diagram-studio-ui/src/index.ts",
-        import.meta.url
+          "../../packages/diagram-studio-ui/src/index.ts",
+          import.meta.url
         ).pathname
       }
     ]
