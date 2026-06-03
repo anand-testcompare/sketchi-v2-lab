@@ -1,17 +1,21 @@
+import { cloudflare } from "@cloudflare/vite-plugin";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [react()],
-  test: {
-    environment: "jsdom",
-    globals: true,
-    coverage: {
-      reportsDirectory: "../../coverage/apps/web"
-    },
-    include: ["apps/web/src/**/*.test.ts", "apps/web/src/**/*.test.tsx"],
-    passWithNoTests: true
-  },
+  plugins: [
+    cloudflare({
+      configPath: "apps/web/wrangler.jsonc",
+      viteEnvironment: {
+        name: "ssr"
+      }
+    }),
+    tanstackStart({
+      srcDirectory: "apps/web/src"
+    }),
+    react()
+  ],
   resolve: {
     alias: [
       {
@@ -24,22 +28,22 @@ export default defineConfig({
       {
         find: "@sketchi/diagram-core",
         replacement: new URL(
-          "../../packages/diagram-core/src/index.ts",
-          import.meta.url
+        "../../packages/diagram-core/src/index.ts",
+        import.meta.url
         ).pathname
       },
       {
         find: "@sketchi/diagram-renderer",
         replacement: new URL(
-          "../../packages/diagram-renderer/src/index.ts",
-          import.meta.url
+        "../../packages/diagram-renderer/src/index.ts",
+        import.meta.url
         ).pathname
       },
       {
         find: "@sketchi/diagram-studio-ui",
         replacement: new URL(
-          "../../packages/diagram-studio-ui/src/index.ts",
-          import.meta.url
+        "../../packages/diagram-studio-ui/src/index.ts",
+        import.meta.url
         ).pathname
       }
     ]
