@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { architectureFixture, onboardingFlowFixture } from "@sketchi/diagram-core";
+import { architectureFixture, flowchartFixture } from "@sketchi/diagram-core";
 
 import { GenerationWorkspace } from "./generation-workspace";
 import "../../styles.css";
@@ -9,9 +9,9 @@ const meta = {
   title: "Diagram Studio/Components/GenerationWorkspace",
   component: GenerationWorkspace,
   args: {
-    diagram: onboardingFlowFixture,
-    status: "ready"
-  }
+    diagram: flowchartFixture,
+    status: "ready",
+  },
 } satisfies Meta<typeof GenerationWorkspace>;
 
 export default meta;
@@ -22,12 +22,12 @@ export const Ready: Story = {};
 
 export const Generating: Story = {
   args: {
-    status: "generating"
-  }
+    status: "generating",
+  },
 };
 
 export const Architecture: Story = {
   args: {
-    diagram: architectureFixture
-  }
+    diagram: architectureFixture,
+  },
 };

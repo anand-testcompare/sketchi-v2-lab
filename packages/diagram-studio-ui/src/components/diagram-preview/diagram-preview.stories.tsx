@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { onboardingFlowFixture } from "@sketchi/diagram-core";
+import { flowchartFixture } from "@sketchi/diagram-core";
 import { renderIntermediateDiagram } from "@sketchi/diagram-renderer";
 
 import { DiagramPreview } from "./diagram-preview";
@@ -10,8 +10,8 @@ const meta = {
   title: "Diagram Studio/Components/DiagramPreview",
   component: DiagramPreview,
   args: {
-    scene: renderIntermediateDiagram(onboardingFlowFixture)
-  }
+    scene: renderIntermediateDiagram(flowchartFixture),
+  },
 } satisfies Meta<typeof DiagramPreview>;
 
 export default meta;
