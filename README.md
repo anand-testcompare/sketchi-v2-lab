@@ -21,10 +21,14 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 pnpm install
 pnpm nx run-many -t typecheck,test,build
 pnpm nx build-storybook diagram-studio-ui
+pnpm dev
 pnpm nx dev playground
 pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition --fixture --out .memory/pharma-batch.excalidraw
 SKETCHI_GENERATOR_COMMAND="your-llm-command" pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition
 ```
+
+`pnpm dev` runs every Nx app with a `dev` target in parallel. The playground
+defaults to port `6200`; Vite will increment to the next free port when needed.
 
 Generate new owned surfaces through the workspace plugin:
 

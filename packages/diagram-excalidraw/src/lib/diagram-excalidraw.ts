@@ -37,6 +37,19 @@ const TEXT_WIDTH_FACTOR = 0.62;
 const TEXT_HORIZONTAL_PADDING = 24;
 const TEXT_VERTICAL_PADDING = 18;
 const ARROW_LABEL_WIDTH = 160;
+const FIT_TARGET_WIDTH = 860;
+const FIT_TARGET_HEIGHT = 420;
+const MIN_INITIAL_ZOOM = 0.5;
+
+function initialZoomForScene(scene: RenderedDiagramScene): number {
+  const zoom = Math.min(
+    1,
+    FIT_TARGET_WIDTH / Math.max(scene.width, 1),
+    FIT_TARGET_HEIGHT / Math.max(scene.height, 1),
+  );
+
+  return Math.max(MIN_INITIAL_ZOOM, Math.round(zoom * 100) / 100);
+}
 
 function stableSeed(input: string): number {
   let hash = 2166136261;
@@ -92,7 +105,10 @@ function textElement(input: {
   x: number;
   y: number;
 }): ExcalidrawElement {
-  const width = Math.max(1, Math.min(input.maxWidth, estimateTextWidth(input.text, input.fontSize)));
+  const width = Math.max(
+    1,
+    Math.min(input.maxWidth, estimateTextWidth(input.text, input.fontSize)),
+  );
   const height = textHeight(input.text, input.fontSize);
 
   return {
@@ -148,12 +164,17 @@ function shapeElement(input: {
   };
 }
 
+function lastArrowPoint(arrow: ArrowSceneElement) {
+  return arrow.points[arrow.points.length - 1] ?? arrow.points[0];
+}
+
 function arrowElement(input: {
   arrow: ArrowSceneElement;
   index: number;
   scene: RenderedDiagramScene;
 }): ExcalidrawElement {
-  const [start, end] = input.arrow.points;
+  const start = input.arrow.points[0];
+  const end = lastArrowPoint(input.arrow);
 
   return {
     ...elementBase(input.arrow.id, input.index),
@@ -173,10 +194,10 @@ function arrowElement(input: {
       gap: 5,
       fixedPoint: null,
     },
-    points: [
-      [0, 0],
-      [end.x - start.x, end.y - start.y],
-    ],
+    points: input.arrow.points.map((point) => [
+      point.x - start.x,
+      point.y - start.y,
+    ]),
     roundness: { type: 2 },
     startArrowhead: null,
     startBinding: {
@@ -197,7 +218,8 @@ function arrowLabelElement(input: {
     return null;
   }
 
-  const [start, end] = input.arrow.points;
+  const start = input.arrow.points[0];
+  const end = lastArrowPoint(input.arrow);
   return textElement({
     id: `${input.arrow.id}:label`,
     index: input.index,
@@ -225,15 +247,21 @@ function collectArrowsByNode(
   return result;
 }
 
-function isNode(element: RenderedDiagramScene["elements"][number]): element is NodeSceneElement {
+function isNode(
+  element: RenderedDiagramScene["elements"][number],
+): element is NodeSceneElement {
   return element.type === "node";
 }
 
-function isText(element: RenderedDiagramScene["elements"][number]): element is TextSceneElement {
+function isText(
+  element: RenderedDiagramScene["elements"][number],
+): element is TextSceneElement {
   return element.type === "text";
 }
 
-function isArrow(element: RenderedDiagramScene["elements"][number]): element is ArrowSceneElement {
+function isArrow(
+  element: RenderedDiagramScene["elements"][number],
+): element is ArrowSceneElement {
   return element.type === "arrow";
 }
 
@@ -295,7 +323,12 @@ export function convertSceneToExcalidraw(
   }
 
   return {
-    appState: {},
+    appState: {
+      viewBackgroundColor: scene.backgroundColor,
+      zoom: {
+        value: initialZoomForScene(scene),
+      },
+    },
     elements,
   };
 }
@@ -321,7 +354,10 @@ function hasBoundElement(
   });
 }
 
-function bindingElementId(element: ExcalidrawElement, key: string): string | null {
+function bindingElementId(
+  element: ExcalidrawElement,
+  key: string,
+): string | null {
   const binding = element[key];
   if (!(binding && typeof binding === "object")) {
     return null;
@@ -335,7 +371,9 @@ export function validateExcalidrawScene(
   scene: ExcalidrawScene,
 ): ExcalidrawSceneValidationResult {
   const issues: ExcalidrawSceneValidationIssue[] = [];
-  const elementsById = new Map(scene.elements.map((element) => [element.id, element]));
+  const elementsById = new Map(
+    scene.elements.map((element) => [element.id, element]),
+  );
   const shapeIds = new Set(
     scene.elements
       .filter((element) => SHAPE_TYPES.has(element.type))
