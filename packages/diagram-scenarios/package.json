@@ -1,5 +1,5 @@
 {
-  "name": "@sketchi/diagram-studio-ui",
+  "name": "@sketchi/diagram-scenarios",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -8,18 +8,12 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./styles.css": "./dist/style.css"
+    }
   },
   "dependencies": {
-    "@excalidraw/excalidraw": "0.18.1",
     "@sketchi/diagram-core": "workspace:*",
     "@sketchi/diagram-excalidraw": "workspace:*",
     "@sketchi/diagram-renderer": "workspace:*",
-    "@sketchi/diagram-scenarios": "workspace:*"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "tslib": "^2.3.0"
   }
 }

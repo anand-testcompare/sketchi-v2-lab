@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { DIAGRAM_TYPES } from "./diagram-types";
+import { DIAGRAM_TYPES } from "./diagram-types.js";
 
 export const DiagramTypeSchema = z.enum(DIAGRAM_TYPES);
 

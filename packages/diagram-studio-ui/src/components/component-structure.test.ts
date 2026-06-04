@@ -32,7 +32,7 @@ describe("Studio component structure", () => {
         true,
       );
       expect(packageIndex).toContain(
-        `export * from "./components/${componentName}";`,
+        `export * from "./components/${componentName}/index.js";`,
       );
     }
   });

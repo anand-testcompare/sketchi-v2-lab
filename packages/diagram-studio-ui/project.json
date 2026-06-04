@@ -6,7 +6,8 @@
   "implicitDependencies": [
     "diagram-core",
     "diagram-excalidraw",
-    "diagram-renderer"
+    "diagram-renderer",
+    "diagram-scenarios"
   ],
   "targets": {
     "build": {

@@ -1,3 +1,5 @@
+@import "@excalidraw/excalidraw/index.css";
+
 :root {
   color-scheme: light;
   font-family:
@@ -95,6 +97,214 @@
   font-weight: 700;
 }
 
+.sketchi-scenario-playground {
+  background: #f6f7f9;
+  color: #111827;
+  display: grid;
+  gap: 18px;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.sketchi-scenario-playground__header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.sketchi-scenario-playground__header h1 {
+  font-size: 24px;
+  line-height: 1.15;
+  margin: 4px 0 0;
+}
+
+.sketchi-scenario-playground__eyebrow {
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.sketchi-scenario-playground__status {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  color: #14532d;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.sketchi-scenario-playground__status--failed {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #7f1d1d;
+}
+
+.sketchi-scenario-playground__layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.sketchi-scenario-playground__controls,
+.sketchi-scenario-playground__checks,
+.sketchi-scenario-playground__json {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.sketchi-scenario-playground__controls {
+  align-content: start;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.sketchi-scenario-playground__controls label {
+  color: #374151;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.sketchi-scenario-playground__controls select,
+.sketchi-scenario-playground__controls textarea {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 100%;
+  padding: 9px;
+}
+
+.sketchi-scenario-playground__controls textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  resize: vertical;
+}
+
+.sketchi-scenario-playground__controls button {
+  background: #111827;
+  border: 1px solid #111827;
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 9px 12px;
+}
+
+.sketchi-scenario-playground__main {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.sketchi-excalidraw-scene-canvas {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  height: min(680px, 68vh);
+  min-height: 420px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.sketchi-excalidraw-scene-canvas__loading {
+  align-items: center;
+  color: #4b5563;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  height: 100%;
+  justify-items: center;
+}
+
+.sketchi-scenario-playground__checks {
+  padding: 14px;
+}
+
+.sketchi-scenario-playground__checks h2 {
+  font-size: 16px;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+
+.sketchi-scenario-playground__checks ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sketchi-scenario-playground__checks li {
+  align-items: center;
+  color: #374151;
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.sketchi-scenario-playground__checks li span {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  color: #7f1d1d;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 6px;
+}
+
+.sketchi-scenario-playground__checks li[data-pass="true"] span {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #14532d;
+}
+
+.sketchi-scenario-playground__error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #7f1d1d;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  padding: 9px;
+}
+
+.sketchi-scenario-playground__json {
+  padding: 12px 14px;
+}
+
+.sketchi-scenario-playground__json summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sketchi-scenario-playground__json pre {
+  color: #111827;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 12px 0 0;
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 640px) {
   .sketchi-generation-workspace {
     padding: 18px;
@@ -106,5 +316,23 @@
 
   .sketchi-generation-workspace__header h1 {
     font-size: 23px;
+  }
+
+  .sketchi-scenario-playground {
+    padding: 14px;
+  }
+
+  .sketchi-scenario-playground__header,
+  .sketchi-scenario-playground__layout {
+    display: grid;
+  }
+
+  .sketchi-scenario-playground__header h1 {
+    font-size: 21px;
+  }
+
+  .sketchi-excalidraw-scene-canvas {
+    height: 520px;
+    min-height: 420px;
   }
 }

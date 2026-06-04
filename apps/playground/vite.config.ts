@@ -6,13 +6,13 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [
     cloudflare({
-      configPath: "apps/web/wrangler.jsonc",
+      configPath: "apps/playground/wrangler.jsonc",
       viteEnvironment: {
         name: "ssr"
       }
     }),
     tanstackStart({
-      srcDirectory: "apps/web/src"
+      srcDirectory: "apps/playground/src"
     }),
     react()
   ],
@@ -43,6 +43,13 @@ export default defineConfig({
         find: "@sketchi/diagram-excalidraw",
         replacement: new URL(
           "../../packages/diagram-excalidraw/src/index.ts",
+          import.meta.url
+        ).pathname
+      },
+      {
+        find: "@sketchi/diagram-scenarios",
+        replacement: new URL(
+          "../../packages/diagram-scenarios/src/index.ts",
           import.meta.url
         ).pathname
       },

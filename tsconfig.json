@@ -2,7 +2,7 @@
   "extends": "./tsconfig.base.json",
   "files": [],
   "references": [
-    { "path": "./apps/web" },
+    { "path": "./apps/playground" },
     { "path": "./packages/diagram-core" },
     { "path": "./packages/diagram-renderer" },
     { "path": "./packages/diagram-studio-ui" }

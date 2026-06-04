@@ -42,7 +42,7 @@ export async function uiComponentGenerator(
     `${normalizedName.fileName}.tsx`,
   );
   const indexPath = joinPathFragments(sourceRoot, "index.ts");
-  const exportPath = `./${directory}/${normalizedName.fileName}`;
+  const exportPath = `./${directory}/${normalizedName.fileName}/index.js`;
   const storyTitle = `Diagram Studio/Components/${normalizedName.className}`;
 
   if (tree.exists(componentPath)) {

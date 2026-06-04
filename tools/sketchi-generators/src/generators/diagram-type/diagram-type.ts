@@ -104,7 +104,7 @@ export async function diagramTypeGenerator(
   appendExport(
     tree,
     joinPathFragments(CORE_ROOT, "index.ts"),
-    `./diagram-types/${typeValue}`,
+    `./diagram-types/${typeValue}.js`,
   );
 
   if (!options.skipFormat) {

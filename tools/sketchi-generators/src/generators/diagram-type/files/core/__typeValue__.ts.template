@@ -1,4 +1,4 @@
-import { parseIntermediateDiagram } from "../intermediate";
+import { parseIntermediateDiagram } from "../intermediate.js";
 
 export const <%= propertyName %>DiagramType = "<%= typeValue %>" as const;
 

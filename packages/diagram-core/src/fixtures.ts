@@ -1,6 +1,6 @@
-import { flowchartFixture } from "./diagram-types/flowchart";
-import { mindmapFixture } from "./diagram-types/mindmap";
-import { parseIntermediateDiagram } from "./intermediate";
+import { flowchartFixture } from "./diagram-types/flowchart.js";
+import { mindmapFixture } from "./diagram-types/mindmap.js";
+import { parseIntermediateDiagram } from "./intermediate.js";
 
 export const diagramFixtures = [
   parseIntermediateDiagram(flowchartFixture),

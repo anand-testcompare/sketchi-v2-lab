@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { <%= fixtureName %> } from "@sketchi/diagram-core";
 
-import { renderIntermediateDiagram } from "../scene";
+import { renderIntermediateDiagram } from "../scene.js";
 
 describe("<%= className %> renderer contract", () => {
   it("renders the generated fixture into deterministic scene elements", () => {
