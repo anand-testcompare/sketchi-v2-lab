@@ -60,6 +60,21 @@ describe("convertSceneToExcalidraw", () => {
     });
   });
 
+  it("keeps maintained flowchart arrow routes from overlapping", () => {
+    const maintainedScenes = [
+      flowchartFixture,
+      pharmaBatchDispositionFlowchart,
+    ].map((diagram) =>
+      convertSceneToExcalidraw(renderIntermediateDiagram(diagram)),
+    );
+
+    for (const scene of maintainedScenes) {
+      expect(validateExcalidrawScene(scene).issues).not.toContainEqual(
+        expect.objectContaining({ code: "overlapping-arrow-segment" }),
+      );
+    }
+  });
+
   it("reports broken reciprocal arrow bindings", () => {
     const scene = convertSceneToExcalidraw(
       renderIntermediateDiagram(flowchartFixture),
@@ -79,6 +94,34 @@ describe("convertSceneToExcalidraw", () => {
           code: "missing-bound-arrow",
           elementId: "node:prompt",
         },
+      ],
+    });
+  });
+
+  it("reports overlapping arrow route segments", () => {
+    const scene = convertSceneToExcalidraw(
+      renderIntermediateDiagram(flowchartFixture),
+    );
+    const promptArrow = scene.elements.find(
+      (element) => element.id === "edge:prompt-requirements",
+    );
+    const requirementsArrow = scene.elements.find(
+      (element) => element.id === "edge:requirements-clear",
+    );
+
+    if (promptArrow && requirementsArrow) {
+      requirementsArrow.x = promptArrow.x;
+      requirementsArrow.y = promptArrow.y;
+      requirementsArrow.points = promptArrow.points;
+    }
+
+    expect(validateExcalidrawScene(scene)).toMatchObject({
+      ok: false,
+      issues: [
+        expect.objectContaining({
+          code: "overlapping-arrow-segment",
+          elementId: "edge:prompt-requirements",
+        }),
       ],
     });
   });

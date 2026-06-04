@@ -1,5 +1,18 @@
 import type { DiagramScenario } from "./scenarios.js";
 
+export type ScenarioPromptRole = "system" | "user";
+
+export interface ScenarioPromptMessage {
+  content: string;
+  role: ScenarioPromptRole;
+}
+
+export interface ScenarioPromptParts {
+  messages: readonly [ScenarioPromptMessage, ScenarioPromptMessage];
+  system: string;
+  user: string;
+}
+
 const FLOWCHART_IR_INSTRUCTIONS = [
   "Return only JSON. Do not wrap the JSON in markdown.",
   'Use type "flowchart".',
@@ -13,39 +26,67 @@ const FLOWCHART_IR_INSTRUCTIONS = [
   'Use layout { "direction": "TB", "edgeRouting": "orthogonal" } unless the prompt says otherwise.',
 ];
 
-export function buildScenarioPrompt(scenario: DiagramScenario): string {
-  return [
+function expectedJsonShape(scenario: DiagramScenario): string {
+  return JSON.stringify(
+    {
+      id: "short-kebab-case-id",
+      title: scenario.title,
+      type: "flowchart",
+      nodes: [
+        { id: "start-id", label: "Human label", kind: "start" },
+        { id: "decision-id", label: "Question?", kind: "decision" },
+      ],
+      edges: [
+        {
+          id: "edge-id",
+          source: "decision-id",
+          target: "target-id",
+          label: "yes",
+        },
+      ],
+      layout: { direction: "TB", edgeRouting: "orthogonal" },
+      style: { accentColor: "#2563eb", backgroundColor: "#ffffff" },
+    },
+    null,
+    2,
+  );
+}
+
+export function buildScenarioPromptParts(
+  scenario: DiagramScenario,
+): ScenarioPromptParts {
+  const system = [
     "You are creating a Sketchi typed intermediate diagram.",
-    "",
-    "Scenario:",
-    scenario.prompt,
     "",
     "Flowchart IR rules:",
     ...FLOWCHART_IR_INSTRUCTIONS.map((instruction) => `- ${instruction}`),
+  ].join("\n");
+  const user = [
+    "Scenario:",
+    scenario.prompt,
     "",
     "Expected JSON shape:",
-    JSON.stringify(
-      {
-        id: "short-kebab-case-id",
-        title: scenario.title,
-        type: "flowchart",
-        nodes: [
-          { id: "start-id", label: "Human label", kind: "start" },
-          { id: "decision-id", label: "Question?", kind: "decision" },
-        ],
-        edges: [
-          {
-            id: "edge-id",
-            source: "decision-id",
-            target: "target-id",
-            label: "yes",
-          },
-        ],
-        layout: { direction: "TB", edgeRouting: "orthogonal" },
-        style: { accentColor: "#2563eb", backgroundColor: "#ffffff" },
-      },
-      null,
-      2,
-    ),
+    expectedJsonShape(scenario),
+  ].join("\n");
+
+  return {
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    system,
+    user,
+  };
+}
+
+export function buildScenarioPrompt(scenario: DiagramScenario): string {
+  const parts = buildScenarioPromptParts(scenario);
+
+  return [
+    "System message:",
+    parts.system,
+    "",
+    "User message:",
+    parts.user,
   ].join("\n");
 }
