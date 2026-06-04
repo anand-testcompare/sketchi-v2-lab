@@ -88,6 +88,21 @@ describe("ScenarioPlayground", () => {
     ).toBeTruthy();
   });
 
+  it("shows system and user prompt parts separately", () => {
+    render(<ScenarioPlayground />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Prompt" }));
+
+    expect(screen.getByRole("heading", { name: "System" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "User" })).toBeTruthy();
+    expect(screen.getByLabelText("System prompt").textContent).toContain(
+      "Flowchart IR rules:",
+    );
+    expect(screen.getByLabelText("User prompt").textContent).toContain(
+      "Scenario:",
+    );
+  });
+
   it("mirrors Excalidraw visual edits into the JSON inspector", async () => {
     render(<ScenarioPlayground />);
 

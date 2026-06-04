@@ -21,6 +21,7 @@ export interface ExcalidrawSceneValidationIssue {
     | "missing-arrow-binding"
     | "missing-bound-arrow"
     | "missing-container"
+    | "overlapping-arrow-segment"
     | "text-overflow";
   elementId?: string;
   message: string;
@@ -40,6 +41,7 @@ const ARROW_LABEL_WIDTH = 160;
 const FIT_TARGET_WIDTH = 860;
 const FIT_TARGET_HEIGHT = 420;
 const MIN_INITIAL_ZOOM = 0.5;
+const SEGMENT_EPSILON = 0.001;
 
 function initialZoomForScene(scene: RenderedDiagramScene): number {
   const zoom = Math.min(
@@ -367,6 +369,147 @@ function bindingElementId(
   return typeof elementId === "string" ? elementId : null;
 }
 
+interface ArrowSegment {
+  arrowId: string;
+  max: number;
+  min: number;
+  orientation: "horizontal" | "vertical";
+  segmentIndex: number;
+  staticCoordinate: number;
+}
+
+function numericValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function pointTuple(value: unknown): [number, number] | null {
+  if (!Array.isArray(value) || value.length < 2) {
+    return null;
+  }
+
+  const x = numericValue(value[0]);
+  const y = numericValue(value[1]);
+
+  return x === null || y === null ? null : [x, y];
+}
+
+function arrowSegments(element: ExcalidrawElement): ArrowSegment[] {
+  const originX = numericValue(element.x) ?? 0;
+  const originY = numericValue(element.y) ?? 0;
+  const points = Array.isArray(element.points)
+    ? element.points
+        .map(pointTuple)
+        .filter((point): point is [number, number] => Boolean(point))
+    : [];
+  const segments: ArrowSegment[] = [];
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const previous = points[index];
+    const current = points[index + 1];
+
+    if (!previous || !current) {
+      continue;
+    }
+
+    const [previousX, previousY] = previous;
+    const [currentX, currentY] = current;
+    const x1 = originX + previousX;
+    const y1 = originY + previousY;
+    const x2 = originX + currentX;
+    const y2 = originY + currentY;
+
+    if (Math.abs(y1 - y2) <= SEGMENT_EPSILON) {
+      segments.push({
+        arrowId: element.id,
+        max: Math.max(x1, x2),
+        min: Math.min(x1, x2),
+        orientation: "horizontal",
+        segmentIndex: index,
+        staticCoordinate: y1,
+      });
+      continue;
+    }
+
+    if (Math.abs(x1 - x2) <= SEGMENT_EPSILON) {
+      segments.push({
+        arrowId: element.id,
+        max: Math.max(y1, y2),
+        min: Math.min(y1, y2),
+        orientation: "vertical",
+        segmentIndex: index,
+        staticCoordinate: x1,
+      });
+    }
+  }
+
+  return segments.filter(
+    (segment) => segment.max - segment.min > SEGMENT_EPSILON,
+  );
+}
+
+function overlapLength(left: ArrowSegment, right: ArrowSegment): number {
+  return Math.min(left.max, right.max) - Math.max(left.min, right.min);
+}
+
+function overlappingArrowSegments(
+  elements: readonly ExcalidrawElement[],
+): ExcalidrawSceneValidationIssue[] {
+  const segments = elements
+    .filter((element) => element.type === "arrow")
+    .flatMap(arrowSegments);
+  const issues: ExcalidrawSceneValidationIssue[] = [];
+  const seen = new Set<string>();
+
+  for (let leftIndex = 0; leftIndex < segments.length; leftIndex += 1) {
+    const left = segments[leftIndex];
+    if (!left) {
+      continue;
+    }
+
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < segments.length;
+      rightIndex += 1
+    ) {
+      const right = segments[rightIndex];
+      if (!right) {
+        continue;
+      }
+
+      if (
+        left.arrowId === right.arrowId ||
+        left.orientation !== right.orientation ||
+        Math.abs(left.staticCoordinate - right.staticCoordinate) >
+          SEGMENT_EPSILON ||
+        overlapLength(left, right) <= SEGMENT_EPSILON
+      ) {
+        continue;
+      }
+
+      const key = [
+        left.arrowId,
+        left.segmentIndex,
+        right.arrowId,
+        right.segmentIndex,
+      ]
+        .sort()
+        .join(":");
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      issues.push({
+        code: "overlapping-arrow-segment",
+        elementId: left.arrowId,
+        message: `Arrow "${left.arrowId}" overlaps arrow "${right.arrowId}".`,
+      });
+    }
+  }
+
+  return issues;
+}
+
 export function validateExcalidrawScene(
   scene: ExcalidrawScene,
 ): ExcalidrawSceneValidationResult {
@@ -448,6 +591,8 @@ export function validateExcalidrawScene(
       }
     }
   }
+
+  issues.push(...overlappingArrowSegments(scene.elements));
 
   return {
     ok: issues.length === 0,

@@ -4,7 +4,7 @@ import type {
   ExcalidrawScene,
 } from "@sketchi/diagram-excalidraw";
 import {
-  buildScenarioPrompt,
+  buildScenarioPromptParts,
   evaluateScenarioFixture,
   evaluateScenarioOutput,
   flowchartScenarios,
@@ -16,6 +16,7 @@ import { useCallback, useMemo } from "react";
 
 import { ExcalidrawSceneCanvas } from "../excalidraw-scene-canvas/index.js";
 import { JsonCodeEditor } from "../json-code-editor/index.js";
+import { PromptMessageViewer } from "../prompt-message-viewer/index.js";
 
 export interface ScenarioPlaygroundProps {
   initialScenarioId?: string;
@@ -131,7 +132,9 @@ export function ScenarioPlayground({
         : undefined,
     [selectedScenario, state.candidateText],
   );
-  const prompt = selectedScenario ? buildScenarioPrompt(selectedScenario) : "";
+  const promptParts = selectedScenario
+    ? buildScenarioPromptParts(selectedScenario)
+    : undefined;
   const result = candidateEvaluation?.result ?? fixtureEvaluation;
   const checks = result?.checks ?? [];
   const displayedScene = state.editedExcalidrawScene ?? result?.excalidrawScene;
@@ -298,10 +301,10 @@ export function ScenarioPlayground({
           ) : null}
 
           {state.inspectorPanel === "prompt" ? (
-            <label className="sketchi-scenario-playground__prompt">
-              Prompt
-              <textarea readOnly value={prompt} />
-            </label>
+            <PromptMessageViewer
+              messages={promptParts?.messages ?? []}
+              title="Prompt"
+            />
           ) : null}
 
           {state.inspectorPanel === "excalidraw" ? (

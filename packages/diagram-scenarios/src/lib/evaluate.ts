@@ -110,7 +110,7 @@ export function evaluateScenarioDiagram(
       passed: excalidrawValidation.ok,
       message:
         excalidrawValidation.issues.length === 0
-          ? "Excalidraw scene has bound arrows and fitting text."
+          ? "Excalidraw scene has bound arrows, non-overlapping routes, and fitting text."
           : `${excalidrawValidation.issues.length} Excalidraw validation issue(s).`,
     },
   ];

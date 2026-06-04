@@ -334,6 +334,14 @@ function connectionEdges(
     };
   }
 
+  if (dy > 0) {
+    return { sourceEdge: "bottom", targetEdge: "top" };
+  }
+
+  if (dy < 0) {
+    return { sourceEdge: "top", targetEdge: "bottom" };
+  }
+
   if (Math.abs(dx) > Math.abs(dy)) {
     return dx > 0
       ? { sourceEdge: "right", targetEdge: "left" }
