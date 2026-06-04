@@ -7,9 +7,12 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     coverage: {
-      reportsDirectory: "../../coverage/apps/web"
+      reportsDirectory: "../../coverage/apps/playground"
     },
-    include: ["apps/web/src/**/*.test.ts", "apps/web/src/**/*.test.tsx"],
+    include: [
+      "apps/playground/src/**/*.test.ts",
+      "apps/playground/src/**/*.test.tsx"
+    ],
     passWithNoTests: true
   },
   resolve: {
@@ -32,6 +35,20 @@ export default defineConfig({
         find: "@sketchi/diagram-renderer",
         replacement: new URL(
           "../../packages/diagram-renderer/src/index.ts",
+          import.meta.url
+        ).pathname
+      },
+      {
+        find: "@sketchi/diagram-excalidraw",
+        replacement: new URL(
+          "../../packages/diagram-excalidraw/src/index.ts",
+          import.meta.url
+        ).pathname
+      },
+      {
+        find: "@sketchi/diagram-scenarios",
+        replacement: new URL(
+          "../../packages/diagram-scenarios/src/index.ts",
           import.meta.url
         ).pathname
       },

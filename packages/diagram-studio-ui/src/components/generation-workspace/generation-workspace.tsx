@@ -9,8 +9,8 @@ import {
 } from "@sketchi/diagram-excalidraw";
 import { renderIntermediateDiagram } from "@sketchi/diagram-renderer";
 
-import { DiagramPreview } from "../diagram-preview";
-import { FlowchartValidationPanel } from "../flowchart-validation-panel";
+import { DiagramPreview } from "../diagram-preview/index.js";
+import { FlowchartValidationPanel } from "../flowchart-validation-panel/index.js";
 
 export interface GenerationWorkspaceProps {
   diagram: IntermediateDiagram;

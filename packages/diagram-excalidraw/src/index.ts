@@ -1,1 +1,1 @@
-export * from "./lib/diagram-excalidraw";
+export * from "./lib/diagram-excalidraw.js";

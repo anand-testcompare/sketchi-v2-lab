@@ -15,7 +15,7 @@ export const Route = createRootRoute({
         name: "viewport",
         content: "width=device-width, initial-scale=1"
       },
-      { title: "Sketchi v2" }
+      { title: "Sketchi Playground" }
     ],
     links: [{ rel: "stylesheet", href: appStyles }]
   }),

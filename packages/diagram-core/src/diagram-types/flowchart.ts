@@ -6,7 +6,7 @@ import {
   DiagramValidationError,
   IntermediateDiagramSchema,
   validateIntermediateDiagram,
-} from "../intermediate";
+} from "../intermediate.js";
 
 export const flowchartDiagramType = "flowchart" as const;
 

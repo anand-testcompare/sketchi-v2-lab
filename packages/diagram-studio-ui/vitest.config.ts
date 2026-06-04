@@ -24,6 +24,10 @@ export default defineConfig({
       "@sketchi/diagram-renderer": new URL(
         "../diagram-renderer/src/index.ts",
         import.meta.url
+      ).pathname,
+      "@sketchi/diagram-scenarios": new URL(
+        "../diagram-scenarios/src/index.ts",
+        import.meta.url
       ).pathname
     }
   }

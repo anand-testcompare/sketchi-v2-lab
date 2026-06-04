@@ -35,6 +35,6 @@ describe("ui-component generator", () => {
       )
     ).toBe(true);
     expect(tree.read("packages/diagram-studio-ui/src/index.ts", "utf-8"))
-      .toContain('export * from "./components/status-badge";');
+      .toContain('export * from "./components/status-badge/index.js";');
   });
 });

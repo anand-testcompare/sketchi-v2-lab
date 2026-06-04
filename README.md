@@ -7,10 +7,11 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 ## Stack
 
 - Nx workspace for package boundaries, affected checks, and Storybook wiring.
-- TanStack Start web app, prepared for Cloudflare deployment.
+- TanStack Start playground app, prepared for optional Cloudflare deployment.
 - Typed diagram intermediate representation in `packages/diagram-core`.
 - Deterministic scene renderer in `packages/diagram-renderer`.
 - Real Excalidraw conversion and validation in `packages/diagram-excalidraw`.
+- Maintained scenarios and local fixture/model-output evaluation in `packages/diagram-scenarios`.
 - Reusable React UI and Storybook in `packages/diagram-studio-ui`.
 - Workspace Nx generators in `tools/sketchi-generators`.
 
@@ -20,7 +21,9 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 pnpm install
 pnpm nx run-many -t typecheck,test,build
 pnpm nx build-storybook diagram-studio-ui
-pnpm nx dev web
+pnpm nx dev playground
+pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition --fixture --out .memory/pharma-batch.excalidraw
+SKETCHI_GENERATOR_COMMAND="your-llm-command" pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition
 ```
 
 Generate new owned surfaces through the workspace plugin:
@@ -33,10 +36,11 @@ pnpm nx g @sketchi/generators:diagram-type mindmap --title "Sketchi mindmap fixt
 ## Workspace Shape
 
 ```text
-apps/web                         TanStack Start application
+apps/playground                  TanStack Start playground
 packages/diagram-core            Diagram IR, validation, fixtures
 packages/diagram-renderer        Deterministic scene generation
 packages/diagram-excalidraw      Real Excalidraw conversion and validation
+packages/diagram-scenarios       Scenario prompts, checks, and CLI evals
 packages/diagram-studio-ui       React components and Storybook
 tools/sketchi-generators         Workspace generators for components and diagram types
 docs/architecture.md             v2 architecture notes

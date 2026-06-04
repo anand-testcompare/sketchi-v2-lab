@@ -45,7 +45,7 @@ describe("diagram-type generator", () => {
       ),
     ).toBe(true);
     expect(tree.read("packages/diagram-core/src/index.ts", "utf-8")).toContain(
-      'export * from "./diagram-types/mindmap";',
+      'export * from "./diagram-types/mindmap.js";',
     );
   });
 

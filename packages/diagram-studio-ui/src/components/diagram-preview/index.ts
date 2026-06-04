@@ -1,1 +1,1 @@
-export * from "./diagram-preview";
+export * from "./diagram-preview.js";

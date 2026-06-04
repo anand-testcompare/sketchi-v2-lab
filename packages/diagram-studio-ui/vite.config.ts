@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react()],
   build: {
+    outDir: "packages/diagram-studio-ui/dist",
     lib: {
       entry: "packages/diagram-studio-ui/src/index.ts",
       formats: ["es"],
@@ -13,9 +14,12 @@ export default defineConfig({
       external: [
         "react",
         "react-dom",
+        "@excalidraw/excalidraw",
+        "@excalidraw/excalidraw/types",
         "@sketchi/diagram-core",
         "@sketchi/diagram-excalidraw",
-        "@sketchi/diagram-renderer"
+        "@sketchi/diagram-renderer",
+        "@sketchi/diagram-scenarios"
       ]
     }
   },
@@ -31,6 +35,10 @@ export default defineConfig({
       ).pathname,
       "@sketchi/diagram-renderer": new URL(
         "../diagram-renderer/src/index.ts",
+        import.meta.url
+      ).pathname,
+      "@sketchi/diagram-scenarios": new URL(
+        "../diagram-scenarios/src/index.ts",
         import.meta.url
       ).pathname
     }

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { <%= fixtureName %> } from "@sketchi/diagram-core";
 
-import { GenerationWorkspace } from "../components/generation-workspace";
+import { GenerationWorkspace } from "../components/generation-workspace/index.js";
 import "../styles.css";
 
 const meta = {
