@@ -42,7 +42,7 @@ export interface ArrowSceneElement {
   edgeId: string;
   sourceNodeId: string;
   targetNodeId: string;
-  points: readonly [ScenePoint, ScenePoint];
+  points: readonly [ScenePoint, ...ScenePoint[]];
   label?: string;
 }
 
@@ -63,8 +63,8 @@ export interface RenderedDiagramScene {
 
 const MIN_NODE_WIDTH = 184;
 const MIN_NODE_HEIGHT = 72;
-const HORIZONTAL_GAP = 72;
-const VERTICAL_GAP = 64;
+const HORIZONTAL_GAP = 112;
+const VERTICAL_GAP = 96;
 const PADDING = 48;
 const NODE_LABEL_FONT_SIZE = 14;
 const NODE_LABEL_WIDTH_FACTOR = 0.62;
@@ -138,15 +138,11 @@ function measureLabel(label: string): {
   const lines = text.split("\n");
   const longestLineLength = Math.max(...lines.map((line) => line.length));
   const width = Math.ceil(
-    longestLineLength *
-      NODE_LABEL_FONT_SIZE *
-      NODE_LABEL_WIDTH_FACTOR +
+    longestLineLength * NODE_LABEL_FONT_SIZE * NODE_LABEL_WIDTH_FACTOR +
       NODE_LABEL_HORIZONTAL_PADDING,
   );
   const height = Math.ceil(
-    lines.length *
-      NODE_LABEL_FONT_SIZE *
-      NODE_LABEL_LINE_HEIGHT +
+    lines.length * NODE_LABEL_FONT_SIZE * NODE_LABEL_LINE_HEIGHT +
       NODE_LABEL_VERTICAL_PADDING,
   );
 
@@ -164,10 +160,7 @@ function shapeForNode(node: DiagramNode): NodeSceneShape {
   return "rectangle";
 }
 
-function createNodeShape(
-  node: DiagramNode,
-  position: ScenePoint,
-): NodeSceneElement {
+function createNodeShape(node: DiagramNode): NodeSceneElement {
   const labelMetrics = measureLabel(node.label);
   const shape = shapeForNode(node);
   const shapeWidthPad = shape === "diamond" ? 32 : shape === "ellipse" ? 20 : 0;
@@ -179,8 +172,8 @@ function createNodeShape(
     nodeId: node.id,
     ...(node.kind ? { kind: node.kind } : {}),
     shape,
-    x: position.x,
-    y: position.y,
+    x: 0,
+    y: 0,
     width: Math.max(MIN_NODE_WIDTH, labelMetrics.width + shapeWidthPad),
     height: Math.max(MIN_NODE_HEIGHT, labelMetrics.height + shapeHeightPad),
     label: labelMetrics.text,
@@ -190,41 +183,115 @@ function createNodeShape(
 function positionNodes(diagram: IntermediateDiagram): NodeSceneElement[] {
   const vertical =
     diagram.layout.direction === "TB" || diagram.layout.direction === "BT";
-  const shapes: NodeSceneElement[] = [];
-  let offset = PADDING;
+  const shapesByNodeId = new Map(
+    diagram.nodes.map((node) => [node.id, createNodeShape(node)]),
+  );
+  const incoming = new Map<string, DiagramEdge[]>();
+  const outgoing = new Map<string, DiagramEdge[]>();
+
+  for (const edge of diagram.edges) {
+    incoming.set(edge.target, [...(incoming.get(edge.target) ?? []), edge]);
+    outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge]);
+  }
+
+  const startNode =
+    diagram.nodes.find((node) => (incoming.get(node.id) ?? []).length === 0) ??
+    diagram.nodes[0];
+  const rankByNodeId = new Map<string, number>();
+  const queue = startNode ? [{ id: startNode.id, rank: 0 }] : [];
+
+  for (const item of queue) {
+    if (rankByNodeId.has(item.id)) {
+      continue;
+    }
+
+    rankByNodeId.set(item.id, item.rank);
+    for (const edge of outgoing.get(item.id) ?? []) {
+      queue.push({ id: edge.target, rank: item.rank + 1 });
+    }
+  }
 
   for (const node of diagram.nodes) {
-    const position = vertical
-      ? { x: PADDING, y: offset }
-      : { x: offset, y: PADDING };
-    const shape = createNodeShape(node, position);
-    shapes.push(shape);
-    offset +=
-      (vertical ? shape.height : shape.width) +
-      (vertical ? VERTICAL_GAP : HORIZONTAL_GAP);
+    if (!rankByNodeId.has(node.id)) {
+      rankByNodeId.set(node.id, rankByNodeId.size);
+    }
+  }
+
+  const rankedShapes = new Map<number, NodeSceneElement[]>();
+  for (const node of diagram.nodes) {
+    const rank = rankByNodeId.get(node.id) ?? 0;
+    const shape = shapesByNodeId.get(node.id);
+    if (shape) {
+      rankedShapes.set(rank, [...(rankedShapes.get(rank) ?? []), shape]);
+    }
+  }
+
+  const ranks = Array.from(rankedShapes.entries()).sort(
+    ([left], [right]) => left - right,
+  );
+  const rankMetrics = ranks.map(([rank, shapes]) => {
+    const breadth = shapes.reduce(
+      (sum, shape, index) =>
+        sum +
+        (vertical ? shape.width : shape.height) +
+        (index > 0 ? HORIZONTAL_GAP : 0),
+      0,
+    );
+    const depth = Math.max(
+      ...shapes.map((shape) => (vertical ? shape.height : shape.width)),
+    );
+
+    return { breadth, depth, rank, shapes };
+  });
+  const maxBreadth = Math.max(...rankMetrics.map((metric) => metric.breadth));
+  let rankOffset = PADDING;
+  const positioned: NodeSceneElement[] = [];
+
+  for (const metric of rankMetrics) {
+    let breadthOffset = PADDING + Math.max(0, maxBreadth - metric.breadth) / 2;
+
+    for (const shape of metric.shapes) {
+      if (vertical) {
+        positioned.push({
+          ...shape,
+          x: breadthOffset,
+          y: rankOffset + Math.max(0, metric.depth - shape.height) / 2,
+        });
+        breadthOffset += shape.width + HORIZONTAL_GAP;
+      } else {
+        positioned.push({
+          ...shape,
+          x: rankOffset + Math.max(0, metric.depth - shape.width) / 2,
+          y: breadthOffset,
+        });
+        breadthOffset += shape.height + HORIZONTAL_GAP;
+      }
+    }
+
+    rankOffset += metric.depth + VERTICAL_GAP;
   }
 
   if (diagram.layout.direction === "BT") {
-    const totalHeight =
-      shapes.reduce((sum, shape) => sum + shape.height, 0) +
-      Math.max(0, shapes.length - 1) * VERTICAL_GAP;
-    return shapes.map((shape) => ({
+    const totalHeight = Math.max(
+      ...positioned.map((shape) => shape.y + shape.height),
+    );
+    return positioned.map((shape) => ({
       ...shape,
-      y: PADDING + totalHeight - (shape.y - PADDING) - shape.height,
+      y: PADDING + totalHeight - shape.y - shape.height,
     }));
   }
 
   if (diagram.layout.direction === "RL") {
-    const totalWidth =
-      shapes.reduce((sum, shape) => sum + shape.width, 0) +
-      Math.max(0, shapes.length - 1) * HORIZONTAL_GAP;
-    return shapes.map((shape) => ({
+    const totalWidth = Math.max(
+      ...positioned.map((shape) => shape.x + shape.width),
+    );
+    return positioned.map((shape) => ({
       ...shape,
-      x: PADDING + totalWidth - (shape.x - PADDING) - shape.width,
+      x: PADDING + totalWidth - shape.x - shape.width,
     }));
   }
 
-  return shapes;
+  return positioned;
 }
 
 function textForNode(shape: NodeSceneElement): TextSceneElement {
@@ -247,7 +314,10 @@ function center(shape: NodeSceneElement): ScenePoint {
   };
 }
 
-function connectionEdges(source: NodeSceneElement, target: NodeSceneElement): {
+function connectionEdges(
+  source: NodeSceneElement,
+  target: NodeSceneElement,
+): {
   sourceEdge: ConnectionEdge;
   targetEdge: ConnectionEdge;
 } {
@@ -255,6 +325,14 @@ function connectionEdges(source: NodeSceneElement, target: NodeSceneElement): {
   const targetCenter = center(target);
   const dx = targetCenter.x - sourceCenter.x;
   const dy = targetCenter.y - sourceCenter.y;
+  const sourceKind = source.kind?.toLowerCase();
+
+  if (sourceKind === "decision" && dx !== 0 && dy > 0) {
+    return {
+      sourceEdge: dx > 0 ? "right" : "left",
+      targetEdge: "top",
+    };
+  }
 
   if (Math.abs(dx) > Math.abs(dy)) {
     return dx > 0
@@ -267,7 +345,10 @@ function connectionEdges(source: NodeSceneElement, target: NodeSceneElement): {
     : { sourceEdge: "top", targetEdge: "bottom" };
 }
 
-function pointOnEdge(shape: NodeSceneElement, edge: ConnectionEdge): ScenePoint {
+function pointOnEdge(
+  shape: NodeSceneElement,
+  edge: ConnectionEdge,
+): ScenePoint {
   switch (edge) {
     case "top":
       return { x: shape.x + shape.width / 2, y: shape.y };
@@ -283,6 +364,7 @@ function pointOnEdge(shape: NodeSceneElement, edge: ConnectionEdge): ScenePoint 
 function arrowForEdge(
   edge: DiagramEdge,
   shapesByNodeId: ReadonlyMap<string, NodeSceneElement>,
+  edgeRouting: IntermediateDiagram["layout"]["edgeRouting"],
 ): ArrowSceneElement {
   const source = shapesByNodeId.get(edge.source);
   const target = shapesByNodeId.get(edge.target);
@@ -292,6 +374,21 @@ function arrowForEdge(
   }
 
   const { sourceEdge, targetEdge } = connectionEdges(source, target);
+  const start = pointOnEdge(source, sourceEdge);
+  const end = pointOnEdge(target, targetEdge);
+  const points: [ScenePoint, ...ScenePoint[]] = [start, end];
+
+  if (edgeRouting === "orthogonal" && start.x !== end.x && start.y !== end.y) {
+    const verticalFirst = sourceEdge === "top" || sourceEdge === "bottom";
+    const cornerA = verticalFirst
+      ? { x: start.x, y: start.y + (end.y - start.y) / 2 }
+      : { x: start.x + (end.x - start.x) / 2, y: start.y };
+    const cornerB = verticalFirst
+      ? { x: end.x, y: cornerA.y }
+      : { x: cornerA.x, y: end.y };
+
+    points.splice(1, 0, cornerA, cornerB);
+  }
 
   return {
     type: "arrow",
@@ -299,7 +396,7 @@ function arrowForEdge(
     edgeId: edge.id,
     sourceNodeId: edge.source,
     targetNodeId: edge.target,
-    points: [pointOnEdge(source, sourceEdge), pointOnEdge(target, targetEdge)],
+    points,
     ...(edge.label ? { label: edge.label } : {}),
   };
 }
@@ -308,7 +405,9 @@ function sceneBounds(elements: readonly NodeSceneElement[]): {
   width: number;
   height: number;
 } {
-  const maxX = Math.max(...elements.map((element) => element.x + element.width));
+  const maxX = Math.max(
+    ...elements.map((element) => element.x + element.width),
+  );
   const maxY = Math.max(
     ...elements.map((element) => element.y + element.height),
   );
@@ -328,7 +427,7 @@ export function renderIntermediateDiagram(
     nodeShapes.map((shape) => [shape.nodeId, shape]),
   );
   const edgeArrows = diagram.edges.map((edge) =>
-    arrowForEdge(edge, shapesByNodeId),
+    arrowForEdge(edge, shapesByNodeId, diagram.layout.edgeRouting),
   );
   const labels = nodeShapes.map(textForNode);
   const bounds = sceneBounds(nodeShapes);

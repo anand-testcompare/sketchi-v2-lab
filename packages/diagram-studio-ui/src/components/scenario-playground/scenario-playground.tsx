@@ -1,14 +1,21 @@
+import type { ExcalidrawProps } from "@excalidraw/excalidraw/types";
+import type {
+  ExcalidrawElement,
+  ExcalidrawScene,
+} from "@sketchi/diagram-excalidraw";
 import {
   buildScenarioPrompt,
   evaluateScenarioFixture,
   evaluateScenarioOutput,
   flowchartScenarios,
   type DiagramScenario,
-  type ScenarioEvaluation
+  type ScenarioEvaluation,
 } from "@sketchi/diagram-scenarios";
-import { useMemo, useState } from "react";
+import { Store, useStore } from "@tanstack/react-store";
+import { useCallback, useMemo } from "react";
 
 import { ExcalidrawSceneCanvas } from "../excalidraw-scene-canvas/index.js";
+import { JsonCodeEditor } from "../json-code-editor/index.js";
 
 export interface ScenarioPlaygroundProps {
   initialScenarioId?: string;
@@ -20,17 +27,28 @@ interface EvaluationState {
   result?: ScenarioEvaluation;
 }
 
+type InspectorPanel = "candidate" | "prompt" | "excalidraw";
+
+interface PlaygroundState {
+  candidateText: string;
+  editedExcalidrawScene: ExcalidrawScene | undefined;
+  editedExcalidrawSceneSignature: string | undefined;
+  inspectorPanel: InspectorPanel;
+  scenarioId: string;
+}
+
 function evaluateCandidate(
   scenario: DiagramScenario,
-  candidateText: string
+  candidateText: string,
 ): EvaluationState {
   try {
     return {
-      result: evaluateScenarioOutput(scenario, candidateText)
+      result: evaluateScenarioOutput(scenario, candidateText),
     };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Candidate evaluation failed"
+      error:
+        error instanceof Error ? error.message : "Candidate evaluation failed",
     };
   }
 }
@@ -39,39 +57,125 @@ function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
+function createInitialState(
+  scenarios: readonly DiagramScenario[],
+  initialScenarioId?: string,
+): PlaygroundState {
+  const selectedScenario =
+    scenarios.find((scenario) => scenario.id === initialScenarioId) ??
+    scenarios[0];
+
+  return {
+    candidateText: selectedScenario
+      ? formatJson(selectedScenario.expectedDiagram)
+      : "{}",
+    editedExcalidrawScene: undefined,
+    editedExcalidrawSceneSignature: undefined,
+    inspectorPanel: "candidate",
+    scenarioId: selectedScenario?.id ?? "",
+  };
+}
+
+function pickExcalidrawAppState(appState: Record<string, unknown>) {
+  return {
+    scrollX: appState.scrollX,
+    scrollY: appState.scrollY,
+    selectedElementIds: appState.selectedElementIds,
+    viewBackgroundColor: appState.viewBackgroundColor,
+    zoom: appState.zoom,
+  };
+}
+
+function sceneFromExcalidrawChange(
+  elements: readonly unknown[],
+  appState: Record<string, unknown>,
+): ExcalidrawScene {
+  return {
+    appState: pickExcalidrawAppState(appState),
+    elements: elements as ExcalidrawElement[],
+  };
+}
+
+function sceneChangeSignature(
+  elements: readonly unknown[],
+  appState: Record<string, unknown>,
+): string {
+  return JSON.stringify({
+    appState: pickExcalidrawAppState(appState),
+    elements,
+  });
+}
+
 export function ScenarioPlayground({
   initialScenarioId,
-  scenarios = flowchartScenarios
+  scenarios = flowchartScenarios,
 }: ScenarioPlaygroundProps) {
-  const [scenarioId, setScenarioId] = useState(
-    initialScenarioId ?? scenarios[0]?.id ?? ""
+  const store = useMemo(
+    () => new Store(createInitialState(scenarios, initialScenarioId)),
+    [initialScenarioId, scenarios],
   );
+  const state = useStore(store, (current) => current);
   const selectedScenario =
-    scenarios.find((scenario) => scenario.id === scenarioId) ?? scenarios[0];
-  const [candidateText, setCandidateText] = useState(() =>
-    selectedScenario ? formatJson(selectedScenario.expectedDiagram) : "{}"
-  );
+    scenarios.find((scenario) => scenario.id === state.scenarioId) ??
+    scenarios[0];
 
   const fixtureEvaluation = useMemo(
     () =>
       selectedScenario ? evaluateScenarioFixture(selectedScenario) : undefined,
-    [selectedScenario]
+    [selectedScenario],
   );
   const candidateEvaluation = useMemo(
     () =>
       selectedScenario
-        ? evaluateCandidate(selectedScenario, candidateText)
+        ? evaluateCandidate(selectedScenario, state.candidateText)
         : undefined,
-    [candidateText, selectedScenario]
+    [selectedScenario, state.candidateText],
   );
   const prompt = selectedScenario ? buildScenarioPrompt(selectedScenario) : "";
   const result = candidateEvaluation?.result ?? fixtureEvaluation;
   const checks = result?.checks ?? [];
+  const displayedScene = state.editedExcalidrawScene ?? result?.excalidrawScene;
+  const statusOk =
+    Boolean(candidateEvaluation?.result?.ok) && !candidateEvaluation?.error;
+  const inspectorTabs: Array<{ id: InspectorPanel; label: string }> = [
+    { id: "candidate", label: "Candidate IR" },
+    { id: "prompt", label: "Prompt" },
+    { id: "excalidraw", label: "Excalidraw JSON" },
+  ];
 
   function resetCandidate(nextScenario: DiagramScenario) {
-    setScenarioId(nextScenario.id);
-    setCandidateText(formatJson(nextScenario.expectedDiagram));
+    store.setState((current) => ({
+      ...current,
+      candidateText: formatJson(nextScenario.expectedDiagram),
+      editedExcalidrawScene: undefined,
+      editedExcalidrawSceneSignature: undefined,
+      scenarioId: nextScenario.id,
+    }));
   }
+
+  const handleExcalidrawChange: NonNullable<ExcalidrawProps["onChange"]> =
+    useCallback(
+      (elements, appState) => {
+        const typedAppState = appState as unknown as Record<string, unknown>;
+        const signature = sceneChangeSignature(elements, typedAppState);
+
+        store.setState((current) => {
+          if (current.editedExcalidrawSceneSignature === signature) {
+            return current;
+          }
+
+          return {
+            ...current,
+            editedExcalidrawScene: sceneFromExcalidrawChange(
+              elements,
+              typedAppState,
+            ),
+            editedExcalidrawSceneSignature: signature,
+          };
+        });
+      },
+      [store],
+    );
 
   return (
     <section className="sketchi-scenario-playground">
@@ -82,12 +186,12 @@ export function ScenarioPlayground({
         </div>
         <span
           className={
-            result?.ok
+            statusOk
               ? "sketchi-scenario-playground__status"
               : "sketchi-scenario-playground__status sketchi-scenario-playground__status--failed"
           }
         >
-          {result?.ok ? "Passing" : "Needs attention"}
+          {statusOk ? "Passing" : "Needs attention"}
         </span>
       </header>
 
@@ -99,7 +203,7 @@ export function ScenarioPlayground({
               value={selectedScenario?.id}
               onChange={(event) => {
                 const nextScenario = scenarios.find(
-                  (scenario) => scenario.id === event.target.value
+                  (scenario) => scenario.id === event.target.value,
                 );
                 if (nextScenario) {
                   resetCandidate(nextScenario);
@@ -113,38 +217,6 @@ export function ScenarioPlayground({
               ))}
             </select>
           </label>
-
-          {selectedScenario ? (
-            <>
-              <label>
-                Prompt
-                <textarea readOnly rows={12} value={prompt} />
-              </label>
-              <label>
-                Candidate IR
-                <textarea
-                  rows={16}
-                  value={candidateText}
-                  onChange={(event) => setCandidateText(event.target.value)}
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => resetCandidate(selectedScenario)}
-              >
-                Reset fixture
-              </button>
-            </>
-          ) : null}
-        </aside>
-
-        <main className="sketchi-scenario-playground__main">
-          {result ? (
-            <ExcalidrawSceneCanvas
-              scene={result.excalidrawScene}
-              title={result.diagram.title}
-            />
-          ) : null}
 
           <section className="sketchi-scenario-playground__checks">
             <h2>Checks</h2>
@@ -163,11 +235,86 @@ export function ScenarioPlayground({
             </ul>
           </section>
 
-          <details className="sketchi-scenario-playground__json">
-            <summary>Excalidraw JSON</summary>
-            <pre>{formatJson(result?.excalidrawScene ?? {})}</pre>
-          </details>
+          {selectedScenario ? (
+            <button
+              type="button"
+              onClick={() => resetCandidate(selectedScenario)}
+            >
+              Reset fixture
+            </button>
+          ) : null}
+        </aside>
+
+        <main className="sketchi-scenario-playground__main">
+          {result ? (
+            <ExcalidrawSceneCanvas
+              onChange={handleExcalidrawChange}
+              scene={result.excalidrawScene}
+              title={result.diagram.title}
+            />
+          ) : null}
         </main>
+
+        <aside className="sketchi-scenario-playground__inspector">
+          <div
+            aria-label="Inspector"
+            className="sketchi-scenario-playground__tabs"
+            role="tablist"
+          >
+            {inspectorTabs.map((tab) => (
+              <button
+                aria-selected={state.inspectorPanel === tab.id}
+                key={tab.id}
+                onClick={() =>
+                  store.setState((current) => ({
+                    ...current,
+                    inspectorPanel: tab.id,
+                  }))
+                }
+                role="tab"
+                type="button"
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {state.inspectorPanel === "candidate" ? (
+            <JsonCodeEditor
+              id="candidate-ir"
+              label="Candidate IR"
+              maxHeight="calc(100vh - 160px)"
+              minHeight="calc(100vh - 214px)"
+              onChange={(value) =>
+                store.setState((current) => ({
+                  ...current,
+                  candidateText: value,
+                  editedExcalidrawScene: undefined,
+                  editedExcalidrawSceneSignature: undefined,
+                }))
+              }
+              value={state.candidateText}
+            />
+          ) : null}
+
+          {state.inspectorPanel === "prompt" ? (
+            <label className="sketchi-scenario-playground__prompt">
+              Prompt
+              <textarea readOnly value={prompt} />
+            </label>
+          ) : null}
+
+          {state.inspectorPanel === "excalidraw" ? (
+            <JsonCodeEditor
+              id="excalidraw-json"
+              label="Excalidraw JSON"
+              maxHeight="calc(100vh - 160px)"
+              minHeight="calc(100vh - 214px)"
+              readOnly
+              value={formatJson(displayedScene ?? {})}
+            />
+          ) : null}
+        </aside>
       </div>
     </section>
   );

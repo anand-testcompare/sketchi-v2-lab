@@ -3,3 +3,4 @@ export * from "./components/generation-workspace/index.js";
 export * from "./components/flowchart-validation-panel/index.js";
 export * from "./components/excalidraw-scene-canvas/index.js";
 export * from "./components/scenario-playground/index.js";
+export * from "./components/json-code-editor/index.js";

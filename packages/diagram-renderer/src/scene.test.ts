@@ -58,4 +58,58 @@ describe("renderIntermediateDiagram", () => {
     }
     expect(qaReviewNode.height).toBeGreaterThan(72);
   });
+
+  it("spreads decision branches into separate rank positions", () => {
+    const scene = renderIntermediateDiagram(flowchartFixture);
+    const clear = scene.elements.find(
+      (element) => element.type === "node" && element.nodeId === "clear",
+    );
+    const draft = scene.elements.find(
+      (element) => element.type === "node" && element.nodeId === "draft",
+    );
+    const review = scene.elements.find(
+      (element) => element.type === "node" && element.nodeId === "review",
+    );
+
+    if (
+      !clear ||
+      clear.type !== "node" ||
+      !draft ||
+      draft.type !== "node" ||
+      !review ||
+      review.type !== "node"
+    ) {
+      throw new Error("Expected onboarding nodes to render as scene nodes.");
+    }
+
+    expect(draft.y).toBe(review.y);
+    expect(draft.x).toBeLessThan(clear.x);
+    expect(review.x).toBeGreaterThan(clear.x);
+  });
+
+  it("routes offset decision branches with orthogonal points", () => {
+    const scene = renderIntermediateDiagram(flowchartFixture);
+    const clearDraft = scene.elements.find(
+      (element) => element.type === "arrow" && element.edgeId === "clear-draft",
+    );
+    const clearReview = scene.elements.find(
+      (element) =>
+        element.type === "arrow" && element.edgeId === "clear-review",
+    );
+
+    expect(clearDraft).toMatchObject({ type: "arrow" });
+    expect(clearReview).toMatchObject({ type: "arrow" });
+
+    if (!clearDraft || clearDraft.type !== "arrow") {
+      throw new Error("Expected clear-draft to render as an arrow.");
+    }
+    if (!clearReview || clearReview.type !== "arrow") {
+      throw new Error("Expected clear-review to render as an arrow.");
+    }
+
+    expect(clearDraft.points.length).toBeGreaterThan(2);
+    expect(clearReview.points.length).toBeGreaterThan(2);
+    expect(clearDraft.points[0].x).toBeLessThan(clearReview.points[0].x);
+    expect(clearDraft.points[0].y).toBe(clearReview.points[0].y);
+  });
 });

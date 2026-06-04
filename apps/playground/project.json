@@ -21,13 +21,13 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "vite dev --config apps/playground/vite.config.ts --host 127.0.0.1"
+        "command": "vite dev --config apps/playground/vite.config.ts --host 127.0.0.1 --port 6200"
       }
     },
     "preview": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "vite preview --config apps/playground/vite.config.ts --host 127.0.0.1"
+        "command": "vite preview --config apps/playground/vite.config.ts --host 127.0.0.1 --port 6300"
       }
     },
     "deploy": {

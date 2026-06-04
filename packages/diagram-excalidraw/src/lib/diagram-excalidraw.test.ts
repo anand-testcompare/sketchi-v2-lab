@@ -16,12 +16,30 @@ describe("convertSceneToExcalidraw", () => {
     const scene = convertSceneToExcalidraw(
       renderIntermediateDiagram(flowchartFixture),
     );
+    const branchArrow = scene.elements.find(
+      (element) => element.id === "edge:clear-draft",
+    );
 
     const validation = validateExcalidrawScene(scene);
 
     expect(validation).toEqual({ ok: true, issues: [] });
-    expect(scene.elements.filter((element) => element.type === "arrow"))
-      .toHaveLength(flowchartFixture.edges.length);
+    expect(scene.appState).toMatchObject({
+      viewBackgroundColor: "#ffffff",
+      zoom: {
+        value: expect.any(Number),
+      },
+    });
+    expect(
+      scene.elements.filter((element) => element.type === "arrow"),
+    ).toHaveLength(flowchartFixture.edges.length);
+    expect(branchArrow).toMatchObject({
+      type: "arrow",
+      points: expect.arrayContaining([
+        expect.any(Array),
+        expect.any(Array),
+        expect.any(Array),
+      ]),
+    });
   });
 
   it("keeps wrapped flowchart text inside real shape containers", () => {

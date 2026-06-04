@@ -2,7 +2,7 @@ import type {
   ArrowSceneElement,
   NodeSceneElement,
   RenderedDiagramScene,
-  TextSceneElement
+  TextSceneElement,
 } from "@sketchi/diagram-renderer";
 
 export interface DiagramPreviewProps {
@@ -10,16 +10,20 @@ export interface DiagramPreviewProps {
 }
 
 const isRectangle = (
-  element: RenderedDiagramScene["elements"][number]
+  element: RenderedDiagramScene["elements"][number],
 ): element is NodeSceneElement => element.type === "node";
 
 const isText = (
-  element: RenderedDiagramScene["elements"][number]
+  element: RenderedDiagramScene["elements"][number],
 ): element is TextSceneElement => element.type === "text";
 
 const isArrow = (
-  element: RenderedDiagramScene["elements"][number]
+  element: RenderedDiagramScene["elements"][number],
 ): element is ArrowSceneElement => element.type === "arrow";
+
+function lastArrowPoint(arrow: ArrowSceneElement) {
+  return arrow.points[arrow.points.length - 1] ?? arrow.points[0];
+}
 
 export function DiagramPreview({ scene }: DiagramPreviewProps) {
   const nodes = scene.elements.filter(isRectangle);
@@ -49,19 +53,22 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
       </defs>
 
       {arrows.map((arrow) => {
-        const [start, end] = arrow.points;
+        const start = arrow.points[0];
+        const end = lastArrowPoint(arrow);
+        const points = arrow.points
+          .map((point) => `${point.x},${point.y}`)
+          .join(" ");
 
         return (
           <g key={arrow.id}>
-            <line
+            <polyline
+              fill="none"
               markerEnd={`url(#${scene.diagramId}-arrow)`}
+              points={points}
               stroke={scene.accentColor}
               strokeLinecap="round"
+              strokeLinejoin="round"
               strokeWidth="2"
-              x1={start.x}
-              x2={end.x}
-              y1={start.y}
-              y2={end.y}
             />
             {arrow.label ? (
               <text
@@ -96,7 +103,7 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
             `${node.x + node.width / 2},${node.y}`,
             `${node.x + node.width},${node.y + node.height / 2}`,
             `${node.x + node.width / 2},${node.y + node.height}`,
-            `${node.x},${node.y + node.height / 2}`
+            `${node.x},${node.y + node.height / 2}`,
           ].join(" ");
           return (
             <polygon
