@@ -37,6 +37,12 @@ pnpm nx g @sketchi/generators:ui-component StatusBadge
 pnpm nx g @sketchi/generators:diagram-type mindmap --title "Sketchi mindmap fixture"
 ```
 
+## Preview Deploys
+
+Pull requests deploy the playground to a PR-specific Cloudflare Worker and update
+one sticky PR comment with the URL when Cloudflare credentials are configured.
+See [docs/preview-deploys.md](docs/preview-deploys.md).
+
 ## Workspace Shape
 
 ```text

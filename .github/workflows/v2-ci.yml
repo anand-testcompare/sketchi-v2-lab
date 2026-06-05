@@ -20,5 +20,6 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:deploy-scripts
       - run: pnpm nx run-many -t typecheck,test,build
       - run: pnpm nx build-storybook diagram-studio-ui
