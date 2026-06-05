@@ -6,6 +6,26 @@ export default defineConfig(() => ({
   root: __dirname,
   cacheDir: "../../node_modules/.vite/packages/diagram-generation",
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(["*.md"])],
+  resolve: {
+    alias: {
+      "@sketchi/diagram-core": new URL(
+        "../diagram-core/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@sketchi/diagram-excalidraw": new URL(
+        "../diagram-excalidraw/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@sketchi/diagram-renderer": new URL(
+        "../diagram-renderer/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@sketchi/diagram-scenarios": new URL(
+        "../diagram-scenarios/src/index.ts",
+        import.meta.url,
+      ).pathname,
+    },
+  },
   test: {
     name: "diagram-generation",
     watch: false,
