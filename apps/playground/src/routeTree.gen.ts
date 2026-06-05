@@ -10,33 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiScenarioCandidatesRouteImport } from './routes/api/scenario-candidates'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiScenarioCandidatesRoute = ApiScenarioCandidatesRouteImport.update({
+  id: '/api/scenario-candidates',
+  path: '/api/scenario-candidates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/scenario-candidates': typeof ApiScenarioCandidatesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/scenario-candidates': typeof ApiScenarioCandidatesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/scenario-candidates': typeof ApiScenarioCandidatesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/scenario-candidates'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/scenario-candidates'
+  id: '__root__' | '/' | '/api/scenario-candidates'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiScenarioCandidatesRoute: typeof ApiScenarioCandidatesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +58,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/scenario-candidates': {
+      id: '/api/scenario-candidates'
+      path: '/api/scenario-candidates'
+      fullPath: '/api/scenario-candidates'
+      preLoaderRoute: typeof ApiScenarioCandidatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiScenarioCandidatesRoute: ApiScenarioCandidatesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

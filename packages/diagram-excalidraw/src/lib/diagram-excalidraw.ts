@@ -17,7 +17,9 @@ export interface ExcalidrawScene {
 
 export interface ExcalidrawSceneValidationIssue {
   code:
+    | "arrow-endpoint-off-shape"
     | "empty-scene"
+    | "invalid-elbow-binding"
     | "missing-arrow-binding"
     | "missing-bound-arrow"
     | "missing-container"
@@ -42,6 +44,74 @@ const FIT_TARGET_WIDTH = 860;
 const FIT_TARGET_HEIGHT = 340;
 const MIN_INITIAL_ZOOM = 0.42;
 const SEGMENT_EPSILON = 0.001;
+const BOUNDS_EPSILON = 0.01;
+
+type BindingKey = "startBinding" | "endBinding";
+
+interface ElementBounds {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+}
+
+function numericValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function finitePointTuple(value: unknown): [number, number] | null {
+  if (!Array.isArray(value) || value.length < 2) {
+    return null;
+  }
+
+  const x = numericValue(value[0]);
+  const y = numericValue(value[1]);
+
+  return x === null || y === null ? null : [x, y];
+}
+
+function elementBounds(element: ExcalidrawElement): ElementBounds | null {
+  const x = numericValue(element.x);
+  const y = numericValue(element.y);
+  const width = numericValue(element.width);
+  const height = numericValue(element.height);
+
+  return x === null || y === null || width === null || height === null
+    ? null
+    : { x, y, width, height };
+}
+
+function normalizedFixedPoint(value: number): number {
+  return Math.abs(value - 0.5) < 0.0001 ? 0.5001 : value;
+}
+
+function fixedPointForShape(
+  shape: ExcalidrawElement,
+  point: { x: number; y: number },
+): [number, number] | null {
+  const bounds = elementBounds(shape);
+
+  if (!bounds || bounds.width === 0 || bounds.height === 0) {
+    return null;
+  }
+
+  return [
+    normalizedFixedPoint((point.x - bounds.x) / bounds.width),
+    normalizedFixedPoint((point.y - bounds.y) / bounds.height),
+  ];
+}
+
+function bindingForShape(
+  shape: ExcalidrawElement | undefined,
+  point: { x: number; y: number },
+) {
+  return {
+    elementId: shape?.id ?? "",
+    focus: 0,
+    gap: 5,
+    fixedPoint: shape ? fixedPointForShape(shape, point) : null,
+  };
+}
 
 function initialZoomForScene(scene: RenderedDiagramScene): number {
   const zoom = Math.min(
@@ -174,9 +244,12 @@ function arrowElement(input: {
   arrow: ArrowSceneElement;
   index: number;
   scene: RenderedDiagramScene;
+  sourceShape: ExcalidrawElement | undefined;
+  targetShape: ExcalidrawElement | undefined;
 }): ExcalidrawElement {
   const start = input.arrow.points[0];
   const end = lastArrowPoint(input.arrow);
+  const elbowed = input.arrow.points.length > 2;
 
   return {
     ...elementBase(input.arrow.id, input.index),
@@ -189,25 +262,23 @@ function arrowElement(input: {
     boundElements: input.arrow.label
       ? [{ id: `${input.arrow.id}:label`, type: "text" }]
       : null,
+    elbowed,
     endArrowhead: "arrow",
-    endBinding: {
-      elementId: `node:${input.arrow.targetNodeId}`,
-      focus: 0,
-      gap: 5,
-      fixedPoint: null,
-    },
+    endBinding: bindingForShape(input.targetShape, end),
+    ...(elbowed
+      ? {
+          fixedSegments: [],
+          startIsSpecial: null,
+          endIsSpecial: null,
+        }
+      : {}),
     points: input.arrow.points.map((point) => [
       point.x - start.x,
       point.y - start.y,
     ]),
-    roundness: { type: 2 },
+    roundness: elbowed ? null : { type: 2 },
     startArrowhead: null,
-    startBinding: {
-      elementId: `node:${input.arrow.sourceNodeId}`,
-      focus: 0,
-      gap: 5,
-      fixedPoint: null,
-    },
+    startBinding: bindingForShape(input.sourceShape, start),
     strokeColor: input.scene.accentColor,
   };
 }
@@ -278,20 +349,22 @@ export function convertSceneToExcalidraw(
   );
   const arrows = scene.elements.filter(isArrow);
   const arrowsByNode = collectArrowsByNode(arrows);
+  const shapeElementsByNodeId = new Map<string, ExcalidrawElement>();
   const elements: ExcalidrawElement[] = [];
   let index = 0;
 
   for (const node of nodes) {
     const text = textByContainerId.get(node.id);
-    elements.push(
-      shapeElement({
-        scene,
-        shape: node,
-        arrowIds: arrowsByNode.get(node.id) ?? [],
-        index,
-        ...(text ? { text } : {}),
-      }),
-    );
+    const shape = shapeElement({
+      scene,
+      shape: node,
+      arrowIds: arrowsByNode.get(node.id) ?? [],
+      index,
+      ...(text ? { text } : {}),
+    });
+
+    shapeElementsByNodeId.set(node.nodeId, shape);
+    elements.push(shape);
     index += 1;
   }
 
@@ -315,7 +388,15 @@ export function convertSceneToExcalidraw(
   }
 
   for (const arrow of arrows) {
-    elements.push(arrowElement({ arrow, scene, index }));
+    elements.push(
+      arrowElement({
+        arrow,
+        scene,
+        index,
+        sourceShape: shapeElementsByNodeId.get(arrow.sourceNodeId),
+        targetShape: shapeElementsByNodeId.get(arrow.targetNodeId),
+      }),
+    );
     index += 1;
     const label = arrowLabelElement({ arrow, index });
     if (label) {
@@ -369,6 +450,18 @@ function bindingElementId(
   return typeof elementId === "string" ? elementId : null;
 }
 
+function bindingFixedPoint(
+  element: ExcalidrawElement,
+  key: BindingKey,
+): [number, number] | null {
+  const binding = element[key];
+  if (!(binding && typeof binding === "object")) {
+    return null;
+  }
+
+  return finitePointTuple((binding as { fixedPoint?: unknown }).fixedPoint);
+}
+
 interface ArrowSegment {
   arrowId: string;
   max: number;
@@ -378,19 +471,8 @@ interface ArrowSegment {
   staticCoordinate: number;
 }
 
-function numericValue(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
 function pointTuple(value: unknown): [number, number] | null {
-  if (!Array.isArray(value) || value.length < 2) {
-    return null;
-  }
-
-  const x = numericValue(value[0]);
-  const y = numericValue(value[1]);
-
-  return x === null || y === null ? null : [x, y];
+  return finitePointTuple(value);
 }
 
 function arrowSegments(element: ExcalidrawElement): ArrowSegment[] {
@@ -510,6 +592,69 @@ function overlappingArrowSegments(
   return issues;
 }
 
+function arrowEndpoint(element: ExcalidrawElement, key: BindingKey) {
+  const x = numericValue(element.x) ?? 0;
+  const y = numericValue(element.y) ?? 0;
+  const points = Array.isArray(element.points)
+    ? element.points
+        .map(pointTuple)
+        .filter((point): point is [number, number] => Boolean(point))
+    : [];
+  const point = key === "startBinding" ? points[0] : points[points.length - 1];
+
+  return point ? { x: x + point[0], y: y + point[1] } : null;
+}
+
+function between(value: number, min: number, max: number): boolean {
+  return value >= min - BOUNDS_EPSILON && value <= max + BOUNDS_EPSILON;
+}
+
+function near(value: number, target: number): boolean {
+  return Math.abs(value - target) <= BOUNDS_EPSILON;
+}
+
+function pointOnShapeBoundary(
+  point: { x: number; y: number },
+  shape: ExcalidrawElement,
+): boolean {
+  const bounds = elementBounds(shape);
+
+  if (!bounds) {
+    return false;
+  }
+
+  const onVerticalSide =
+    (near(point.x, bounds.x) || near(point.x, bounds.x + bounds.width)) &&
+    between(point.y, bounds.y, bounds.y + bounds.height);
+  const onHorizontalSide =
+    (near(point.y, bounds.y) || near(point.y, bounds.y + bounds.height)) &&
+    between(point.x, bounds.x, bounds.x + bounds.width);
+
+  return onVerticalSide || onHorizontalSide;
+}
+
+function fixedPointResolvesToEndpoint(
+  fixedPoint: [number, number],
+  point: { x: number; y: number },
+  shape: ExcalidrawElement,
+): boolean {
+  const bounds = elementBounds(shape);
+
+  if (!bounds) {
+    return false;
+  }
+
+  const fixedX =
+    Math.abs(fixedPoint[0] - 0.5001) < 0.0001 ? 0.5 : fixedPoint[0];
+  const fixedY =
+    Math.abs(fixedPoint[1] - 0.5001) < 0.0001 ? 0.5 : fixedPoint[1];
+
+  return (
+    near(bounds.x + fixedX * bounds.width, point.x) &&
+    near(bounds.y + fixedY * bounds.height, point.y)
+  );
+}
+
 export function validateExcalidrawScene(
   scene: ExcalidrawScene,
 ): ExcalidrawSceneValidationResult {
@@ -532,7 +677,30 @@ export function validateExcalidrawScene(
 
   for (const element of scene.elements) {
     if (element.type === "arrow") {
-      for (const bindingKey of ["startBinding", "endBinding"]) {
+      const isElbowed = element.elbowed === true;
+      const points = Array.isArray(element.points) ? element.points : [];
+
+      if (points.length > 2 && !isElbowed) {
+        issues.push({
+          code: "invalid-elbow-binding",
+          elementId: element.id,
+          message: `Arrow "${element.id}" has an orthogonal route but is not marked elbowed.`,
+        });
+      }
+
+      if (
+        isElbowed &&
+        element.fixedSegments !== null &&
+        !Array.isArray(element.fixedSegments)
+      ) {
+        issues.push({
+          code: "invalid-elbow-binding",
+          elementId: element.id,
+          message: `Elbow arrow "${element.id}" is missing fixedSegments metadata.`,
+        });
+      }
+
+      for (const bindingKey of ["startBinding", "endBinding"] as const) {
         const shapeId = bindingElementId(element, bindingKey);
         if (!(shapeId && shapeIds.has(shapeId))) {
           issues.push({
@@ -550,6 +718,29 @@ export function validateExcalidrawScene(
             elementId: shape.id,
             message: `Shape "${shape.id}" does not include bound arrow "${element.id}".`,
           });
+        }
+
+        const endpoint = arrowEndpoint(element, bindingKey);
+        if (shape && endpoint && !pointOnShapeBoundary(endpoint, shape)) {
+          issues.push({
+            code: "arrow-endpoint-off-shape",
+            elementId: element.id,
+            message: `Arrow "${element.id}" ${bindingKey} endpoint does not land on "${shape.id}".`,
+          });
+        }
+
+        if (shape && endpoint && isElbowed) {
+          const fixedPoint = bindingFixedPoint(element, bindingKey);
+          if (
+            !fixedPoint ||
+            !fixedPointResolvesToEndpoint(fixedPoint, endpoint, shape)
+          ) {
+            issues.push({
+              code: "invalid-elbow-binding",
+              elementId: element.id,
+              message: `Elbow arrow "${element.id}" has invalid ${bindingKey} fixedPoint metadata.`,
+            });
+          }
         }
       }
     }

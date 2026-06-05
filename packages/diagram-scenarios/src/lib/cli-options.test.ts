@@ -23,14 +23,29 @@ describe("scenario CLI options", () => {
       "--fixture",
       "--out-dir",
       ".memory/scenarios",
+      "--candidate-out-dir",
+      ".memory/candidates",
+      "--report-out",
+      ".memory/report.json",
+      "--repeat",
+      "5",
     ]);
 
     expect(options).toEqual(
       expect.objectContaining({
         all: true,
+        candidateOutDir: ".memory/candidates",
         outDir: ".memory/scenarios",
+        repeat: 5,
+        reportOut: ".memory/report.json",
         useFixture: true,
       }),
+    );
+  });
+
+  it("rejects invalid repeat counts", () => {
+    expect(() => parseCliOptions(["--all", "--repeat", "0"])).toThrow(
+      "--repeat must be a positive integer.",
     );
   });
 
