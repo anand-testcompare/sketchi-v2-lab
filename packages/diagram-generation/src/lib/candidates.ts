@@ -8,8 +8,6 @@ import { z } from "zod";
 export const diagramGenerationProviderIds = [
   "fixture",
   "cloudflare-google-ai-studio",
-  "cloudflare-ai-gateway-compat",
-  "cloudflare-workers-ai",
 ] as const;
 
 export const DiagramGenerationProviderIdSchema = z.enum(

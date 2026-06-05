@@ -13,7 +13,11 @@ import {
   evaluateScenarioFixture,
   evaluateScenarioOutput,
 } from "./lib/evaluate.js";
-import { flowchartScenarios, getScenario } from "./lib/scenarios.js";
+import {
+  type DiagramScenario,
+  flowchartScenarios,
+  getScenario,
+} from "./lib/scenarios.js";
 
 function runCommand(command: string, stdin: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -50,6 +54,47 @@ async function writeJson(filePath: string, value: unknown): Promise<void> {
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function outputPathForScenario(input: {
+  out: string | undefined;
+  outDir: string | undefined;
+  scenarioId: string;
+}): string | undefined {
+  if (input.outDir) {
+    return path.join(input.outDir, `${input.scenarioId}.excalidraw`);
+  }
+
+  return input.out;
+}
+
+async function evaluateScenario(
+  scenario: DiagramScenario,
+  input: {
+    generatorCommand: string | undefined;
+    input: string | undefined;
+    useFixture: boolean;
+  },
+) {
+  if (input.useFixture) {
+    return evaluateScenarioFixture(scenario);
+  }
+
+  if (input.input) {
+    return evaluateScenarioDiagram(
+      scenario,
+      JSON.parse(await readFile(input.input, "utf8")),
+    );
+  }
+
+  if (input.generatorCommand) {
+    return evaluateScenarioOutput(
+      scenario,
+      await runCommand(input.generatorCommand, buildScenarioPrompt(scenario)),
+    );
+  }
+
+  return null;
+}
+
 async function main() {
   const options = parseCliOptions(process.argv.slice(2));
 
@@ -60,6 +105,8 @@ async function main() {
           id: scenario.id,
           title: scenario.title,
           description: scenario.description,
+          difficulty: scenario.difficulty,
+          tags: scenario.tags,
         })),
         null,
         2,
@@ -68,52 +115,79 @@ async function main() {
     return;
   }
 
-  if (!options.scenarioId) {
+  if (options.all && options.input) {
+    throw new Error("--input can only be used with one --scenario.");
+  }
+
+  if (options.all && options.out) {
+    throw new Error(
+      "--out can only be used with one --scenario. Use --out-dir for --all.",
+    );
+  }
+
+  if (!options.all && !options.scenarioId) {
     throw new Error(`Missing --scenario.\n\n${usage()}`);
   }
 
-  const scenario = getScenario(options.scenarioId);
+  const scenarios = options.all
+    ? flowchartScenarios
+    : [getScenario(options.scenarioId ?? "")];
   const generatorCommand = resolveGeneratorCommand(options);
-  const result = options.useFixture
-    ? evaluateScenarioFixture(scenario)
-    : options.input
-      ? evaluateScenarioDiagram(
-          scenario,
-          JSON.parse(await readFile(options.input, "utf8")),
-        )
-      : generatorCommand
-        ? evaluateScenarioOutput(
-            scenario,
-            await runCommand(
-              generatorCommand,
-              buildScenarioPrompt(scenario),
-            ),
-          )
-        : null;
+  const results = [];
 
-  if (!result) {
-    throw new Error(`Choose --fixture, --input, or --generator-command.\n\n${usage()}`);
+  if (!options.useFixture && !options.input && !generatorCommand) {
+    throw new Error(
+      `Choose --fixture, --input, or --generator-command.\n\n${usage()}`,
+    );
   }
 
-  if (options.out) {
-    await writeJson(options.out, result.excalidrawScene);
+  for (const scenario of scenarios) {
+    const result = await evaluateScenario(scenario, {
+      generatorCommand,
+      input: options.input,
+      useFixture: options.useFixture,
+    });
+
+    if (!result) {
+      throw new Error(
+        `Choose --fixture, --input, or --generator-command.\n\n${usage()}`,
+      );
+    }
+
+    const out = outputPathForScenario({
+      out: options.out,
+      outDir: options.outDir,
+      scenarioId: scenario.id,
+    });
+
+    if (out) {
+      await writeJson(out, result.excalidrawScene);
+    }
+
+    results.push({
+      scenarioId: result.scenarioId,
+      ok: result.ok,
+      checks: result.checks,
+      excalidrawIssues: result.excalidrawValidation.issues,
+      out,
+    });
   }
 
-  console.log(
-    JSON.stringify(
-      {
-        scenarioId: result.scenarioId,
-        ok: result.ok,
-        checks: result.checks,
-        excalidrawIssues: result.excalidrawValidation.issues,
-        out: options.out,
-      },
-      null,
-      2,
-    ),
-  );
+  const ok = results.every((result) => result.ok);
+  const output = options.all
+    ? {
+        ok,
+        scenarioCount: results.length,
+        failedScenarioIds: results
+          .filter((result) => !result.ok)
+          .map((result) => result.scenarioId),
+        results,
+      }
+    : results[0];
 
-  if (!result.ok) {
+  console.log(JSON.stringify(output, null, 2));
+
+  if (!ok) {
     process.exitCode = 1;
   }
 }

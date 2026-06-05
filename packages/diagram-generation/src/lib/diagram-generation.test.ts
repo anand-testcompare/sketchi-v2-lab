@@ -1,9 +1,7 @@
 import { getScenario } from "@sketchi/diagram-scenarios";
 import { describe, expect, it, vi } from "vitest";
 
-import { createCloudflareAiGatewayCompatClient } from "./cloudflare-ai-gateway-compat.js";
 import { createCloudflareGoogleAiStudioClient } from "./cloudflare-google-ai-studio.js";
-import { createCloudflareWorkersAiClient } from "./cloudflare-workers-ai.js";
 import { createFixtureGenerationClient } from "./fixture-client.js";
 import {
   buildGeminiGenerateContentBody,
@@ -83,16 +81,16 @@ describe("diagram generation prompt mapping", () => {
 describe("diagram generation clients", () => {
   it("preserves explicit provider errors instead of replacing them with parse errors", () => {
     const candidate = candidateFromText({
-      diagnostics: ["AI Gateway compat request failed with HTTP 401."],
+      diagnostics: ["Google AI Studio Gateway request failed with HTTP 401."],
       error: "HTTP 401",
-      model: "google-ai-studio/gemini-3.1-flash-lite",
-      provider: "cloudflare-ai-gateway-compat",
+      model: "gemini-3.1-flash-lite",
+      provider: "cloudflare-google-ai-studio",
       text: "",
     });
 
     expect(candidate.error).toBe("HTTP 401");
     expect(candidate.diagnostics).toContain(
-      "AI Gateway compat request failed with HTTP 401.",
+      "Google AI Studio Gateway request failed with HTTP 401.",
     );
   });
 
@@ -150,79 +148,5 @@ describe("diagram generation clients", () => {
     );
     expect(candidate.diagram?.id).toBe(scenario.expectedDiagram.id);
     expect(candidate.usage?.totalTokens).toBe(34);
-  });
-
-  it("uses Cloudflare native AI.run with the requested model", async () => {
-    const run = vi.fn(async () => ({
-      choices: [{ message: { content: expectedText } }],
-      usage: {
-        completion_tokens: 5,
-        prompt_tokens: 8,
-        total_tokens: 13,
-      },
-    }));
-    const client = createCloudflareWorkersAiClient({
-      ai: { run },
-      gatewayId: "sketchi",
-    });
-
-    const candidate = await client.generate({
-      model: "google/gemini-3.1-flash-lite",
-      scenario,
-    });
-
-    expect(run).toHaveBeenCalledWith(
-      "google/gemini-3.1-flash-lite",
-      expect.objectContaining({
-        messages: expect.any(Array),
-        response_format: { type: "json_object" },
-      }),
-      expect.objectContaining({
-        gateway: expect.objectContaining({
-          id: "sketchi",
-        }),
-      }),
-    );
-    expect(candidate.diagram?.id).toBe(scenario.expectedDiagram.id);
-    expect(candidate.usage?.totalTokens).toBe(13);
-  });
-
-  it("can call the experimental Gateway compat endpoint without provider keys", async () => {
-    const fetcher = vi.fn(
-      async (
-        _input: RequestInfo | URL,
-        _init?: RequestInit,
-      ): Promise<Response> =>
-        jsonResponse({
-          choices: [{ message: { content: expectedText } }],
-          usage: {
-            completion_tokens: 5,
-            prompt_tokens: 8,
-            total_tokens: 13,
-          },
-        }),
-    );
-    const client = createCloudflareAiGatewayCompatClient({
-      endpointUrl:
-        "https://gateway.ai.cloudflare.com/v1/account/sketchi/compat/chat/completions",
-      fetch: fetcher,
-    });
-
-    const candidate = await client.generate({
-      model: "google/gemini-3.1-flash-lite",
-      scenario,
-    });
-
-    const requestInit = fetcher.mock.calls[0]?.[1];
-    const body = JSON.parse(String(requestInit?.body));
-
-    expect(fetcher).toHaveBeenCalledWith(
-      "https://gateway.ai.cloudflare.com/v1/account/sketchi/compat/chat/completions",
-      expect.objectContaining({ method: "POST" }),
-    );
-    expect(body.model).toBe("google/gemini-3.1-flash-lite");
-    expect(body.messages[0].role).toBe("system");
-    expect(candidate.diagram?.id).toBe(scenario.expectedDiagram.id);
-    expect(candidate.usage?.totalTokens).toBe(13);
   });
 });

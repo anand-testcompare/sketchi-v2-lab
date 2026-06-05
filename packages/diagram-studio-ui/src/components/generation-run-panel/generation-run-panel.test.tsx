@@ -30,25 +30,40 @@ describe("GenerationRunPanel", () => {
             diagramValid: false,
             durationMs: 42,
             model: "google/gemini-3.1-flash-lite",
-            provider: "cloudflare-workers-ai",
+            provider: "cloudflare-google-ai-studio",
             text: "{}",
             usage: { totalTokens: 11 },
-          },
-          {
-            diagnostics: ["bad json", "AI Gateway compat request failed."],
-            diagramValid: false,
-            error: "bad json",
-            model: "google/gemini-3.1-flash-lite",
-            provider: "cloudflare-ai-gateway-compat",
-            text: "",
           },
         ]}
       />,
     );
 
     expect(screen.getByText("Returned")).toBeTruthy();
-    expect(screen.getByText("Failed")).toBeTruthy();
-    expect(screen.getByText("AI Gateway compat request failed.")).toBeTruthy();
     expect(screen.getByText("42 ms / 11 tokens")).toBeTruthy();
+  });
+
+  it("shows provider error diagnostics", () => {
+    render(
+      <GenerationRunPanel
+        candidates={[
+          {
+            diagnostics: [
+              "bad json",
+              "Google AI Studio Gateway request failed.",
+            ],
+            diagramValid: false,
+            error: "bad json",
+            model: "google/gemini-3.1-flash-lite",
+            provider: "cloudflare-google-ai-studio",
+            text: "",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Failed")).toBeTruthy();
+    expect(
+      screen.getByText("Google AI Studio Gateway request failed."),
+    ).toBeTruthy();
   });
 });

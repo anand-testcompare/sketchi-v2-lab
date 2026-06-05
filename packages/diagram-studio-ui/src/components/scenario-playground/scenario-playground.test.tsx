@@ -1,4 +1,5 @@
 import { flowchartFixture } from "@sketchi/diagram-core";
+import { flowchartScenarios, getScenario } from "@sketchi/diagram-scenarios";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -64,7 +65,10 @@ vi.mock("../json-code-editor/index.js", () => ({
   ),
 }));
 
-import { ScenarioPlayground } from "./scenario-playground";
+import {
+  ScenarioPlayground,
+  type ScenarioGenerationRequest,
+} from "./scenario-playground";
 
 describe("ScenarioPlayground", () => {
   it("renders maintained scenarios and their checks", () => {
@@ -131,7 +135,7 @@ describe("ScenarioPlayground", () => {
           diagnostics: [],
           diagramValid: true,
           model: "google/gemini-3.1-flash-lite",
-          provider: "cloudflare-workers-ai" as const,
+          provider: "cloudflare-google-ai-studio" as const,
           text: JSON.stringify(generatedDiagram, null, 2),
         },
       ],
@@ -145,5 +149,42 @@ describe("ScenarioPlayground", () => {
     expect(
       (screen.getByLabelText("Candidate IR") as HTMLTextAreaElement).value,
     ).toContain("Generated onboarding flow");
+  });
+
+  it("runs the full prompt suite against generated candidates", async () => {
+    const onGenerateScenario = vi.fn(
+      async ({ scenarioId }: ScenarioGenerationRequest) => {
+        const scenario = getScenario(scenarioId);
+
+        return {
+          candidates: [
+            {
+              diagnostics: [],
+              diagramValid: true,
+              durationMs: 25,
+              model: "google/gemini-3.1-flash-lite",
+              provider: "cloudflare-google-ai-studio" as const,
+              text: JSON.stringify(scenario.expectedDiagram, null, 2),
+              usage: { totalTokens: 300 },
+            },
+          ],
+          scenarioId,
+        };
+      },
+    );
+
+    render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
+    fireEvent.click(screen.getByRole("button", { name: "Run suite" }));
+
+    await waitFor(() =>
+      expect(onGenerateScenario).toHaveBeenCalledTimes(
+        flowchartScenarios.length,
+      ),
+    );
+    expect(
+      screen.getByText(
+        `${flowchartScenarios.length} / ${flowchartScenarios.length} passed`,
+      ),
+    ).toBeTruthy();
   });
 });

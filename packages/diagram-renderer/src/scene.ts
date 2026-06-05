@@ -72,8 +72,19 @@ const NODE_LABEL_LINE_HEIGHT = 1.35;
 const NODE_LABEL_HORIZONTAL_PADDING = 36;
 const NODE_LABEL_VERTICAL_PADDING = 28;
 const MAX_LABEL_CHARS_PER_LINE = 18;
+const PORT_SPACING = 18;
+const PORT_PADDING = 16;
 
 type ConnectionEdge = "top" | "right" | "bottom" | "left";
+
+interface RoutedEdge {
+  edge: DiagramEdge;
+  index: number;
+  source: NodeSceneElement;
+  sourceEdge: ConnectionEdge;
+  target: NodeSceneElement;
+  targetEdge: ConnectionEdge;
+}
 
 function splitLongWord(word: string, maxChars: number): string[] {
   if (word.length <= maxChars) {
@@ -327,6 +338,10 @@ function connectionEdges(
   const dy = targetCenter.y - sourceCenter.y;
   const sourceKind = source.kind?.toLowerCase();
 
+  if (dy < 0) {
+    return { sourceEdge: "right", targetEdge: "right" };
+  }
+
   if (sourceKind === "decision" && dx !== 0 && dy > 0) {
     return {
       sourceEdge: dx > 0 ? "right" : "left",
@@ -353,27 +368,103 @@ function connectionEdges(
     : { sourceEdge: "top", targetEdge: "bottom" };
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function constrainedPortOffset(
+  shape: NodeSceneElement,
+  edge: ConnectionEdge,
+  offset: number,
+) {
+  const limit =
+    edge === "top" || edge === "bottom"
+      ? shape.width / 2 - PORT_PADDING
+      : shape.height / 2 - PORT_PADDING;
+
+  return limit > 0 ? clamp(offset, -limit, limit) : 0;
+}
+
 function pointOnEdge(
   shape: NodeSceneElement,
   edge: ConnectionEdge,
+  portOffset = 0,
 ): ScenePoint {
+  const offset = constrainedPortOffset(shape, edge, portOffset);
+
   switch (edge) {
     case "top":
-      return { x: shape.x + shape.width / 2, y: shape.y };
+      return { x: shape.x + shape.width / 2 + offset, y: shape.y };
     case "right":
-      return { x: shape.x + shape.width, y: shape.y + shape.height / 2 };
+      return {
+        x: shape.x + shape.width,
+        y: shape.y + shape.height / 2 + offset,
+      };
     case "bottom":
-      return { x: shape.x + shape.width / 2, y: shape.y + shape.height };
+      return {
+        x: shape.x + shape.width / 2 + offset,
+        y: shape.y + shape.height,
+      };
     case "left":
-      return { x: shape.x, y: shape.y + shape.height / 2 };
+      return { x: shape.x, y: shape.y + shape.height / 2 + offset };
   }
 }
 
-function arrowForEdge(
+function connectionKey(input: {
+  endpoint: "source" | "target";
+  edgeId: string;
+}): string {
+  return `${input.edgeId}:${input.endpoint}`;
+}
+
+function portKey(nodeId: string, edge: ConnectionEdge): string {
+  return `${nodeId}:${edge}`;
+}
+
+function portOffset(index: number, count: number): number {
+  return (index - (count - 1) / 2) * PORT_SPACING;
+}
+
+function portOffsetsForRoutes(
+  routes: readonly RoutedEdge[],
+): Map<string, number> {
+  const connectionsByPort = new Map<
+    string,
+    Array<{ edgeId: string; endpoint: "source" | "target" }>
+  >();
+
+  for (const route of routes) {
+    const sourcePortKey = portKey(route.source.nodeId, route.sourceEdge);
+    const targetPortKey = portKey(route.target.nodeId, route.targetEdge);
+
+    connectionsByPort.set(sourcePortKey, [
+      ...(connectionsByPort.get(sourcePortKey) ?? []),
+      { edgeId: route.edge.id, endpoint: "source" },
+    ]);
+    connectionsByPort.set(targetPortKey, [
+      ...(connectionsByPort.get(targetPortKey) ?? []),
+      { edgeId: route.edge.id, endpoint: "target" },
+    ]);
+  }
+
+  const offsets = new Map<string, number>();
+  for (const connections of connectionsByPort.values()) {
+    connections.forEach((connection, index) => {
+      offsets.set(
+        connectionKey(connection),
+        portOffset(index, connections.length),
+      );
+    });
+  }
+
+  return offsets;
+}
+
+function routeForEdge(
   edge: DiagramEdge,
+  index: number,
   shapesByNodeId: ReadonlyMap<string, NodeSceneElement>,
-  edgeRouting: IntermediateDiagram["layout"]["edgeRouting"],
-): ArrowSceneElement {
+): RoutedEdge {
   const source = shapesByNodeId.get(edge.source);
   const target = shapesByNodeId.get(edge.target);
 
@@ -382,18 +473,67 @@ function arrowForEdge(
   }
 
   const { sourceEdge, targetEdge } = connectionEdges(source, target);
-  const start = pointOnEdge(source, sourceEdge);
-  const end = pointOnEdge(target, targetEdge);
-  const points: [ScenePoint, ...ScenePoint[]] = [start, end];
 
-  if (edgeRouting === "orthogonal" && start.x !== end.x && start.y !== end.y) {
+  return {
+    edge,
+    index,
+    source,
+    sourceEdge,
+    target,
+    targetEdge,
+  };
+}
+
+function arrowForRoute(
+  route: RoutedEdge,
+  edgeRouting: IntermediateDiagram["layout"]["edgeRouting"],
+  portOffsets: ReadonlyMap<string, number>,
+): ArrowSceneElement {
+  const { edge, source, sourceEdge, target, targetEdge } = route;
+  const portedStart = pointOnEdge(
+    source,
+    sourceEdge,
+    portOffsets.get(connectionKey({ edgeId: edge.id, endpoint: "source" })) ??
+      0,
+  );
+  const portedEnd = pointOnEdge(
+    target,
+    targetEdge,
+    portOffsets.get(connectionKey({ edgeId: edge.id, endpoint: "target" })) ??
+      0,
+  );
+  const points: [ScenePoint, ...ScenePoint[]] = [portedStart, portedEnd];
+
+  if (center(target).y < center(source).y) {
+    const laneX =
+      Math.max(source.x + source.width, target.x + target.width) +
+      HORIZONTAL_GAP / 2 +
+      (route.index % 4) * PORT_SPACING;
+
+    points.splice(
+      1,
+      0,
+      { x: laneX, y: portedStart.y },
+      { x: laneX, y: portedEnd.y },
+    );
+  } else if (
+    edgeRouting === "orthogonal" &&
+    portedStart.x !== portedEnd.x &&
+    portedStart.y !== portedEnd.y
+  ) {
     const verticalFirst = sourceEdge === "top" || sourceEdge === "bottom";
     const cornerA = verticalFirst
-      ? { x: start.x, y: start.y + (end.y - start.y) / 2 }
-      : { x: start.x + (end.x - start.x) / 2, y: start.y };
+      ? {
+          x: portedStart.x,
+          y: portedStart.y + (portedEnd.y - portedStart.y) / 2,
+        }
+      : {
+          x: portedStart.x + (portedEnd.x - portedStart.x) / 2,
+          y: portedStart.y,
+        };
     const cornerB = verticalFirst
-      ? { x: end.x, y: cornerA.y }
-      : { x: cornerA.x, y: end.y };
+      ? { x: portedEnd.x, y: cornerA.y }
+      : { x: cornerA.x, y: portedEnd.y };
 
     points.splice(1, 0, cornerA, cornerB);
   }
@@ -434,8 +574,12 @@ export function renderIntermediateDiagram(
   const shapesByNodeId = new Map(
     nodeShapes.map((shape) => [shape.nodeId, shape]),
   );
-  const edgeArrows = diagram.edges.map((edge) =>
-    arrowForEdge(edge, shapesByNodeId, diagram.layout.edgeRouting),
+  const routedEdges = diagram.edges.map((edge, index) =>
+    routeForEdge(edge, index, shapesByNodeId),
+  );
+  const portOffsets = portOffsetsForRoutes(routedEdges);
+  const edgeArrows = routedEdges.map((route) =>
+    arrowForRoute(route, diagram.layout.edgeRouting, portOffsets),
   );
   const labels = nodeShapes.map(textForNode);
   const bounds = sceneBounds(nodeShapes);

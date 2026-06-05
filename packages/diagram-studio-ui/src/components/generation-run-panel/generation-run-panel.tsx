@@ -20,8 +20,6 @@ export interface GenerationRunProvider {
 
 const defaultProviders: readonly GenerationRunProvider[] = [
   { id: "cloudflare-google-ai-studio", label: "Gateway BYOK" },
-  { id: "cloudflare-workers-ai", label: "CF native" },
-  { id: "cloudflare-ai-gateway-compat", label: "Compat" },
 ];
 
 function providerCandidate(
@@ -76,7 +74,7 @@ export function GenerationRunPanel({
   onRun,
   providers = defaultProviders,
   running = false,
-  title = "LLM comparison",
+  title = "LLM run",
 }: GenerationRunPanelProps) {
   return (
     <section className="sketchi-generation-run-panel">

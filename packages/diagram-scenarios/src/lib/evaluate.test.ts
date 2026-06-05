@@ -6,7 +6,7 @@ import {
   evaluateScenarioOutput,
   extractJsonCandidate,
 } from "./evaluate";
-import { getScenario } from "./scenarios";
+import { flowchartScenarios, getScenario } from "./scenarios";
 
 const onboardingScenario = getScenario("sketchi-onboarding-decision-flow");
 
@@ -16,7 +16,33 @@ describe("diagram scenario evaluation", () => {
 
     expect(result.ok).toBe(true);
     expect(result.excalidrawValidation.ok).toBe(true);
-    expect(result.excalidrawScene.elements.some((element) => element.type === "arrow")).toBe(true);
+    expect(
+      result.excalidrawScene.elements.some(
+        (element) => element.type === "arrow",
+      ),
+    ).toBe(true);
+  });
+
+  it("passes every maintained scenario through the deterministic pipeline", () => {
+    expect(flowchartScenarios.length).toBeGreaterThanOrEqual(20);
+
+    for (const scenario of flowchartScenarios) {
+      const result = evaluateScenarioFixture(scenario);
+
+      expect(
+        result.ok,
+        `${scenario.id}: ${result.checks
+          .filter((check) => !check.passed)
+          .map((check) => check.message)
+          .join(", ")}`,
+      ).toBe(true);
+      expect(
+        result.excalidrawValidation.ok,
+        `${scenario.id}: ${result.excalidrawValidation.issues
+          .map((issue) => issue.message)
+          .join(", ")}`,
+      ).toBe(true);
+    }
   });
 
   it("extracts a JSON object from wrapped model output", () => {

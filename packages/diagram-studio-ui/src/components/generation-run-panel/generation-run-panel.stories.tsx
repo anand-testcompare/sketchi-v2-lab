@@ -16,17 +16,8 @@ const meta = {
         text: '{"type":"flowchart"}',
         usage: { totalTokens: 681 },
       },
-      {
-        diagnostics: [],
-        diagramValid: true,
-        durationMs: 704,
-        model: "google/gemini-3.1-flash-lite",
-        provider: "cloudflare-workers-ai",
-        text: '{"type":"flowchart"}',
-        usage: { totalTokens: 622 },
-      },
     ],
-    title: "LLM comparison",
+    title: "LLM run",
   },
 } satisfies Meta<typeof GenerationRunPanel>;
 

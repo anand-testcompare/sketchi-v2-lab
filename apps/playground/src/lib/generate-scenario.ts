@@ -1,10 +1,7 @@
 import {
-  createCloudflareAiGatewayCompatClient,
   createCloudflareGoogleAiStudioClient,
-  createCloudflareWorkersAiClient,
   DiagramGenerationProviderIdSchema,
   type CloudflareAiGatewayProvider,
-  type CloudflareWorkersAiBinding,
   type DiagramGenerationCandidateSummary,
   type DiagramGenerationClient,
   type DiagramGenerationProviderId,
@@ -19,8 +16,6 @@ const DEFAULT_GATEWAY_ID = "google-ai-studio";
 const DEFAULT_MODEL = "google/gemini-3.1-flash-lite";
 const DEFAULT_PROVIDERS: readonly DiagramGenerationProviderId[] = [
   "cloudflare-google-ai-studio",
-  "cloudflare-workers-ai",
-  "cloudflare-ai-gateway-compat",
 ];
 
 const GenerateScenarioInputSchema = z.object({
@@ -39,9 +34,7 @@ export interface GenerateScenarioOutput {
 }
 
 interface PlaygroundEnv {
-  AI?: CloudflareWorkersAiBinding & CloudflareAiGatewayProvider;
-  SKETCHI_AI_GATEWAY_COMPAT_MODEL?: string;
-  SKETCHI_AI_GATEWAY_COMPAT_URL?: string;
+  AI?: CloudflareAiGatewayProvider;
   SKETCHI_AI_GATEWAY_ID?: string;
   SKETCHI_AI_MODEL?: string;
 }
@@ -73,26 +66,11 @@ function errorCandidate(
   };
 }
 
-async function compatEndpointUrl(
-  bindings: PlaygroundEnv,
-  gatewayId: string,
-): Promise<string | undefined> {
-  if (bindings.SKETCHI_AI_GATEWAY_COMPAT_URL) {
-    return bindings.SKETCHI_AI_GATEWAY_COMPAT_URL;
-  }
-
-  const gatewayBaseUrl = await bindings.AI?.gateway(gatewayId).getUrl();
-
-  return gatewayBaseUrl
-    ? `${gatewayBaseUrl.replace(/\/$/, "")}/compat/chat/completions`
-    : undefined;
-}
-
-async function createGenerationClients(
+function createGenerationClients(
   providers: readonly DiagramGenerationProviderId[],
   bindings: PlaygroundEnv,
   gatewayId: string,
-): Promise<DiagramGenerationClient[]> {
+): DiagramGenerationClient[] {
   const clients: DiagramGenerationClient[] = [];
 
   for (const provider of providers) {
@@ -103,23 +81,6 @@ async function createGenerationClients(
           gatewayId,
         }),
       );
-    }
-
-    if (provider === "cloudflare-workers-ai" && bindings.AI) {
-      clients.push(
-        createCloudflareWorkersAiClient({
-          ai: bindings.AI,
-          gatewayId,
-        }),
-      );
-    }
-
-    if (provider === "cloudflare-ai-gateway-compat") {
-      const endpointUrl = await compatEndpointUrl(bindings, gatewayId);
-
-      if (endpointUrl) {
-        clients.push(createCloudflareAiGatewayCompatClient({ endpointUrl }));
-      }
     }
   }
 
@@ -157,7 +118,7 @@ export const generateScenarioCandidates = createServerFn({ method: "POST" })
       DEFAULT_GATEWAY_ID,
     );
     const model = envString(bindings, "SKETCHI_AI_MODEL", DEFAULT_MODEL);
-    const clients = await createGenerationClients(
+    const clients = createGenerationClients(
       data.providers,
       bindings,
       gatewayId,
@@ -173,15 +134,7 @@ export const generateScenarioCandidates = createServerFn({ method: "POST" })
         ),
       );
     const candidates = await Promise.all(
-      clients.map((client) =>
-        runClient(
-          client,
-          client.provider === "cloudflare-ai-gateway-compat"
-            ? envString(bindings, "SKETCHI_AI_GATEWAY_COMPAT_MODEL", model)
-            : model,
-          data.scenarioId,
-        ),
-      ),
+      clients.map((client) => runClient(client, model, data.scenarioId)),
     );
 
     return {

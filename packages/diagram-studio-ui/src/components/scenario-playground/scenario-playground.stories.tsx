@@ -29,7 +29,7 @@ export const GeneratedCandidate: Story = {
           diagramValid: true,
           durationMs: 812,
           model: "google/gemini-3.1-flash-lite",
-          provider: "cloudflare-workers-ai",
+          provider: "cloudflare-google-ai-studio",
           text: JSON.stringify(
             { ...flowchartFixture, title: "Generated onboarding flow" },
             null,
