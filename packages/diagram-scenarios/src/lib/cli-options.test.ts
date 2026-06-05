@@ -17,6 +17,23 @@ describe("scenario CLI options", () => {
     expect(options.generatorCommand).toBe("opencode run --model gpt-5");
   });
 
+  it("parses all-scenario regression output options", () => {
+    const options = parseCliOptions([
+      "--all",
+      "--fixture",
+      "--out-dir",
+      ".memory/scenarios",
+    ]);
+
+    expect(options).toEqual(
+      expect.objectContaining({
+        all: true,
+        outDir: ".memory/scenarios",
+        useFixture: true,
+      }),
+    );
+  });
+
   it("resolves the default generator command environment variable", () => {
     const options = parseCliOptions([
       "--scenario",

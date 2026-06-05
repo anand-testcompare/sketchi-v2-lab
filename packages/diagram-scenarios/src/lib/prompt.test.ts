@@ -21,6 +21,10 @@ describe("scenario prompts", () => {
     ]);
     expect(prompt.system).not.toContain(scenario.prompt);
     expect(prompt.user).toContain(scenario.prompt);
+    expect(prompt.user).toContain("Required node labels:");
+    expect(prompt.user).toContain("- QA Manager final review");
+    expect(prompt.user).toContain("Required decision branch labels:");
+    expect(prompt.user).toContain("- retest");
     expect(prompt.user).toContain('"title": "Pharma batch disposition"');
   });
 

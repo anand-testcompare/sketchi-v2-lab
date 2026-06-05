@@ -1,5 +1,9 @@
 import type { ExcalidrawProps } from "@excalidraw/excalidraw/types";
 import type {
+  DiagramGenerationCandidateSummary,
+  DiagramGenerationProviderId,
+} from "@sketchi/diagram-generation";
+import type {
   ExcalidrawElement,
   ExcalidrawScene,
 } from "@sketchi/diagram-excalidraw";
@@ -15,11 +19,25 @@ import { Store, useStore } from "@tanstack/react-store";
 import { useCallback, useMemo } from "react";
 
 import { ExcalidrawSceneCanvas } from "../excalidraw-scene-canvas/index.js";
+import { GenerationRunPanel } from "../generation-run-panel/index.js";
 import { JsonCodeEditor } from "../json-code-editor/index.js";
 import { PromptMessageViewer } from "../prompt-message-viewer/index.js";
 
+export interface ScenarioGenerationRequest {
+  providers: readonly DiagramGenerationProviderId[];
+  scenarioId: string;
+}
+
+export interface ScenarioGenerationResult {
+  candidates: readonly DiagramGenerationCandidateSummary[];
+  scenarioId: string;
+}
+
 export interface ScenarioPlaygroundProps {
   initialScenarioId?: string;
+  onGenerateScenario?: (
+    request: ScenarioGenerationRequest,
+  ) => Promise<ScenarioGenerationResult>;
   scenarios?: readonly DiagramScenario[];
 }
 
@@ -28,14 +46,28 @@ interface EvaluationState {
   result?: ScenarioEvaluation;
 }
 
+interface SuiteRunResult {
+  durationMs?: number;
+  message: string;
+  scenarioId: string;
+  status: "fail" | "pass" | "running";
+  title: string;
+}
+
 type InspectorPanel = "candidate" | "prompt" | "excalidraw";
 
 interface PlaygroundState {
   candidateText: string;
   editedExcalidrawScene: ExcalidrawScene | undefined;
   editedExcalidrawSceneSignature: string | undefined;
+  generationCandidates: readonly DiagramGenerationCandidateSummary[];
+  generationError: string | undefined;
+  generationStatus: "idle" | "running" | "complete" | "error";
   inspectorPanel: InspectorPanel;
   scenarioId: string;
+  suiteError: string | undefined;
+  suiteResults: readonly SuiteRunResult[];
+  suiteStatus: "idle" | "running" | "complete" | "error";
 }
 
 function evaluateCandidate(
@@ -58,6 +90,10 @@ function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
+const defaultGenerationProviders: readonly DiagramGenerationProviderId[] = [
+  "cloudflare-google-ai-studio",
+];
+
 function createInitialState(
   scenarios: readonly DiagramScenario[],
   initialScenarioId?: string,
@@ -72,8 +108,14 @@ function createInitialState(
       : "{}",
     editedExcalidrawScene: undefined,
     editedExcalidrawSceneSignature: undefined,
+    generationCandidates: [],
+    generationError: undefined,
+    generationStatus: "idle",
     inspectorPanel: "candidate",
     scenarioId: selectedScenario?.id ?? "",
+    suiteError: undefined,
+    suiteResults: [],
+    suiteStatus: "idle",
   };
 }
 
@@ -107,8 +149,77 @@ function sceneChangeSignature(
   });
 }
 
+function pickCandidateText(
+  candidates: readonly DiagramGenerationCandidateSummary[],
+): string | undefined {
+  const candidate = candidates.find(
+    (generationCandidate) =>
+      !generationCandidate.error && generationCandidate.diagramValid,
+  );
+
+  return candidate?.text;
+}
+
+function replaceSuiteResult(
+  results: readonly SuiteRunResult[],
+  nextResult: SuiteRunResult,
+): SuiteRunResult[] {
+  const nextResults = results.filter(
+    (result) => result.scenarioId !== nextResult.scenarioId,
+  );
+
+  return [...nextResults, nextResult];
+}
+
+function suiteRunResult(
+  result: Omit<SuiteRunResult, "durationMs"> & {
+    durationMs: number | undefined;
+  },
+): SuiteRunResult {
+  const { durationMs, ...requiredResult } = result;
+
+  return durationMs === undefined
+    ? requiredResult
+    : { ...requiredResult, durationMs };
+}
+
+function summarizeSuiteRun(
+  scenario: DiagramScenario,
+  candidates: readonly DiagramGenerationCandidateSummary[],
+): SuiteRunResult {
+  const firstCandidate = candidates[0];
+  const candidateText = pickCandidateText(candidates) ?? firstCandidate?.text;
+
+  if (!candidateText) {
+    return suiteRunResult({
+      durationMs: firstCandidate?.durationMs,
+      message: firstCandidate?.error ?? "No generated candidate returned.",
+      scenarioId: scenario.id,
+      status: "fail",
+      title: scenario.title,
+    });
+  }
+
+  const evaluation = evaluateCandidate(scenario, candidateText);
+  const failedChecks =
+    evaluation.result?.checks.filter((check) => !check.passed) ?? [];
+
+  return suiteRunResult({
+    durationMs: firstCandidate?.durationMs,
+    message: evaluation.error
+      ? evaluation.error
+      : evaluation.result?.ok
+        ? "Passed deterministic checks"
+        : failedChecks.map((check) => check.message).join(" "),
+    scenarioId: scenario.id,
+    status: evaluation.result?.ok ? "pass" : "fail",
+    title: scenario.title,
+  });
+}
+
 export function ScenarioPlayground({
   initialScenarioId,
+  onGenerateScenario,
   scenarios = flowchartScenarios,
 }: ScenarioPlaygroundProps) {
   const store = useMemo(
@@ -140,6 +251,12 @@ export function ScenarioPlayground({
   const displayedScene = state.editedExcalidrawScene ?? result?.excalidrawScene;
   const statusOk =
     Boolean(candidateEvaluation?.result?.ok) && !candidateEvaluation?.error;
+  const suitePassedCount = state.suiteResults.filter(
+    (suiteResult) => suiteResult.status === "pass",
+  ).length;
+  const suiteCompleteCount = state.suiteResults.filter(
+    (suiteResult) => suiteResult.status !== "running",
+  ).length;
   const inspectorTabs: Array<{ id: InspectorPanel; label: string }> = [
     { id: "candidate", label: "Candidate IR" },
     { id: "prompt", label: "Prompt" },
@@ -152,8 +269,101 @@ export function ScenarioPlayground({
       candidateText: formatJson(nextScenario.expectedDiagram),
       editedExcalidrawScene: undefined,
       editedExcalidrawSceneSignature: undefined,
+      generationCandidates: [],
+      generationError: undefined,
+      generationStatus: "idle",
       scenarioId: nextScenario.id,
     }));
+  }
+
+  async function runGeneration() {
+    if (!selectedScenario || !onGenerateScenario) {
+      return;
+    }
+
+    store.setState((current) => ({
+      ...current,
+      generationError: undefined,
+      generationStatus: "running",
+    }));
+
+    try {
+      const generationResult = await onGenerateScenario({
+        providers: defaultGenerationProviders,
+        scenarioId: selectedScenario.id,
+      });
+      const nextCandidateText = pickCandidateText(generationResult.candidates);
+
+      store.setState((current) => ({
+        ...current,
+        ...(nextCandidateText ? { candidateText: nextCandidateText } : {}),
+        editedExcalidrawScene: undefined,
+        editedExcalidrawSceneSignature: undefined,
+        generationCandidates: generationResult.candidates,
+        generationError: undefined,
+        generationStatus: "complete",
+      }));
+    } catch (error) {
+      store.setState((current) => ({
+        ...current,
+        generationError:
+          error instanceof Error ? error.message : "Generation failed.",
+        generationStatus: "error",
+      }));
+    }
+  }
+
+  async function runScenarioSuite() {
+    if (!onGenerateScenario) {
+      return;
+    }
+
+    store.setState((current) => ({
+      ...current,
+      suiteError: undefined,
+      suiteResults: [],
+      suiteStatus: "running",
+    }));
+
+    try {
+      for (const scenario of scenarios) {
+        store.setState((current) => ({
+          ...current,
+          suiteResults: replaceSuiteResult(current.suiteResults, {
+            message: "Running",
+            scenarioId: scenario.id,
+            status: "running",
+            title: scenario.title,
+          }),
+        }));
+
+        const generationResult = await onGenerateScenario({
+          providers: defaultGenerationProviders,
+          scenarioId: scenario.id,
+        });
+        const summary = summarizeSuiteRun(
+          scenario,
+          generationResult.candidates,
+        );
+
+        store.setState((current) => ({
+          ...current,
+          suiteResults: replaceSuiteResult(current.suiteResults, summary),
+        }));
+      }
+
+      store.setState((current) => ({
+        ...current,
+        suiteStatus: "complete",
+      }));
+    } catch (error) {
+      store.setState((current) => ({
+        ...current,
+        suiteError:
+          error instanceof Error ? error.message : "Scenario suite failed.",
+        suiteStatus: "error",
+      }));
+    }
   }
 
   const handleExcalidrawChange: NonNullable<ExcalidrawProps["onChange"]> =
@@ -220,6 +430,62 @@ export function ScenarioPlayground({
               ))}
             </select>
           </label>
+
+          <GenerationRunPanel
+            candidates={state.generationCandidates}
+            disabled={!onGenerateScenario}
+            {...(state.generationError ? { error: state.generationError } : {})}
+            onRun={runGeneration}
+            running={state.generationStatus === "running"}
+          />
+
+          <section className="sketchi-scenario-playground__suite">
+            <header>
+              <h2>Prompt suite</h2>
+              <button
+                disabled={
+                  !onGenerateScenario || state.suiteStatus === "running"
+                }
+                onClick={runScenarioSuite}
+                type="button"
+              >
+                {state.suiteStatus === "running" ? "Running" : "Run suite"}
+              </button>
+            </header>
+            <p>
+              {suiteCompleteCount === 0
+                ? `${scenarios.length} maintained prompts`
+                : `${suitePassedCount} / ${suiteCompleteCount} passed`}
+            </p>
+            {state.suiteError ? (
+              <p className="sketchi-scenario-playground__error">
+                {state.suiteError}
+              </p>
+            ) : null}
+            {state.suiteResults.length > 0 ? (
+              <ol>
+                {state.suiteResults.map((suiteResult) => (
+                  <li
+                    data-status={suiteResult.status}
+                    key={suiteResult.scenarioId}
+                  >
+                    <span>{suiteResult.status}</span>
+                    <strong>{suiteResult.title}</strong>
+                    <small>
+                      {[
+                        suiteResult.message,
+                        suiteResult.durationMs === undefined
+                          ? undefined
+                          : `${suiteResult.durationMs} ms`,
+                      ]
+                        .filter(Boolean)
+                        .join(" / ")}
+                    </small>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+          </section>
 
           <section className="sketchi-scenario-playground__checks">
             <h2>Checks</h2>

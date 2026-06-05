@@ -1,4 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { flowchartFixture } from "@sketchi/diagram-core";
+import { flowchartScenarios, getScenario } from "@sketchi/diagram-scenarios";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@excalidraw/excalidraw", () => ({
@@ -63,7 +65,10 @@ vi.mock("../json-code-editor/index.js", () => ({
   ),
 }));
 
-import { ScenarioPlayground } from "./scenario-playground";
+import {
+  ScenarioPlayground,
+  type ScenarioGenerationRequest,
+} from "./scenario-playground";
 
 describe("ScenarioPlayground", () => {
   it("renders maintained scenarios and their checks", () => {
@@ -117,5 +122,69 @@ describe("ScenarioPlayground", () => {
 
     expect(excalidrawJson.value).toContain('"node:draft": true');
     expect(excalidrawJson.value).toContain('"x": 123');
+  });
+
+  it("loads a generated candidate into the deterministic IR editor", async () => {
+    const generatedDiagram = {
+      ...flowchartFixture,
+      title: "Generated onboarding flow",
+    };
+    const onGenerateScenario = vi.fn(async () => ({
+      candidates: [
+        {
+          diagnostics: [],
+          diagramValid: true,
+          model: "google/gemini-3.1-flash-lite",
+          provider: "cloudflare-google-ai-studio" as const,
+          text: JSON.stringify(generatedDiagram, null, 2),
+        },
+      ],
+      scenarioId: "sketchi-onboarding-decision-flow",
+    }));
+
+    render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    await waitFor(() => expect(onGenerateScenario).toHaveBeenCalledTimes(1));
+    expect(
+      (screen.getByLabelText("Candidate IR") as HTMLTextAreaElement).value,
+    ).toContain("Generated onboarding flow");
+  });
+
+  it("runs the full prompt suite against generated candidates", async () => {
+    const onGenerateScenario = vi.fn(
+      async ({ scenarioId }: ScenarioGenerationRequest) => {
+        const scenario = getScenario(scenarioId);
+
+        return {
+          candidates: [
+            {
+              diagnostics: [],
+              diagramValid: true,
+              durationMs: 25,
+              model: "google/gemini-3.1-flash-lite",
+              provider: "cloudflare-google-ai-studio" as const,
+              text: JSON.stringify(scenario.expectedDiagram, null, 2),
+              usage: { totalTokens: 300 },
+            },
+          ],
+          scenarioId,
+        };
+      },
+    );
+
+    render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
+    fireEvent.click(screen.getByRole("button", { name: "Run suite" }));
+
+    await waitFor(() =>
+      expect(onGenerateScenario).toHaveBeenCalledTimes(
+        flowchartScenarios.length,
+      ),
+    );
+    expect(
+      screen.getByText(
+        `${flowchartScenarios.length} / ${flowchartScenarios.length} passed`,
+      ),
+    ).toBeTruthy();
   });
 });

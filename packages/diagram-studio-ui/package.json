@@ -17,6 +17,7 @@
     "@excalidraw/excalidraw": "0.18.1",
     "@sketchi/diagram-core": "workspace:*",
     "@sketchi/diagram-excalidraw": "workspace:*",
+    "@sketchi/diagram-generation": "workspace:*",
     "@sketchi/diagram-renderer": "workspace:*",
     "@sketchi/diagram-scenarios": "workspace:*",
     "@tanstack/react-store": "^0.11.0",

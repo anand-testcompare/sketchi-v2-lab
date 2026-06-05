@@ -1,17 +1,20 @@
 export const DEFAULT_GENERATOR_COMMAND_ENV = "SKETCHI_GENERATOR_COMMAND";
 
 export interface CliOptions {
+  all: boolean;
   generatorCommand?: string;
   generatorCommandEnv?: string;
   input?: string;
   list: boolean;
   out?: string;
+  outDir?: string;
   scenarioId?: string;
   useFixture: boolean;
 }
 
 export function parseCliOptions(argv: readonly string[]): CliOptions {
   const options: CliOptions = {
+    all: false,
     list: false,
     useFixture: false,
   };
@@ -27,6 +30,11 @@ export function parseCliOptions(argv: readonly string[]): CliOptions {
 
     if (arg === "--fixture") {
       options.useFixture = true;
+      continue;
+    }
+
+    if (arg === "--all") {
+      options.all = true;
       continue;
     }
 
@@ -63,6 +71,12 @@ export function parseCliOptions(argv: readonly string[]): CliOptions {
       continue;
     }
 
+    if (arg === "--out-dir" && next) {
+      options.outDir = next;
+      index += 1;
+      continue;
+    }
+
     throw new Error(`Unknown or incomplete argument "${arg}".`);
   }
 
@@ -91,9 +105,11 @@ export function usage(): string {
   return [
     "Usage:",
     "  pnpm nx scenario diagram-scenarios -- --list",
+    "  pnpm nx scenario diagram-scenarios -- --all --fixture",
+    "  pnpm nx scenario diagram-scenarios -- --all --fixture --out-dir .memory/scenarios",
     "  pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition --fixture --out .memory/pharma.excalidraw",
     "  pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition --input candidate.json",
-    "  SKETCHI_GENERATOR_COMMAND=\"your-llm-command\" pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition",
+    '  SKETCHI_GENERATOR_COMMAND="your-llm-command" pnpm nx scenario diagram-scenarios -- --all',
     "",
     "When --generator-command is used directly, put it last. The scenario prompt is written to stdin and JSON IR is expected on stdout.",
   ].join("\n");

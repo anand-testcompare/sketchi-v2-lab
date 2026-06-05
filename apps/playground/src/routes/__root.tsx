@@ -2,8 +2,10 @@ import {
   createRootRoute,
   HeadContent,
   Outlet,
-  Scripts
+  Scripts,
 } from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 
 import appStyles from "../styles/app.css?url";
 
@@ -13,24 +15,28 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       {
         name: "viewport",
-        content: "width=device-width, initial-scale=1"
+        content: "width=device-width, initial-scale=1",
       },
-      { title: "Sketchi Playground" }
+      { title: "Sketchi Playground" },
     ],
-    links: [{ rel: "stylesheet", href: appStyles }]
+    links: [{ rel: "stylesheet", href: appStyles }],
   }),
   component: RootComponent,
-  notFoundComponent: NotFoundComponent
+  notFoundComponent: NotFoundComponent,
 });
 
 function RootComponent() {
+  const [queryClient] = useState(() => new QueryClient());
+
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <Outlet />
+        <QueryClientProvider client={queryClient}>
+          <Outlet />
+        </QueryClientProvider>
         <Scripts />
       </body>
     </html>

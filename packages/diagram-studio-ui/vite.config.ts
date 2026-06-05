@@ -8,7 +8,7 @@ export default defineConfig({
     lib: {
       entry: "packages/diagram-studio-ui/src/index.ts",
       formats: ["es"],
-      fileName: "index"
+      fileName: "index",
     },
     rollupOptions: {
       external: [
@@ -18,29 +18,34 @@ export default defineConfig({
         "@excalidraw/excalidraw/types",
         "@sketchi/diagram-core",
         "@sketchi/diagram-excalidraw",
+        "@sketchi/diagram-generation",
         "@sketchi/diagram-renderer",
-        "@sketchi/diagram-scenarios"
-      ]
-    }
+        "@sketchi/diagram-scenarios",
+      ],
+    },
   },
   resolve: {
     alias: {
       "@sketchi/diagram-core": new URL(
         "../diagram-core/src/index.ts",
-        import.meta.url
+        import.meta.url,
       ).pathname,
       "@sketchi/diagram-excalidraw": new URL(
         "../diagram-excalidraw/src/index.ts",
-        import.meta.url
+        import.meta.url,
+      ).pathname,
+      "@sketchi/diagram-generation": new URL(
+        "../diagram-generation/src/index.ts",
+        import.meta.url,
       ).pathname,
       "@sketchi/diagram-renderer": new URL(
         "../diagram-renderer/src/index.ts",
-        import.meta.url
+        import.meta.url,
       ).pathname,
       "@sketchi/diagram-scenarios": new URL(
         "../diagram-scenarios/src/index.ts",
-        import.meta.url
-      ).pathname
-    }
-  }
+        import.meta.url,
+      ).pathname,
+    },
+  },
 });

@@ -5,7 +5,7 @@ const config: StorybookConfig = {
   addons: ["@storybook/addon-vitest"],
   framework: {
     name: "@storybook/react-vite",
-    options: {}
+    options: {},
   },
   viteFinal: async (config) => {
     config.resolve ??= {};
@@ -13,16 +13,28 @@ const config: StorybookConfig = {
       ...(config.resolve.alias ?? {}),
       "@sketchi/diagram-core": new URL(
         "../../diagram-core/src/index.ts",
-        import.meta.url
+        import.meta.url,
+      ).pathname,
+      "@sketchi/diagram-excalidraw": new URL(
+        "../../diagram-excalidraw/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@sketchi/diagram-generation": new URL(
+        "../../diagram-generation/src/index.ts",
+        import.meta.url,
       ).pathname,
       "@sketchi/diagram-renderer": new URL(
         "../../diagram-renderer/src/index.ts",
-        import.meta.url
-      ).pathname
+        import.meta.url,
+      ).pathname,
+      "@sketchi/diagram-scenarios": new URL(
+        "../../diagram-scenarios/src/index.ts",
+        import.meta.url,
+      ).pathname,
     };
 
     return config;
-  }
+  },
 };
 
 export default config;

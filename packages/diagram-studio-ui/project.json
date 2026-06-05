@@ -6,6 +6,7 @@
   "implicitDependencies": [
     "diagram-core",
     "diagram-excalidraw",
+    "diagram-generation",
     "diagram-renderer",
     "diagram-scenarios"
   ],
