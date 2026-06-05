@@ -13,6 +13,7 @@
     "preview": "nx run-many -t preview --parallel",
     "storybook": "nx storybook diagram-studio-ui",
     "test": "nx run-many -t test",
+    "test:deploy-scripts": "node --test scripts/lib/*.test.mjs",
     "typecheck": "nx run-many -t typecheck",
     "typecheck:tsgo": "nx run-many -t typecheck-tsgo"
   },
