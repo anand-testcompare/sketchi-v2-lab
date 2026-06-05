@@ -18,6 +18,12 @@ Required repository configuration:
 - `CLOUDFLARE_ACCOUNT_ID`: repository variable or secret.
 - `CLOUDFLARE_API_TOKEN`: repository secret with Workers edit/deploy access.
 
+The canonical source for those GitHub Actions values is the Infisical `sketchi`
+project under `/github`:
+
+- `staging`: PR preview deploys.
+- `prod`: production deploys.
+
 Cloudflare documents that non-interactive CI deploys require an API token and
 account ID. The token should stay in GitHub Secrets, not in source control.
 
