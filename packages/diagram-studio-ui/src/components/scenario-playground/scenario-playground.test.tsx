@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { flowchartFixture } from "@sketchi/diagram-core";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@excalidraw/excalidraw", () => ({
@@ -117,5 +118,32 @@ describe("ScenarioPlayground", () => {
 
     expect(excalidrawJson.value).toContain('"node:draft": true');
     expect(excalidrawJson.value).toContain('"x": 123');
+  });
+
+  it("loads a generated candidate into the deterministic IR editor", async () => {
+    const generatedDiagram = {
+      ...flowchartFixture,
+      title: "Generated onboarding flow",
+    };
+    const onGenerateScenario = vi.fn(async () => ({
+      candidates: [
+        {
+          diagnostics: [],
+          diagramValid: true,
+          model: "google/gemini-3.1-flash-lite",
+          provider: "cloudflare-workers-ai" as const,
+          text: JSON.stringify(generatedDiagram, null, 2),
+        },
+      ],
+      scenarioId: "sketchi-onboarding-decision-flow",
+    }));
+
+    render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    await waitFor(() => expect(onGenerateScenario).toHaveBeenCalledTimes(1));
+    expect(
+      (screen.getByLabelText("Candidate IR") as HTMLTextAreaElement).value,
+    ).toContain("Generated onboarding flow");
   });
 });

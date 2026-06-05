@@ -1,5 +1,9 @@
 import type { ExcalidrawProps } from "@excalidraw/excalidraw/types";
 import type {
+  DiagramGenerationCandidateSummary,
+  DiagramGenerationProviderId,
+} from "@sketchi/diagram-generation";
+import type {
   ExcalidrawElement,
   ExcalidrawScene,
 } from "@sketchi/diagram-excalidraw";
@@ -15,11 +19,25 @@ import { Store, useStore } from "@tanstack/react-store";
 import { useCallback, useMemo } from "react";
 
 import { ExcalidrawSceneCanvas } from "../excalidraw-scene-canvas/index.js";
+import { GenerationRunPanel } from "../generation-run-panel/index.js";
 import { JsonCodeEditor } from "../json-code-editor/index.js";
 import { PromptMessageViewer } from "../prompt-message-viewer/index.js";
 
+export interface ScenarioGenerationRequest {
+  providers: readonly DiagramGenerationProviderId[];
+  scenarioId: string;
+}
+
+export interface ScenarioGenerationResult {
+  candidates: readonly DiagramGenerationCandidateSummary[];
+  scenarioId: string;
+}
+
 export interface ScenarioPlaygroundProps {
   initialScenarioId?: string;
+  onGenerateScenario?: (
+    request: ScenarioGenerationRequest,
+  ) => Promise<ScenarioGenerationResult>;
   scenarios?: readonly DiagramScenario[];
 }
 
@@ -34,6 +52,9 @@ interface PlaygroundState {
   candidateText: string;
   editedExcalidrawScene: ExcalidrawScene | undefined;
   editedExcalidrawSceneSignature: string | undefined;
+  generationCandidates: readonly DiagramGenerationCandidateSummary[];
+  generationError: string | undefined;
+  generationStatus: "idle" | "running" | "complete" | "error";
   inspectorPanel: InspectorPanel;
   scenarioId: string;
 }
@@ -58,6 +79,12 @@ function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
+const defaultGenerationProviders: readonly DiagramGenerationProviderId[] = [
+  "cloudflare-google-ai-studio",
+  "cloudflare-workers-ai",
+  "cloudflare-ai-gateway-compat",
+];
+
 function createInitialState(
   scenarios: readonly DiagramScenario[],
   initialScenarioId?: string,
@@ -72,6 +99,9 @@ function createInitialState(
       : "{}",
     editedExcalidrawScene: undefined,
     editedExcalidrawSceneSignature: undefined,
+    generationCandidates: [],
+    generationError: undefined,
+    generationStatus: "idle",
     inspectorPanel: "candidate",
     scenarioId: selectedScenario?.id ?? "",
   };
@@ -107,8 +137,20 @@ function sceneChangeSignature(
   });
 }
 
+function pickCandidateText(
+  candidates: readonly DiagramGenerationCandidateSummary[],
+): string | undefined {
+  const candidate = candidates.find(
+    (generationCandidate) =>
+      !generationCandidate.error && generationCandidate.diagramValid,
+  );
+
+  return candidate?.text;
+}
+
 export function ScenarioPlayground({
   initialScenarioId,
+  onGenerateScenario,
   scenarios = flowchartScenarios,
 }: ScenarioPlaygroundProps) {
   const store = useMemo(
@@ -152,8 +194,48 @@ export function ScenarioPlayground({
       candidateText: formatJson(nextScenario.expectedDiagram),
       editedExcalidrawScene: undefined,
       editedExcalidrawSceneSignature: undefined,
+      generationCandidates: [],
+      generationError: undefined,
+      generationStatus: "idle",
       scenarioId: nextScenario.id,
     }));
+  }
+
+  async function runGeneration() {
+    if (!selectedScenario || !onGenerateScenario) {
+      return;
+    }
+
+    store.setState((current) => ({
+      ...current,
+      generationError: undefined,
+      generationStatus: "running",
+    }));
+
+    try {
+      const generationResult = await onGenerateScenario({
+        providers: defaultGenerationProviders,
+        scenarioId: selectedScenario.id,
+      });
+      const nextCandidateText = pickCandidateText(generationResult.candidates);
+
+      store.setState((current) => ({
+        ...current,
+        ...(nextCandidateText ? { candidateText: nextCandidateText } : {}),
+        editedExcalidrawScene: undefined,
+        editedExcalidrawSceneSignature: undefined,
+        generationCandidates: generationResult.candidates,
+        generationError: undefined,
+        generationStatus: "complete",
+      }));
+    } catch (error) {
+      store.setState((current) => ({
+        ...current,
+        generationError:
+          error instanceof Error ? error.message : "Generation failed.",
+        generationStatus: "error",
+      }));
+    }
   }
 
   const handleExcalidrawChange: NonNullable<ExcalidrawProps["onChange"]> =
@@ -220,6 +302,14 @@ export function ScenarioPlayground({
               ))}
             </select>
           </label>
+
+          <GenerationRunPanel
+            candidates={state.generationCandidates}
+            disabled={!onGenerateScenario}
+            {...(state.generationError ? { error: state.generationError } : {})}
+            onRun={runGeneration}
+            running={state.generationStatus === "running"}
+          />
 
           <section className="sketchi-scenario-playground__checks">
             <h2>Checks</h2>

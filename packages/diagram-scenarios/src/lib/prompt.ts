@@ -52,6 +52,14 @@ function expectedJsonShape(scenario: DiagramScenario): string {
   );
 }
 
+function requiredList(title: string, values: readonly string[]): string[] {
+  if (values.length === 0) {
+    return [];
+  }
+
+  return [title, ...values.map((value) => `- ${value}`), ""];
+}
+
 export function buildScenarioPromptParts(
   scenario: DiagramScenario,
 ): ScenarioPromptParts {
@@ -64,6 +72,16 @@ export function buildScenarioPromptParts(
   const user = [
     "Scenario:",
     scenario.prompt,
+    "",
+    ...requiredList(
+      "Required node labels:",
+      scenario.assertions.requiredNodeLabels,
+    ),
+    ...requiredList(
+      "Required decision branch labels:",
+      scenario.assertions.requiredBranchLabels,
+    ),
+    "Use these required labels exactly unless the scenario explicitly asks for a clearer synonym.",
     "",
     "Expected JSON shape:",
     expectedJsonShape(scenario),
