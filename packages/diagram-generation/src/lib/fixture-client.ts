@@ -10,6 +10,7 @@ export function createFixtureGenerationClient(): DiagramGenerationClient {
     generate: (request: DiagramGenerationRequest) =>
       timeGenerationCandidate(async () =>
         candidateFromText({
+          cacheMode: request.cacheMode ?? "default",
           model: "fixture",
           provider: "fixture",
           text: JSON.stringify(request.scenario.expectedDiagram, null, 2),

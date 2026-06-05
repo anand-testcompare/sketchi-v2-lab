@@ -1,12 +1,15 @@
 import type {
+  DiagramGenerationCacheMode,
   DiagramGenerationCandidateSummary,
   DiagramGenerationProviderId,
 } from "@sketchi/diagram-generation";
 
 export interface GenerationRunPanelProps {
+  cacheMode?: DiagramGenerationCacheMode;
   candidates?: readonly DiagramGenerationCandidateSummary[];
   disabled?: boolean;
   error?: string;
+  onCacheModeChange?: (cacheMode: DiagramGenerationCacheMode) => void;
   onRun?: () => void;
   providers?: readonly GenerationRunProvider[];
   running?: boolean;
@@ -68,9 +71,11 @@ function diagnosticSummary(
 }
 
 export function GenerationRunPanel({
+  cacheMode = "default",
   candidates = [],
   disabled = false,
   error,
+  onCacheModeChange,
   onRun,
   providers = defaultProviders,
   running = false,
@@ -92,6 +97,23 @@ export function GenerationRunPanel({
       {error ? (
         <p className="sketchi-generation-run-panel__error">{error}</p>
       ) : null}
+
+      <fieldset className="sketchi-generation-run-panel__cache-mode">
+        <legend>Cache</legend>
+        {(["default", "fresh"] as const).map((mode) => (
+          <label key={mode}>
+            <input
+              checked={cacheMode === mode}
+              disabled={disabled || running}
+              name="generation-cache-mode"
+              onChange={() => onCacheModeChange?.(mode)}
+              type="radio"
+              value={mode}
+            />
+            {mode === "fresh" ? "Fresh" : "Default"}
+          </label>
+        ))}
+      </fieldset>
 
       <ul>
         {providers.map((provider) => {
@@ -121,6 +143,11 @@ export function GenerationRunPanel({
               ) : null}
               {duration || tokens ? (
                 <small>{[duration, tokens].filter(Boolean).join(" / ")}</small>
+              ) : null}
+              {candidate?.cacheMode ? (
+                <small>
+                  {candidate.cacheMode === "fresh" ? "Fresh" : "Default"} run
+                </small>
               ) : null}
             </li>
           );

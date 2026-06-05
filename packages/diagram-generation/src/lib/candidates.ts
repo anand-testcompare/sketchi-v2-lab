@@ -24,7 +24,10 @@ export interface DiagramGenerationUsage {
   totalTokens?: number;
 }
 
+export type DiagramGenerationCacheMode = "default" | "fresh";
+
 export interface DiagramGenerationCandidate {
+  cacheMode?: DiagramGenerationCacheMode;
   diagnostics: string[];
   diagram?: FlowchartDiagram;
   durationMs?: number;
@@ -37,6 +40,7 @@ export interface DiagramGenerationCandidate {
 }
 
 export interface DiagramGenerationCandidateSummary {
+  cacheMode?: DiagramGenerationCacheMode;
   diagnostics: string[];
   diagramValid: boolean;
   durationMs?: number;
@@ -48,6 +52,7 @@ export interface DiagramGenerationCandidateSummary {
 }
 
 export interface DiagramGenerationRequest {
+  cacheMode?: DiagramGenerationCacheMode;
   maxOutputTokens?: number;
   model: string;
   scenario: DiagramScenario;
@@ -161,6 +166,7 @@ export function summarizeGenerationCandidate(
     model: candidate.model,
     provider: candidate.provider,
     text: candidate.text,
+    ...(candidate.cacheMode ? { cacheMode: candidate.cacheMode } : {}),
     ...(candidate.durationMs !== undefined
       ? { durationMs: candidate.durationMs }
       : {}),

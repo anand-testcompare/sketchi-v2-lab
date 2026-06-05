@@ -1,5 +1,6 @@
 import {
   createCloudflareGoogleAiStudioClient,
+  type DiagramGenerationCacheMode,
   DiagramGenerationProviderIdSchema,
   type CloudflareAiGatewayProvider,
   type DiagramGenerationCandidateSummary,
@@ -19,6 +20,7 @@ const DEFAULT_PROVIDERS: readonly DiagramGenerationProviderId[] = [
 ];
 
 const GenerateScenarioInputSchema = z.object({
+  cacheMode: z.enum(["default", "fresh"]).default("default"),
   providers: z
     .array(DiagramGenerationProviderIdSchema)
     .default([...DEFAULT_PROVIDERS]),
@@ -55,8 +57,10 @@ function errorCandidate(
   provider: DiagramGenerationProviderId,
   model: string,
   message: string,
+  cacheMode: DiagramGenerationCacheMode = "default",
 ): DiagramGenerationCandidateSummary {
   return {
+    cacheMode,
     diagnostics: [message],
     diagramValid: false,
     error: message,
@@ -89,12 +93,14 @@ function createGenerationClients(
 
 async function runClient(
   client: DiagramGenerationClient,
+  cacheMode: DiagramGenerationCacheMode,
   model: string,
   scenarioId: string,
 ): Promise<DiagramGenerationCandidateSummary> {
   try {
     return summarizeGenerationCandidate(
       await client.generate({
+        cacheMode,
         model,
         scenario: getScenario(scenarioId),
       }),
@@ -104,6 +110,7 @@ async function runClient(
       client.provider,
       model,
       error instanceof Error ? error.message : "Generation failed.",
+      cacheMode,
     );
   }
 }
@@ -131,10 +138,13 @@ export const generateScenarioCandidates = createServerFn({ method: "POST" })
           provider,
           model,
           `Provider "${provider}" is not configured in this Worker environment.`,
+          data.cacheMode,
         ),
       );
     const candidates = await Promise.all(
-      clients.map((client) => runClient(client, model, data.scenarioId)),
+      clients.map((client) =>
+        runClient(client, data.cacheMode, model, data.scenarioId),
+      ),
     );
 
     return {

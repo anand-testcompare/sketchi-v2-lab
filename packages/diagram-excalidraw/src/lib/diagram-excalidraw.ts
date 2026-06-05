@@ -39,8 +39,8 @@ const TEXT_HORIZONTAL_PADDING = 24;
 const TEXT_VERTICAL_PADDING = 18;
 const ARROW_LABEL_WIDTH = 160;
 const FIT_TARGET_WIDTH = 860;
-const FIT_TARGET_HEIGHT = 420;
-const MIN_INITIAL_ZOOM = 0.5;
+const FIT_TARGET_HEIGHT = 340;
+const MIN_INITIAL_ZOOM = 0.42;
 const SEGMENT_EPSILON = 0.001;
 
 function initialZoomForScene(scene: RenderedDiagramScene): number {

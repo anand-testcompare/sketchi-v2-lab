@@ -6,3 +6,4 @@ export * from "./components/scenario-playground/index.js";
 export * from "./components/json-code-editor/index.js";
 export * from "./components/prompt-message-viewer/index.js";
 export * from "./components/generation-run-panel/index.js";
+export * from "./components/scenario-suite-panel/index.js";
