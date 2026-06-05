@@ -2,12 +2,15 @@ export const DEFAULT_GENERATOR_COMMAND_ENV = "SKETCHI_GENERATOR_COMMAND";
 
 export interface CliOptions {
   all: boolean;
+  candidateOutDir?: string;
   generatorCommand?: string;
   generatorCommandEnv?: string;
   input?: string;
   list: boolean;
   out?: string;
   outDir?: string;
+  repeat: number;
+  reportOut?: string;
   scenarioId?: string;
   useFixture: boolean;
 }
@@ -16,6 +19,7 @@ export function parseCliOptions(argv: readonly string[]): CliOptions {
   const options: CliOptions = {
     all: false,
     list: false,
+    repeat: 1,
     useFixture: false,
   };
 
@@ -52,6 +56,28 @@ export function parseCliOptions(argv: readonly string[]): CliOptions {
 
     if (arg === "--generator-command-env" && next) {
       options.generatorCommandEnv = next;
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--candidate-out-dir" && next) {
+      options.candidateOutDir = next;
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--report-out" && next) {
+      options.reportOut = next;
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--repeat" && next) {
+      const repeat = Number.parseInt(next, 10);
+      if (!Number.isInteger(repeat) || repeat < 1) {
+        throw new Error("--repeat must be a positive integer.");
+      }
+      options.repeat = repeat;
       index += 1;
       continue;
     }
@@ -109,8 +135,8 @@ export function usage(): string {
     "  pnpm nx scenario diagram-scenarios -- --all --fixture --out-dir .memory/scenarios",
     "  pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition --fixture --out .memory/pharma.excalidraw",
     "  pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition --input candidate.json",
-    '  SKETCHI_GENERATOR_COMMAND="your-llm-command" pnpm nx scenario diagram-scenarios -- --all',
+    '  SKETCHI_GENERATOR_COMMAND="your-llm-command" pnpm nx scenario diagram-scenarios -- --all --repeat 5 --candidate-out-dir .memory/candidates --report-out .memory/report.json',
     "",
-    "When --generator-command is used directly, put it last. The scenario prompt is written to stdin and JSON IR is expected on stdout.",
+    "When --generator-command is used directly, put it last. The scenario prompt is written to stdin, SKETCHI_SCENARIO_ID is set, and JSON IR is expected on stdout.",
   ].join("\n");
 }

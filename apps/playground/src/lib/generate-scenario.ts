@@ -10,7 +10,6 @@ import {
 } from "@sketchi/diagram-generation";
 import { getScenario } from "@sketchi/diagram-scenarios";
 import { createServerFn } from "@tanstack/react-start";
-import { env } from "cloudflare:workers";
 import { z } from "zod";
 
 const DEFAULT_GATEWAY_ID = "google-ai-studio";
@@ -35,7 +34,7 @@ export interface GenerateScenarioOutput {
   scenarioId: string;
 }
 
-interface PlaygroundEnv {
+export interface PlaygroundEnv {
   AI?: CloudflareAiGatewayProvider;
   SKETCHI_AI_GATEWAY_ID?: string;
   SKETCHI_AI_MODEL?: string;
@@ -115,41 +114,48 @@ async function runClient(
   }
 }
 
-export const generateScenarioCandidates = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => GenerateScenarioInputSchema.parse(input))
-  .handler(async ({ data }): Promise<GenerateScenarioOutput> => {
-    const bindings = env as unknown as PlaygroundEnv;
-    const gatewayId = envString(
-      bindings,
-      "SKETCHI_AI_GATEWAY_ID",
-      DEFAULT_GATEWAY_ID,
-    );
-    const model = envString(bindings, "SKETCHI_AI_MODEL", DEFAULT_MODEL);
-    const clients = createGenerationClients(
-      data.providers,
-      bindings,
-      gatewayId,
-    );
-    const clientProviders = new Set(clients.map((client) => client.provider));
-    const missingCandidates = data.providers
-      .filter((provider) => !clientProviders.has(provider))
-      .map((provider) =>
-        errorCandidate(
-          provider,
-          model,
-          `Provider "${provider}" is not configured in this Worker environment.`,
-          data.cacheMode,
-        ),
-      );
-    const candidates = await Promise.all(
-      clients.map((client) =>
-        runClient(client, data.cacheMode, model, data.scenarioId),
+export async function generateScenarioCandidatesForInput(
+  input: GenerateScenarioInput,
+  bindings: PlaygroundEnv,
+): Promise<GenerateScenarioOutput> {
+  const data = GenerateScenarioInputSchema.parse(input);
+  const gatewayId = envString(
+    bindings,
+    "SKETCHI_AI_GATEWAY_ID",
+    DEFAULT_GATEWAY_ID,
+  );
+  const model = envString(bindings, "SKETCHI_AI_MODEL", DEFAULT_MODEL);
+  const clients = createGenerationClients(data.providers, bindings, gatewayId);
+  const clientProviders = new Set(clients.map((client) => client.provider));
+  const missingCandidates = data.providers
+    .filter((provider) => !clientProviders.has(provider))
+    .map((provider) =>
+      errorCandidate(
+        provider,
+        model,
+        `Provider "${provider}" is not configured in this Worker environment.`,
+        data.cacheMode,
       ),
     );
+  const candidates = await Promise.all(
+    clients.map((client) =>
+      runClient(client, data.cacheMode, model, data.scenarioId),
+    ),
+  );
 
-    return {
-      candidates: [...candidates, ...missingCandidates],
-      model,
-      scenarioId: data.scenarioId,
-    };
+  return {
+    candidates: [...candidates, ...missingCandidates],
+    model,
+    scenarioId: data.scenarioId,
+  };
+}
+
+export const generateScenarioCandidates = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => GenerateScenarioInputSchema.parse(input))
+  .handler(async ({ data }) => {
+    const { getPlaygroundBindings } = await import(
+      "./cloudflare-bindings.server"
+    );
+
+    return generateScenarioCandidatesForInput(data, getPlaygroundBindings());
   });
