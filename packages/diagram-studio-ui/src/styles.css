@@ -173,6 +173,12 @@ body {
   color: #7f1d1d;
 }
 
+.sketchi-scenario-playground__status--ready {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
 .sketchi-scenario-playground__layout {
   display: grid;
   gap: 10px;
@@ -623,10 +629,404 @@ body {
   overflow: auto;
 }
 
+.sketchi-scenario-playground__layout {
+  grid-template-columns:
+    minmax(260px, 300px) minmax(520px, 1fr)
+    minmax(420px, 540px);
+  height: calc(100vh - 78px);
+}
+
+.sketchi-scenario-playground__controls {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sketchi-scenario-playground__mode-tabs {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sketchi-scenario-playground__mode-tabs button {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #334155;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  min-width: 0;
+  padding: 8px;
+}
+
+.sketchi-scenario-playground__mode-tabs button[aria-selected="true"] {
+  background: #111827;
+  border-color: #111827;
+  color: #ffffff;
+}
+
+.sketchi-scenario-playground__scenario-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 9px;
+}
+
+.sketchi-scenario-playground__scenario-card h2 {
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.25;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sketchi-scenario-playground__scenario-card p {
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.sketchi-scenario-playground__scenario-card div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.sketchi-scenario-playground__scenario-card span {
+  background: #f1f5f9;
+  border: 1px solid #dbe3ef;
+  border-radius: 5px;
+  color: #334155;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 6px;
+  text-transform: uppercase;
+}
+
+.sketchi-scenario-playground__main {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.sketchi-scenario-playground__canvas-header {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 8px 10px;
+}
+
+.sketchi-scenario-playground__canvas-header h2 {
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.25;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sketchi-scenario-playground__canvas-header span {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 5px;
+  color: #1d4ed8;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 6px;
+}
+
+.sketchi-scenario-playground__empty-canvas {
+  align-items: center;
+  color: #64748b;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  height: 100%;
+  justify-items: center;
+}
+
+.sketchi-scenario-playground__empty-inspector {
+  align-items: center;
+  color: #64748b;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  justify-items: center;
+}
+
+.sketchi-scenario-playground__inspector {
+  grid-template-rows: auto minmax(0, 1fr) minmax(190px, 0.82fr);
+}
+
+.sketchi-scenario-playground__inspector-body {
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sketchi-scenario-playground__tabs {
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+}
+
+.sketchi-scenario-playground__tabs button {
+  white-space: normal;
+}
+
+.sketchi-scenario-playground__muted {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+
+.sketchi-scenario-playground__checks {
+  flex: 1 1 auto;
+}
+
+.sketchi-scenario-playground__controls > button {
+  flex: 0 0 auto;
+  line-height: 1.2;
+  min-height: 34px;
+}
+
+.sketchi-prompt-message-viewer__messages {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.sketchi-generation-run-panel__cache-mode {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 7px 8px;
+}
+
+.sketchi-generation-run-panel__cache-mode legend {
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 0 4px;
+}
+
+.sketchi-generation-run-panel__cache-mode label {
+  align-items: center;
+  color: #334155;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.sketchi-scenario-suite-panel {
+  border-top: 1px solid #dbe3ef;
+  display: grid;
+  gap: 8px;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.sketchi-scenario-suite-panel__header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.sketchi-scenario-suite-panel__header h2 {
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.sketchi-scenario-suite-panel__header p {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 3px 0 0;
+}
+
+.sketchi-scenario-suite-panel button {
+  background: #111827;
+  border: 1px solid #111827;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 7px 9px;
+}
+
+.sketchi-scenario-suite-panel button:disabled {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.sketchi-scenario-suite-panel__selection-actions {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sketchi-scenario-suite-panel__selection-actions button {
+  background: #ffffff;
+  color: #334155;
+}
+
+.sketchi-scenario-suite-panel__selection-actions button:disabled {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.sketchi-scenario-suite-panel__error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #7f1d1d;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+  padding: 8px;
+}
+
+.sketchi-scenario-suite-panel__list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
+}
+
+.sketchi-scenario-suite-panel__list li {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  display: grid;
+  gap: 7px;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 0.42fr);
+  padding: 7px;
+}
+
+.sketchi-scenario-suite-panel__list label {
+  align-items: start;
+  color: #111827;
+  display: flex;
+  gap: 7px;
+  min-width: 0;
+}
+
+.sketchi-scenario-suite-panel__list input {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.sketchi-scenario-suite-panel__list strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.sketchi-scenario-suite-panel__list label small {
+  color: #64748b;
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.sketchi-scenario-suite-panel__list output {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+  min-width: 0;
+}
+
+.sketchi-scenario-suite-panel__list output span {
+  background: #e2e8f0;
+  border-radius: 5px;
+  color: #334155;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 5px;
+  text-transform: uppercase;
+}
+
+.sketchi-scenario-suite-panel__list li[data-status="pass"] output span {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.sketchi-scenario-suite-panel__list li[data-status="fail"] output span {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+.sketchi-scenario-suite-panel__list li[data-status="running"] output span {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.sketchi-scenario-suite-panel__list output small {
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
 @media (max-width: 1280px) {
   .sketchi-scenario-playground__layout {
-    grid-template-columns: minmax(210px, 240px) minmax(0, 1fr);
-    grid-template-rows: minmax(360px, 1fr) minmax(300px, 0.76fr);
+    grid-template-columns:
+      minmax(240px, 260px) minmax(540px, 1fr)
+      minmax(360px, 420px);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .sketchi-scenario-playground__controls {
+    grid-row: auto;
+  }
+
+  .sketchi-scenario-playground__inspector {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 1120px) {
+  .sketchi-scenario-playground {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .sketchi-scenario-playground__layout {
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    grid-template-rows: minmax(440px, 62vh) minmax(360px, 54vh);
+    height: auto;
   }
 
   .sketchi-scenario-playground__controls {
@@ -687,6 +1087,19 @@ body {
   }
 
   .sketchi-prompt-message-viewer__messages {
+    grid-template-columns: 1fr;
     grid-auto-rows: minmax(140px, auto);
+  }
+
+  .sketchi-scenario-suite-panel__list li {
+    grid-template-columns: 1fr;
+  }
+
+  .sketchi-scenario-suite-panel__list output {
+    justify-items: start;
+  }
+
+  .sketchi-scenario-suite-panel__list output small {
+    text-align: left;
   }
 }

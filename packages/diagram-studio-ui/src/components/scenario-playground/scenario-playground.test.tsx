@@ -3,8 +3,8 @@ import { flowchartScenarios, getScenario } from "@sketchi/diagram-scenarios";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@excalidraw/excalidraw", () => ({
-  Excalidraw: ({
+vi.mock("../excalidraw-scene-canvas/index.js", () => ({
+  ExcalidrawSceneCanvas: ({
     onChange,
   }: {
     onChange?: (
@@ -78,32 +78,49 @@ describe("ScenarioPlayground", () => {
       screen.getByRole("heading", { name: "Sketchi diagram scenarios" }),
     ).toBeTruthy();
     expect(screen.getByText("Expected at least 5 nodes.")).toBeTruthy();
-    expect(screen.getByLabelText("Candidate IR")).toBeTruthy();
+    expect(screen.getByLabelText("Fixture IR")).toBeTruthy();
   });
 
-  it("reports invalid candidate output", () => {
-    render(<ScenarioPlayground />);
+  it("reports invalid generated candidate output", async () => {
+    const onGenerateScenario = vi.fn(async () => ({
+      candidates: [
+        {
+          diagnostics: ["Model output did not contain a JSON object."],
+          diagramValid: false,
+          model: "google/gemini-3.1-flash-lite",
+          provider: "cloudflare-google-ai-studio" as const,
+          text: "not json",
+        },
+      ],
+      scenarioId: "sketchi-onboarding-decision-flow",
+    }));
 
-    fireEvent.change(screen.getByLabelText("Candidate IR"), {
-      target: { value: "not json" },
-    });
+    render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
+    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
 
+    await waitFor(() => expect(onGenerateScenario).toHaveBeenCalledTimes(1));
     expect(
-      screen.getByText("Model output did not contain a JSON object."),
-    ).toBeTruthy();
+      screen.getAllByText("Model output did not contain a JSON object.").length,
+    ).toBeGreaterThan(0);
   });
 
   it("shows system and user prompt parts separately", () => {
     render(<ScenarioPlayground />);
 
+    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
     fireEvent.click(screen.getByRole("tab", { name: "Prompt" }));
 
-    expect(screen.getByRole("heading", { name: "System" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "User" })).toBeTruthy();
-    expect(screen.getByLabelText("System prompt").textContent).toContain(
+    expect(
+      screen.getAllByRole("heading", { name: "System" }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("heading", { name: "User" }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText("System prompt")[0]?.textContent).toContain(
       "Flowchart IR rules:",
     );
-    expect(screen.getByLabelText("User prompt").textContent).toContain(
+    expect(screen.getAllByLabelText("User prompt")[0]?.textContent).toContain(
       "Scenario:",
     );
   });
@@ -143,12 +160,22 @@ describe("ScenarioPlayground", () => {
     }));
 
     render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
+    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
 
     await waitFor(() => expect(onGenerateScenario).toHaveBeenCalledTimes(1));
+    expect(onGenerateScenario).toHaveBeenCalledWith({
+      cacheMode: "default",
+      providers: ["cloudflare-google-ai-studio"],
+      scenarioId: "sketchi-onboarding-decision-flow",
+    });
     expect(
       (screen.getByLabelText("Candidate IR") as HTMLTextAreaElement).value,
     ).toContain("Generated onboarding flow");
+    expect(
+      screen.getByLabelText("Sketchi onboarding decision flow result")
+        .textContent,
+    ).toContain("Passed deterministic checks");
   });
 
   it("runs the full prompt suite against generated candidates", async () => {
@@ -174,7 +201,9 @@ describe("ScenarioPlayground", () => {
     );
 
     render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
-    fireEvent.click(screen.getByRole("button", { name: "Run suite" }));
+    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByRole("button", { name: "Select all" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run selected" }));
 
     await waitFor(() =>
       expect(onGenerateScenario).toHaveBeenCalledTimes(
@@ -186,5 +215,39 @@ describe("ScenarioPlayground", () => {
         `${flowchartScenarios.length} / ${flowchartScenarios.length} passed`,
       ),
     ).toBeTruthy();
+  });
+
+  it("uses the fresh cache mode for selected LLM suite runs", async () => {
+    const onGenerateScenario = vi.fn(
+      async ({ scenarioId }: ScenarioGenerationRequest) => {
+        const scenario = getScenario(scenarioId);
+
+        return {
+          candidates: [
+            {
+              cacheMode: "fresh" as const,
+              diagnostics: [],
+              diagramValid: true,
+              durationMs: 25,
+              model: "google/gemini-3.1-flash-lite",
+              provider: "cloudflare-google-ai-studio" as const,
+              text: JSON.stringify(scenario.expectedDiagram, null, 2),
+            },
+          ],
+          scenarioId,
+        };
+      },
+    );
+
+    render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
+    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByLabelText("Fresh"));
+    fireEvent.click(screen.getByRole("button", { name: "Run selected" }));
+
+    await waitFor(() => expect(onGenerateScenario).toHaveBeenCalledTimes(1));
+    expect(onGenerateScenario).toHaveBeenCalledWith(
+      expect.objectContaining({ cacheMode: "fresh" }),
+    );
+    expect(screen.getByText("Fresh run")).toBeTruthy();
   });
 });

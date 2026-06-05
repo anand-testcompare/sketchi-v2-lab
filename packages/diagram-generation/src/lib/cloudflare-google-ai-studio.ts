@@ -1,4 +1,5 @@
 import type {
+  DiagramGenerationCacheMode,
   DiagramGenerationClient,
   DiagramGenerationRequest,
 } from "./candidates.js";
@@ -42,6 +43,17 @@ export interface CloudflareGoogleAiStudioClientOptions {
   gatewayId: string;
 }
 
+function cacheModeHeaders(
+  cacheMode: DiagramGenerationCacheMode | undefined,
+): Record<string, string> {
+  return cacheMode === "fresh"
+    ? {
+        "Cache-Control": "no-store",
+        Pragma: "no-cache",
+      }
+    : {};
+}
+
 async function readJsonResponse(response: Response): Promise<unknown> {
   const text = await response.text();
 
@@ -69,6 +81,7 @@ export function createCloudflareGoogleAiStudioClient({
             provider: "google-ai-studio",
             headers: {
               "Content-Type": "application/json",
+              ...cacheModeHeaders(request.cacheMode),
             },
             query: buildGeminiGenerateContentBody(request),
           },
@@ -76,6 +89,7 @@ export function createCloudflareGoogleAiStudioClient({
             gateway: {
               collectLog,
               metadata: {
+                cacheMode: request.cacheMode ?? "default",
                 scenarioId: request.scenario.id,
                 sketchiProvider: "cloudflare-google-ai-studio",
               },
@@ -97,6 +111,7 @@ export function createCloudflareGoogleAiStudioClient({
             provider: "cloudflare-google-ai-studio",
             raw,
             text: "",
+            cacheMode: request.cacheMode ?? "default",
           });
         }
 
@@ -108,6 +123,7 @@ export function createCloudflareGoogleAiStudioClient({
           provider: "cloudflare-google-ai-studio",
           raw,
           text,
+          cacheMode: request.cacheMode ?? "default",
           ...(usage ? { usage } : {}),
         });
       }),
@@ -138,6 +154,7 @@ export function createCloudflareGoogleAiStudioFetchClient({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              ...cacheModeHeaders(request.cacheMode),
             },
             body: JSON.stringify(buildGeminiGenerateContentBody(request)),
           },
@@ -157,6 +174,7 @@ export function createCloudflareGoogleAiStudioFetchClient({
             provider: "cloudflare-google-ai-studio",
             raw,
             text: "",
+            cacheMode: request.cacheMode ?? "default",
           });
         }
 
@@ -167,6 +185,7 @@ export function createCloudflareGoogleAiStudioFetchClient({
           provider: "cloudflare-google-ai-studio",
           raw,
           text: extractGeminiText(raw),
+          cacheMode: request.cacheMode ?? "default",
           ...(usage ? { usage } : {}),
         });
       }),

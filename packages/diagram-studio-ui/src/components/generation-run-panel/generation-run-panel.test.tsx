@@ -21,11 +21,26 @@ describe("GenerationRunPanel", () => {
     expect(onRun).toHaveBeenCalledTimes(1);
   });
 
+  it("switches cache mode before a run", () => {
+    const onCacheModeChange = vi.fn();
+
+    render(
+      <GenerationRunPanel
+        cacheMode="default"
+        onCacheModeChange={onCacheModeChange}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Fresh"));
+
+    expect(onCacheModeChange).toHaveBeenCalledWith("fresh");
+  });
+
   it("shows provider candidate status", () => {
     render(
       <GenerationRunPanel
         candidates={[
           {
+            cacheMode: "fresh",
             diagnostics: [],
             diagramValid: false,
             durationMs: 42,
@@ -40,6 +55,7 @@ describe("GenerationRunPanel", () => {
 
     expect(screen.getByText("Returned")).toBeTruthy();
     expect(screen.getByText("42 ms / 11 tokens")).toBeTruthy();
+    expect(screen.getByText("Fresh run")).toBeTruthy();
   });
 
   it("shows provider error diagnostics", () => {

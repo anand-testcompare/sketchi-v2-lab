@@ -135,6 +135,9 @@ describe("diagram generation clients", () => {
     expect(run).toHaveBeenCalledWith(
       expect.objectContaining({
         endpoint: "v1beta/models/gemini-3.1-flash-lite:generateContent",
+        headers: expect.not.objectContaining({
+          "Cache-Control": "no-store",
+        }),
         provider: "google-ai-studio",
       }),
       expect.objectContaining({
@@ -148,5 +151,41 @@ describe("diagram generation clients", () => {
     );
     expect(candidate.diagram?.id).toBe(scenario.expectedDiagram.id);
     expect(candidate.usage?.totalTokens).toBe(34);
+  });
+
+  it("sends no-store headers and metadata for fresh gateway runs", async () => {
+    const run = vi.fn(async () => jsonResponse(geminiResponse));
+    const client = createCloudflareGoogleAiStudioClient({
+      ai: {
+        gateway: () => ({
+          getUrl: vi.fn(),
+          run,
+        }),
+      },
+      gatewayId: "sketchi",
+    });
+
+    const candidate = await client.generate({
+      cacheMode: "fresh",
+      model: "google/gemini-3.1-flash-lite",
+      scenario,
+    });
+
+    expect(run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "Cache-Control": "no-store",
+          Pragma: "no-cache",
+        }),
+      }),
+      expect.objectContaining({
+        gateway: expect.objectContaining({
+          metadata: expect.objectContaining({
+            cacheMode: "fresh",
+          }),
+        }),
+      }),
+    );
+    expect(candidate.cacheMode).toBe("fresh");
   });
 });

@@ -42,6 +42,14 @@ describe("convertSceneToExcalidraw", () => {
     });
   });
 
+  it("opens maintained vertical flowcharts at an embedded-canvas friendly zoom", () => {
+    const scene = convertSceneToExcalidraw(
+      renderIntermediateDiagram(flowchartFixture),
+    );
+
+    expect(scene.appState.zoom).toEqual({ value: 0.5 });
+  });
+
   it("keeps wrapped flowchart text inside real shape containers", () => {
     const scene = convertSceneToExcalidraw(
       renderIntermediateDiagram(pharmaBatchDispositionFlowchart),
