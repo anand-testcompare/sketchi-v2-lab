@@ -78,7 +78,7 @@ export function JsonCodeEditor({
           maxHeight,
         },
         "&.cm-focused": {
-          outline: "2px solid #2563eb",
+          outline: "2px solid #0f766e",
           outlineOffset: "-2px",
         },
       }),

@@ -40,11 +40,14 @@ jobs:
         github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'workflow_dispatch' && inputs.action == 'deploy')
     runs-on: ubuntu-latest
+    environment: staging
     concurrency:
       group: playground-preview-pr-${{ github.event.pull_request.number || inputs.pr_number }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: pnpm/action-setup@v5
         with:
@@ -88,6 +91,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
           PREVIEW_STATUS: unconfigured
+          PREVIEW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           WORKER_NAME: ${{ steps.prepare.outputs.worker_name }}
         run: node scripts/03-upsert-preview-comment.mjs
 
@@ -103,7 +107,7 @@ jobs:
           pnpm exec wrangler deploy \
             --config "${{ steps.prepare.outputs.preview_config_path }}" \
             --keep-vars \
-            --message "PR #${{ github.event.pull_request.number || inputs.pr_number }} preview ${GITHUB_SHA}" \
+            --message "PR #${{ github.event.pull_request.number || inputs.pr_number }} preview ${{ github.event.pull_request.head.sha || github.sha }}" \
             2>&1 | tee .memory/wrangler-preview-deploy.log
 
       - name: Extract preview URL
@@ -121,6 +125,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
           PREVIEW_STATUS: ready
           PREVIEW_URL: ${{ steps.preview-url.outputs.preview_url }}
+          PREVIEW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           WORKER_NAME: ${{ steps.prepare.outputs.worker_name }}
         run: node scripts/03-upsert-preview-comment.mjs
 
@@ -130,6 +135,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
           PREVIEW_STATUS: failed
+          PREVIEW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           WORKER_NAME: ${{ steps.prepare.outputs.worker_name }}
         run: node scripts/03-upsert-preview-comment.mjs
 
@@ -140,6 +146,7 @@ jobs:
         github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'workflow_dispatch' && inputs.action == 'cleanup')
     runs-on: ubuntu-latest
+    environment: staging
     concurrency:
       group: playground-preview-pr-${{ github.event.pull_request.number || inputs.pr_number }}
       cancel-in-progress: false

@@ -10,8 +10,14 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    environment: staging
+    env:
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: pnpm/action-setup@v5
         with:
           version: 11.5.0
@@ -21,5 +27,46 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:deploy-scripts
-      - run: pnpm nx run-many -t typecheck,test,build
-      - run: pnpm nx build-storybook diagram-studio-ui
+      - name: Resolve Nx affected refs
+        id: nx-refs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            echo "base=$PR_BASE_SHA" >> "$GITHUB_OUTPUT"
+            echo "head=$PR_HEAD_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -n "${PUSH_BEFORE_SHA:-}" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            echo "base=$PUSH_BEFORE_SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=origin/main" >> "$GITHUB_OUTPUT"
+          fi
+          echo "head=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+      - name: Detect affected projects
+        id: affected
+        run: |
+          set -euo pipefail
+          mkdir -p .memory
+          pnpm nx show projects --affected \
+            --base="${{ steps.nx-refs.outputs.base }}" \
+            --head="${{ steps.nx-refs.outputs.head }}" \
+            | tee .memory/affected-projects.txt
+
+          if grep -qx "diagram-studio-ui" .memory/affected-projects.txt; then
+            echo "storybook=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "storybook=false" >> "$GITHUB_OUTPUT"
+          fi
+      - run: pnpm nx affected -t typecheck,test,build --base="${{ steps.nx-refs.outputs.base }}" --head="${{ steps.nx-refs.outputs.head }}"
+      - if: ${{ steps.affected.outputs.storybook == 'true' }}
+        run: pnpm nx build-storybook diagram-studio-ui
+      - name: Publish Storybook to Chromatic
+        if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' && steps.affected.outputs.storybook == 'true' }}
+        run: pnpm nx chromatic diagram-studio-ui -- --branch-name "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" --repository-slug "$GITHUB_REPOSITORY"

@@ -13,16 +13,23 @@ The preview workflow:
 - runs `wrangler deploy --keep-vars`;
 - writes or updates one sticky PR comment with the preview URL.
 
-Required repository configuration:
+Required GitHub Actions configuration:
 
-- `CLOUDFLARE_ACCOUNT_ID`: repository variable or secret.
-- `CLOUDFLARE_API_TOKEN`: repository secret with Workers edit/deploy access.
+- `CHROMATIC_PROJECT_TOKEN`: `staging` environment secret for Storybook
+  publish and visual checks.
+- `CLOUDFLARE_ACCOUNT_ID`: `staging` environment variable or secret.
+- `CLOUDFLARE_API_TOKEN`: `staging` environment secret with Workers
+  edit/deploy access.
 
 The canonical source for those GitHub Actions values is the Infisical `sketchi`
-project under `/github`:
+project under `/github`, synced to GitHub environment secrets:
 
-- `staging`: PR preview deploys.
-- `prod`: production deploys.
+- `staging`: GitHub `staging` environment for CI and PR preview deploys.
+- `prod`: GitHub `production` environment for production deploys.
+
+Do not sync both Infisical environments into the same repository-secret
+namespace; environment-scoped GitHub secrets keep preview and production values
+from overwriting each other when the values eventually diverge.
 
 Cloudflare documents that non-interactive CI deploys require an API token and
 account ID. The token should stay in GitHub Secrets, not in source control.

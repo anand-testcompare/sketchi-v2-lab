@@ -49,10 +49,7 @@ function edgeBuckets(edges: readonly FlowchartEdge[]) {
   return { incoming, outgoing };
 }
 
-function requireFlowchartInvariant(
-  condition: boolean,
-  message: string,
-): void {
+function requireFlowchartInvariant(condition: boolean, message: string): void {
   if (!condition) {
     throw new DiagramValidationError(message);
   }
@@ -167,7 +164,7 @@ export const flowchartFixture = parseFlowchartDiagram({
     edgeRouting: "orthogonal",
   },
   style: {
-    accentColor: "#2563eb",
+    accentColor: "#0f766e",
     backgroundColor: "#ffffff",
   },
 });
@@ -218,7 +215,7 @@ export const pharmaBatchDispositionFlowchart = parseFlowchartDiagram({
     edgeRouting: "orthogonal",
   },
   style: {
-    accentColor: "#2563eb",
+    accentColor: "#0f766e",
     backgroundColor: "#ffffff",
   },
 });

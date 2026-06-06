@@ -45,7 +45,7 @@ function expectedJsonShape(scenario: DiagramScenario): string {
         },
       ],
       layout: { direction: "TB", edgeRouting: "orthogonal" },
-      style: { accentColor: "#2563eb", backgroundColor: "#ffffff" },
+      style: { accentColor: "#0f766e", backgroundColor: "#ffffff" },
     },
     null,
     2,

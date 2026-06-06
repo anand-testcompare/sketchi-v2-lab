@@ -51,7 +51,7 @@ export async function upsertPreviewComment() {
     marker,
     previewUrl: process.env.PREVIEW_URL,
     runUrl,
-    sha: process.env.GITHUB_SHA,
+    sha: process.env.PREVIEW_SHA ?? process.env.GITHUB_SHA,
     status: process.env.PREVIEW_STATUS,
     workerName: process.env.WORKER_NAME,
   });
