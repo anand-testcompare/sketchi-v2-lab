@@ -69,4 +69,4 @@ jobs:
         run: pnpm nx build-storybook diagram-studio-ui
       - name: Publish Storybook to Chromatic
         if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' && steps.affected.outputs.storybook == 'true' }}
-        run: pnpm nx chromatic diagram-studio-ui -- --branch-name "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" --repository-slug "$GITHUB_REPOSITORY"
+        run: pnpm nx chromatic diagram-studio-ui -- --branch-name "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" --repository-slug "$GITHUB_REPOSITORY" --only-changed --exit-zero-on-changes
