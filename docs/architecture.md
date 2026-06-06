@@ -85,32 +85,21 @@ The live playground uses the Cloudflare AI Gateway Worker binding with
 Gateway logs and can retain request/response payloads for prompt tuning when
 the gateway is configured to keep payloads.
 
-Inspect recent logs with:
+Inspect and summarize logs through the Cloudflare API MCP instead of keeping
+repo-local Cloudflare API scripts. Configure Codex or another MCP client with
+Cloudflare's Code Mode server:
 
-```sh
-pnpm ai-gateway:logs -- --limit 5
+```json
+{
+  "mcpServers": {
+    "cloudflare-api": {
+      "url": "https://mcp.cloudflare.com/mcp"
+    }
+  }
+}
 ```
 
-Inspect stored prompt/response payloads with:
-
-```sh
-pnpm ai-gateway:logs -- --include-payload --limit 3
-```
-
-When running through Infisical, use the `/github` path so the same Cloudflare
-account/token values used by CI are available locally:
-
-```sh
-infisical run --env staging --path /github -- pnpm ai-gateway:logs -- --include-payload --limit 3
-```
-
-The token used for this command must include Cloudflare `AI Gateway Read`. The
-Cloudflare `cf` CLI can introspect the relevant AI Gateway log schemas with
-`cf agent-context ai-gateway` and `cf schema ai-gateway logs list`, but this
-repo currently keeps the executable path in this script because the installed
-`cf` CLI does not execute `cf ai-gateway logs ...` commands and Wrangler's `ai`
-commands do not expose Gateway logs. If the deploy token is intentionally
-narrower, provide a separate `CLOUDFLARE_AI_GATEWAY_API_TOKEN` for this script.
-
-The script calls Cloudflare's AI Gateway Logs API endpoints for list, detail,
-request payload, and response payload inspection.
+Use [docs/prompts/ai-gateway-log-analysis.md](./prompts/ai-gateway-log-analysis.md)
+as the reusable analysis prompt. The prompt keeps the operational behavior
+read-only, asks for payload inspection only when retained by the Gateway, and
+turns model failures into scenario or prompt-tuning follow-up.
