@@ -10,6 +10,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    environment: staging
     env:
       CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     steps:

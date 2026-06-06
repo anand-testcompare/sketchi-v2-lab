@@ -40,6 +40,7 @@ jobs:
         github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'workflow_dispatch' && inputs.action == 'deploy')
     runs-on: ubuntu-latest
+    environment: staging
     concurrency:
       group: playground-preview-pr-${{ github.event.pull_request.number || inputs.pr_number }}
       cancel-in-progress: true
@@ -145,6 +146,7 @@ jobs:
         github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'workflow_dispatch' && inputs.action == 'cleanup')
     runs-on: ubuntu-latest
+    environment: staging
     concurrency:
       group: playground-preview-pr-${{ github.event.pull_request.number || inputs.pr_number }}
       cancel-in-progress: false
