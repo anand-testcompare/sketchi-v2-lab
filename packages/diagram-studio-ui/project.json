@@ -33,7 +33,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["build-storybook"],
       "options": {
-        "command": "chromatic --storybook-build-dir storybook-static/diagram-studio-ui --storybook-config-dir packages/diagram-studio-ui/.storybook --storybook-base-dir packages/diagram-studio-ui --only-changed"
+        "command": "chromatic --storybook-build-dir storybook-static/diagram-studio-ui --storybook-config-dir packages/diagram-studio-ui/.storybook --storybook-base-dir packages/diagram-studio-ui"
       }
     },
     "storybook": {
