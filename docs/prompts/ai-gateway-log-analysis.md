@@ -24,6 +24,9 @@ needed for debugging.
 
 Start by finding the account ID and AI Gateway log endpoints if they are not
 already known. Then inspect recent Gateway logs for the deployed playground.
+Prefer log detail fields such as `request_head` and `response_head` when they
+are marked complete. Use separate request/response payload endpoints only when
+the detail record does not include enough retained payload data.
 
 For each relevant request, report:
 
