@@ -13,8 +13,11 @@ export interface ScenarioSuitePanelResult {
 }
 
 export interface ScenarioSuitePanelProps {
+  activeScenarioId?: string;
+  batchControlsOpen?: boolean;
   disabled?: boolean;
   error?: string;
+  onActivateScenario?: (scenarioId: string) => void;
   onClearSelection?: () => void;
   onRunSelected?: () => void;
   onSelectAll?: () => void;
@@ -53,8 +56,11 @@ function durationLabel(result: ScenarioSuitePanelResult | undefined): string {
 }
 
 export function ScenarioSuitePanel({
+  activeScenarioId,
+  batchControlsOpen = false,
   disabled = false,
   error,
+  onActivateScenario,
   onClearSelection,
   onRunSelected,
   onSelectAll,
@@ -94,22 +100,28 @@ export function ScenarioSuitePanel({
         </button>
       </header>
 
-      <div className="sketchi-scenario-suite-panel__selection-actions">
-        <button
-          disabled={disabled || running}
-          onClick={onSelectAll}
-          type="button"
-        >
-          Select all
-        </button>
-        <button
-          disabled={disabled || running}
-          onClick={onClearSelection}
-          type="button"
-        >
-          Clear
-        </button>
-      </div>
+      <details
+        className="sketchi-scenario-suite-panel__batch"
+        open={batchControlsOpen || running}
+      >
+        <summary>Batch controls</summary>
+        <div className="sketchi-scenario-suite-panel__selection-actions">
+          <button
+            disabled={disabled || running}
+            onClick={onSelectAll}
+            type="button"
+          >
+            Select all
+          </button>
+          <button
+            disabled={disabled || running}
+            onClick={onClearSelection}
+            type="button"
+          >
+            Clear
+          </button>
+        </div>
+      </details>
 
       {error ? (
         <p className="sketchi-scenario-suite-panel__error">{error}</p>
@@ -119,23 +131,45 @@ export function ScenarioSuitePanel({
         {scenarios.map((scenario) => {
           const result = resultForScenario(results, scenario.id);
           const label = resultLabel(result);
+          const active = activeScenarioId === scenario.id;
+          const activateScenario = () => onActivateScenario?.(scenario.id);
 
           return (
-            <li data-status={label} key={scenario.id}>
-              <label>
+            <li
+              data-active={active}
+              data-status={label}
+              key={scenario.id}
+              onClick={(event) => {
+                if (event.target instanceof HTMLInputElement) {
+                  return;
+                }
+
+                activateScenario();
+              }}
+            >
+              <div className="sketchi-scenario-suite-panel__scenario">
                 <input
+                  aria-label={`Include ${scenario.title}`}
                   checked={selectedIds.has(scenario.id)}
                   disabled={disabled || running}
                   onChange={() => onToggleScenario?.(scenario.id)}
                   type="checkbox"
                 />
-                <span>
+                <button
+                  aria-current={active ? "true" : undefined}
+                  className="sketchi-scenario-suite-panel__scenario-button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    activateScenario();
+                  }}
+                  type="button"
+                >
                   <strong>{scenario.title}</strong>
                   {scenario.difficulty ? (
                     <small>{scenario.difficulty}</small>
                   ) : null}
-                </span>
-              </label>
+                </button>
+              </div>
               <output aria-label={`${scenario.title} result`}>
                 <span>{label}</span>
                 <small>{durationLabel(result)}</small>

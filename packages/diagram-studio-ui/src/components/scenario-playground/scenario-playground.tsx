@@ -274,11 +274,7 @@ export function ScenarioPlayground({
   const displayedScene =
     state.editedExcalidrawScene ?? activeResult?.excalidrawScene;
   const mainPanelLabel =
-    state.mode === "llm"
-      ? activeResult
-        ? "LLM candidate"
-        : "Prompt"
-      : "Deterministic";
+    state.mode === "llm" ? "Live candidate" : "Fixture conversion";
   const statusOk =
     state.mode === "llm"
       ? Boolean(candidateEvaluation?.result?.ok) && !candidateEvaluation?.error
@@ -304,7 +300,7 @@ export function ScenarioPlayground({
     state.mode === "llm"
       ? [
           { id: "ir", label: "Candidate IR" },
-          { id: "prompt", label: "Prompt" },
+          { id: "prompt", label: "Messages" },
           { id: "excalidraw", label: "Excalidraw JSON" },
         ]
       : [
@@ -316,9 +312,13 @@ export function ScenarioPlayground({
     store.setState((current) => ({
       ...current,
       inspectorPanel:
-        mode === "deterministic" && current.inspectorPanel === "prompt"
-          ? "ir"
-          : current.inspectorPanel,
+        mode === "deterministic"
+          ? current.inspectorPanel === "prompt"
+            ? "ir"
+            : current.inspectorPanel
+          : current.candidateText.trim().length > 0
+            ? "ir"
+            : "prompt",
       mode,
     }));
   }
@@ -333,13 +333,8 @@ export function ScenarioPlayground({
       generationCandidates: [],
       generationError: undefined,
       generationStatus: "idle",
-      inspectorPanel: "ir",
+      inspectorPanel: current.mode === "llm" ? "prompt" : "ir",
       scenarioId: nextScenario.id,
-      selectedSuiteScenarioIds: current.selectedSuiteScenarioIds.includes(
-        nextScenario.id,
-      )
-        ? current.selectedSuiteScenarioIds
-        : [nextScenario.id, ...current.selectedSuiteScenarioIds],
     }));
   }
 
@@ -498,27 +493,6 @@ export function ScenarioPlayground({
 
       <div className="sketchi-scenario-playground__layout">
         <aside className="sketchi-scenario-playground__controls">
-          <label>
-            Scenario
-            <select
-              value={selectedScenario?.id}
-              onChange={(event) => {
-                const nextScenario = scenarios.find(
-                  (scenario) => scenario.id === event.target.value,
-                );
-                if (nextScenario) {
-                  resetScenario(nextScenario);
-                }
-              }}
-            >
-              {scenarios.map((scenario) => (
-                <option key={scenario.id} value={scenario.id}>
-                  {scenario.title}
-                </option>
-              ))}
-            </select>
-          </label>
-
           <div
             aria-label="Scenario type"
             className="sketchi-scenario-playground__mode-tabs"
@@ -530,7 +504,7 @@ export function ScenarioPlayground({
               role="tab"
               type="button"
             >
-              Deterministic
+              Fixture conversion
             </button>
             <button
               aria-selected={state.mode === "llm"}
@@ -538,9 +512,32 @@ export function ScenarioPlayground({
               role="tab"
               type="button"
             >
-              LLM evals
+              Live generation
             </button>
           </div>
+
+          {state.mode === "deterministic" ? (
+            <label className="sketchi-scenario-playground__scenario-selector">
+              Scenario
+              <select
+                value={selectedScenario?.id}
+                onChange={(event) => {
+                  const nextScenario = scenarios.find(
+                    (scenario) => scenario.id === event.target.value,
+                  );
+                  if (nextScenario) {
+                    resetScenario(nextScenario);
+                  }
+                }}
+              >
+                {scenarios.map((scenario) => (
+                  <option key={scenario.id} value={scenario.id}>
+                    {scenario.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
           {selectedScenario ? (
             <section className="sketchi-scenario-playground__scenario-card">
@@ -579,7 +576,7 @@ export function ScenarioPlayground({
 
           <section className="sketchi-scenario-playground__checks">
             <h2>
-              {state.mode === "llm" ? "LLM candidate checks" : "Fixture checks"}
+              {state.mode === "llm" ? "Candidate checks" : "Fixture checks"}
             </h2>
             {state.mode === "llm" && !hasCandidateText ? (
               <p className="sketchi-scenario-playground__muted">
@@ -600,15 +597,6 @@ export function ScenarioPlayground({
               ))}
             </ul>
           </section>
-
-          {selectedScenario ? (
-            <button
-              onClick={() => resetScenario(selectedScenario)}
-              type="button"
-            >
-              Reset scenario
-            </button>
-          ) : null}
         </aside>
 
         <main className="sketchi-scenario-playground__main">
@@ -623,14 +611,11 @@ export function ScenarioPlayground({
               scene={activeResult.excalidrawScene}
               title={activeResult.diagram.title}
             />
-          ) : state.mode === "llm" && promptParts ? (
-            <PromptMessageViewer
-              messages={promptParts.messages}
-              title="Prompt"
-            />
           ) : (
             <div className="sketchi-scenario-playground__empty-canvas">
-              No generated diagram
+              {state.mode === "llm"
+                ? "No live candidate yet"
+                : "No generated diagram"}
             </div>
           )}
         </main>
@@ -699,7 +684,7 @@ export function ScenarioPlayground({
             {state.inspectorPanel === "prompt" && state.mode === "llm" ? (
               <PromptMessageViewer
                 messages={promptParts?.messages ?? []}
-                title="Prompt"
+                title="Prompt messages"
               />
             ) : null}
 
@@ -717,8 +702,21 @@ export function ScenarioPlayground({
 
           {state.mode === "llm" ? (
             <ScenarioSuitePanel
+              batchControlsOpen={state.selectedSuiteScenarioIds.length > 1}
               disabled={!onGenerateScenario}
+              {...(selectedScenario
+                ? { activeScenarioId: selectedScenario.id }
+                : {})}
               {...(state.suiteError ? { error: state.suiteError } : {})}
+              onActivateScenario={(scenarioId) => {
+                const nextScenario = scenarios.find(
+                  (scenario) => scenario.id === scenarioId,
+                );
+
+                if (nextScenario) {
+                  resetScenario(nextScenario);
+                }
+              }}
               onClearSelection={() =>
                 store.setState((current) => ({
                   ...current,
@@ -751,6 +749,7 @@ export function ScenarioPlayground({
                 title: scenario.title,
               }))}
               selectedScenarioIds={state.selectedSuiteScenarioIds}
+              title="Scenario set"
             />
           ) : null}
         </aside>

@@ -22,6 +22,7 @@ describe("ScenarioSuitePanel", () => {
           },
         ]}
         scenarios={scenarios}
+        activeScenarioId="onboarding"
         selectedScenarioIds={["onboarding"]}
       />,
     );
@@ -36,14 +37,21 @@ describe("ScenarioSuitePanel", () => {
     expect(screen.getByLabelText("Pharma batch result").textContent).toContain(
       "Not run",
     );
+    expect(
+      screen
+        .getByRole("button", { name: /Onboarding flow/ })
+        .getAttribute("aria-current"),
+    ).toBe("true");
   });
 
   it("notifies when a scenario is toggled or the selection is run", () => {
+    const onActivateScenario = vi.fn();
     const onRunSelected = vi.fn();
     const onToggleScenario = vi.fn();
 
     render(
       <ScenarioSuitePanel
+        onActivateScenario={onActivateScenario}
         onRunSelected={onRunSelected}
         onToggleScenario={onToggleScenario}
         scenarios={scenarios}
@@ -51,13 +59,11 @@ describe("ScenarioSuitePanel", () => {
       />,
     );
 
-    fireEvent.click(
-      screen
-        .getAllByLabelText(/Pharma batch/)
-        .find((element) => element instanceof HTMLInputElement) as HTMLElement,
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Pharma batch/ }));
+    fireEvent.click(screen.getByLabelText("Include Pharma batch"));
     fireEvent.click(screen.getByRole("button", { name: "Run selected" }));
 
+    expect(onActivateScenario).toHaveBeenCalledWith("pharma");
     expect(onToggleScenario).toHaveBeenCalledWith("pharma");
     expect(onRunSelected).toHaveBeenCalledTimes(1);
   });

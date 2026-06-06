@@ -97,7 +97,7 @@ describe("ScenarioPlayground", () => {
     }));
 
     render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
-    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Live generation" }));
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
 
     await waitFor(() => expect(onGenerateScenario).toHaveBeenCalledTimes(1));
@@ -119,7 +119,7 @@ describe("ScenarioPlayground", () => {
     );
 
     render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
-    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Live generation" }));
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
 
     expect(screen.getAllByText("Running").length).toBeGreaterThan(0);
@@ -144,21 +144,43 @@ describe("ScenarioPlayground", () => {
   it("shows system and user prompt parts separately", () => {
     render(<ScenarioPlayground />);
 
-    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
-    fireEvent.click(screen.getByRole("tab", { name: "Prompt" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Live generation" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Messages" }));
 
     expect(
-      screen.getAllByRole("heading", { name: "System" }).length,
+      screen.getAllByRole("heading", { name: "System instructions" }).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.getAllByRole("heading", { name: "User" }).length,
+      screen.getAllByRole("heading", { name: "User request" }).length,
     ).toBeGreaterThan(0);
-    expect(screen.getAllByLabelText("System prompt")[0]?.textContent).toContain(
-      "Flowchart IR rules:",
+    expect(
+      screen.getAllByLabelText("System instructions prompt")[0]?.textContent,
+    ).toContain("Flowchart IR rules:");
+    expect(
+      screen.getAllByLabelText("User request prompt")[0]?.textContent,
+    ).toContain("Scenario:");
+  });
+
+  it("focuses a live scenario from the suite without selecting it for the batch", () => {
+    render(<ScenarioPlayground />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Live generation" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Pharma batch disposition/ }),
     );
-    expect(screen.getAllByLabelText("User prompt")[0]?.textContent).toContain(
-      "Scenario:",
-    );
+
+    expect(
+      screen.getAllByRole("heading", {
+        name: "Pharma batch disposition",
+      }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      (
+        screen.getByLabelText(
+          "Include Pharma batch disposition",
+        ) as HTMLInputElement
+      ).checked,
+    ).toBe(false);
   });
 
   it("mirrors Excalidraw visual edits into the JSON inspector", async () => {
@@ -196,7 +218,7 @@ describe("ScenarioPlayground", () => {
     }));
 
     render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
-    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Live generation" }));
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
 
     await waitFor(() => expect(onGenerateScenario).toHaveBeenCalledTimes(1));
@@ -237,7 +259,8 @@ describe("ScenarioPlayground", () => {
     );
 
     render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
-    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Live generation" }));
+    fireEvent.click(screen.getByText("Batch controls"));
     fireEvent.click(screen.getByRole("button", { name: "Select all" }));
     fireEvent.click(screen.getByRole("button", { name: "Run selected" }));
 
@@ -276,7 +299,8 @@ describe("ScenarioPlayground", () => {
     );
 
     render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
-    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Live generation" }));
+    fireEvent.click(screen.getByText("Run settings"));
     fireEvent.click(screen.getByLabelText("Fresh"));
     fireEvent.click(screen.getByRole("button", { name: "Run selected" }));
 

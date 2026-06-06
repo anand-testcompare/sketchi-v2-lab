@@ -30,6 +30,7 @@ describe("GenerationRunPanel", () => {
         onCacheModeChange={onCacheModeChange}
       />,
     );
+    fireEvent.click(screen.getByText("Run settings"));
     fireEvent.click(screen.getByLabelText("Fresh"));
 
     expect(onCacheModeChange).toHaveBeenCalledWith("fresh");
@@ -53,8 +54,8 @@ describe("GenerationRunPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Returned")).toBeTruthy();
-    expect(screen.getByText("42 ms / 11 tokens")).toBeTruthy();
+    expect(screen.getAllByText("Returned").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("42 ms / 11 tokens").length).toBeGreaterThan(0);
     expect(screen.getByText("Fresh run")).toBeTruthy();
   });
 
@@ -77,7 +78,7 @@ describe("GenerationRunPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Failed")).toBeTruthy();
+    expect(screen.getAllByText("Failed").length).toBeGreaterThan(0);
     expect(
       screen.getByText("Google AI Studio Gateway request failed."),
     ).toBeTruthy();

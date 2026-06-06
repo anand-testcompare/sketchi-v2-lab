@@ -77,3 +77,36 @@ an implementation, test, story, local export, and package export.
 The playground is scaffolded for Cloudflare Workers through Vite and Wrangler.
 Deployment should remain independent from the product app and can be skipped
 when the playground is only needed as a local scenario/eval surface.
+
+## AI Gateway Observability
+
+The live playground uses the Cloudflare AI Gateway Worker binding with
+`collectLog: true` and scenario metadata on each request. Cloudflare stores
+Gateway logs and can retain request/response payloads for prompt tuning when
+the gateway is configured to keep payloads.
+
+Inspect recent logs with:
+
+```sh
+pnpm ai-gateway:logs -- --limit 5
+```
+
+Inspect stored prompt/response payloads with:
+
+```sh
+pnpm ai-gateway:logs -- --include-payload --limit 3
+```
+
+When running through Infisical, use the `/github` path so the same Cloudflare
+account/token values used by CI are available locally:
+
+```sh
+infisical run --env staging --path /github -- pnpm ai-gateway:logs -- --include-payload --limit 3
+```
+
+The token used for this command must include Cloudflare `AI Gateway Read`. If
+the deploy token is intentionally narrower, provide a separate
+`CLOUDFLARE_AI_GATEWAY_API_TOKEN` for this script.
+
+The script calls Cloudflare's AI Gateway Logs API endpoints for list, detail,
+request payload, and response payload inspection.

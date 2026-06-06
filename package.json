@@ -10,6 +10,7 @@
     "cf-typegen": "nx cf-typegen playground",
     "deploy:playground": "nx deploy playground",
     "dev": "nx run-many -t dev --parallel",
+    "ai-gateway:logs": "node scripts/05-inspect-ai-gateway-logs.mjs",
     "preview": "nx run-many -t preview --parallel",
     "storybook": "nx storybook diagram-studio-ui",
     "test": "nx run-many -t test",

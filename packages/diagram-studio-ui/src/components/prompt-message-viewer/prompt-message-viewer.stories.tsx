@@ -15,7 +15,7 @@ const meta = {
   component: PromptMessageViewer,
   args: {
     messages: promptParts.messages,
-    title: "Prompt",
+    title: "Prompt messages",
   },
 } satisfies Meta<typeof PromptMessageViewer>;
 
