@@ -96,6 +96,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ~4.1.0
         version: 4.1.8(vitest@4.1.8)
+      chromatic:
+        specifier: ^17.2.0
+        version: 17.2.0
       jsdom:
         specifier: 29.1.1
         version: 29.1.1
@@ -4632,6 +4635,22 @@ packages:
   chokidar@5.0.0:
     resolution: {integrity: sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw==}
     engines: {node: '>= 20.19.0'}
+
+  chromatic@17.2.0:
+    resolution: {integrity: sha512-jxuFtNNMuxbVcM2oAAPsa1fDuygt5e1SVJpvTmvSPkVXFQGylFvApsbhDP9a94qI8QMJeUMmts4bXMqrBotWjg==}
+    engines: {node: '>=22.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@chromatic-com/cypress': ^0.*.* || ^1.0.0
+      '@chromatic-com/playwright': ^0.*.* || ^1.0.0
+      '@chromatic-com/vitest': ^0.*.* || ^1.0.0
+    peerDependenciesMeta:
+      '@chromatic-com/cypress':
+        optional: true
+      '@chromatic-com/playwright':
+        optional: true
+      '@chromatic-com/vitest':
+        optional: true
 
   chrome-trace-event@1.0.4:
     resolution: {integrity: sha512-rNjApaLzuwaOTjCiT8lSDdGN1APCiqkChLMJxJPWLunPAt5fy8xgU9/jNOchV84wfIxrA0lRQB7oCT8jrn/wrQ==}
@@ -12736,6 +12755,10 @@ snapshots:
   chokidar@5.0.0:
     dependencies:
       readdirp: 5.0.0
+
+  chromatic@17.2.0:
+    dependencies:
+      semver: 7.8.1
 
   chrome-trace-event@1.0.4: {}
 

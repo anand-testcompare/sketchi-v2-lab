@@ -59,10 +59,10 @@ body {
 }
 
 .sketchi-generation-workspace__status {
-  background: #dbeafe;
-  border: 1px solid #93c5fd;
+  background: #ecfdf5;
+  border: 1px solid #99f6e4;
   border-radius: 999px;
-  color: #1e3a8a;
+  color: #115e59;
   font-size: 13px;
   font-weight: 700;
   padding: 7px 12px;
@@ -230,7 +230,7 @@ body {
 .sketchi-scenario-playground__tabs button:focus-visible,
 .sketchi-scenario-suite-panel__scenario-button:focus-visible,
 .sketchi-scenario-suite-panel summary:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid #0f766e;
   outline-offset: 2px;
 }
 
@@ -872,10 +872,10 @@ body {
 }
 
 .sketchi-scenario-playground__canvas-header span {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
   border-radius: 5px;
-  color: #1d4ed8;
+  color: #0f766e;
   flex: 0 0 auto;
   font-size: 11px;
   font-weight: 800;
@@ -995,7 +995,7 @@ body {
   margin: 3px 0 0;
 }
 
-.sketchi-scenario-suite-panel button {
+.sketchi-scenario-suite-panel__header > button {
   background: #111827;
   border: 1px solid #111827;
   border-radius: 6px;
@@ -1007,7 +1007,7 @@ body {
   padding: 7px 9px;
 }
 
-.sketchi-scenario-suite-panel button:disabled {
+.sketchi-scenario-suite-panel__header > button:disabled {
   background: #e5e7eb;
   border-color: #d1d5db;
   color: #6b7280;
@@ -1076,8 +1076,9 @@ body {
 }
 
 .sketchi-scenario-suite-panel__list li[data-active="true"] {
-  border-color: #2563eb;
-  box-shadow: inset 3px 0 0 #2563eb;
+  background: #f8fafc;
+  border-color: #64748b;
+  box-shadow: inset 3px 0 0 #64748b;
 }
 
 .sketchi-scenario-suite-panel__scenario {
@@ -1107,7 +1108,7 @@ body {
 }
 
 .sketchi-scenario-suite-panel__scenario-button[aria-current="true"] strong {
-  color: #1d4ed8;
+  color: #0f172a;
 }
 
 .sketchi-scenario-suite-panel__list strong {

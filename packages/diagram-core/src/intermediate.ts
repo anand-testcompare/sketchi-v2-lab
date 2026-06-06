@@ -27,7 +27,7 @@ export const DiagramStyleSchema = z.object({
   accentColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
-    .default("#2563eb"),
+    .default("#0f766e"),
   backgroundColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
@@ -50,7 +50,7 @@ export const IntermediateDiagramSchema = z.object({
     edgeRouting: "orthogonal",
   }),
   style: DiagramStyleSchema.default({
-    accentColor: "#2563eb",
+    accentColor: "#0f766e",
     backgroundColor: "#ffffff",
   }),
   metadata: z.record(z.string(), z.unknown()).default({}),

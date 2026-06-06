@@ -52,7 +52,7 @@ interface FlowchartScenarioDefinition {
 }
 
 const DEFAULT_STYLE = {
-  accentColor: "#2563eb",
+  accentColor: "#0f766e",
   backgroundColor: "#ffffff",
 };
 const FLOWCHART_NODE_KIND_ORDER: readonly FlowchartNodeKind[] = [
