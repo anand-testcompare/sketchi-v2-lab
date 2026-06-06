@@ -10,6 +10,9 @@ Sketchi v2 should make diagram generation boring in the best way: inputs are val
 - `diagram-scenarios` owns maintained prompts, assertions, fixture evaluation, and local command-provider runs.
 - `diagram-studio-ui` renders the scene model and owns user-facing component states.
 - `apps/playground` composes the packages in a TanStack Start testing ground.
+- `apps/web` owns the public home/docs surface and should stay free of diagram runtime dependencies unless docs become interactive.
+- `apps/excalidraw` owns the no-auth product shell for `excalidraw.sketchi.app` and composes the diagram packages into a real workspace.
+- `apps/icons` owns `icons.sketchi.app` and serves the copied pre-cleaned `sketchi-icons/output` tree from its app-local public assets.
 
 ## Diagram Pipeline
 
@@ -56,6 +59,19 @@ argv as the provider command.
 This keeps local/OpenCode-style integrations separate from Convex auth, thread
 orchestration, and persistence.
 
+## App Surfaces
+
+The v2 workspace now has four independently deployable TanStack Start apps:
+
+- `playground`: scenario evaluation and prompt-output inspection.
+- `web`: public home/docs for the Sketchi product direction.
+- `excalidraw`: the no-auth diagram workspace that will become the authenticated app later.
+- `icons`: a standalone browser for the curated Sketchi icon outputs.
+
+Keep app-specific UI in the app that owns it. Generate those components with
+`@sketchi/generators:ui-component --projectRoot=apps/<app>` so stories and tests
+stay close to the route shell without adding shared package dependencies.
+
 ## Generator Contract
 
 New UI components should be created with `@sketchi/generators:ui-component`.
@@ -74,9 +90,16 @@ an implementation, test, story, local export, and package export.
 
 ## Deployment Direction
 
-The playground is scaffolded for Cloudflare Workers through Vite and Wrangler.
-Deployment should remain independent from the product app and can be skipped
-when the playground is only needed as a local scenario/eval surface.
+Each app is scaffolded for Cloudflare Workers through Vite and Wrangler. The
+production domains are:
+
+- `playground.sketchi.app`
+- `sketchi.app` and `www.sketchi.app`
+- `excalidraw.sketchi.app`
+- `icons.sketchi.app`
+
+Preview deploys strip production routes and deploy app-specific Workers named
+`sketchi-<app>-pr-<number>`.
 
 ## AI Gateway Observability
 

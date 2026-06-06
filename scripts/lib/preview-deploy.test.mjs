@@ -3,15 +3,32 @@ import test from "node:test";
 
 import {
   extractPreviewUrl,
+  previewAppConfig,
   previewCommentBody,
   previewWorkerName,
   previewWranglerConfig,
 } from "./preview-deploy.mjs";
 
+test("previewAppConfig returns app-scoped preview metadata", () => {
+  assert.deepEqual(previewAppConfig("icons"), {
+    appId: "icons",
+    commentMarker: "<!-- sketchi-icons-preview -->",
+    title: "Sketchi Icons",
+    workerPrefix: "sketchi-icons-pr",
+  });
+});
+
 test("previewWorkerName creates a stable Cloudflare-safe PR worker name", () => {
   assert.equal(
     previewWorkerName({ prNumber: 42, workerPrefix: "Sketchi Playground PR" }),
     "sketchi-playground-pr-42",
+  );
+});
+
+test("previewWorkerName defaults to the selected app prefix", () => {
+  assert.equal(
+    previewWorkerName({ app: "web", prNumber: 42 }),
+    "sketchi-web-pr-42",
   );
 });
 
@@ -30,6 +47,7 @@ test("previewWranglerConfig isolates preview worker settings", () => {
       route: "playground.sketchi.app/*",
       routes: ["playground.sketchi.app/*"],
       domains: [{ pattern: "playground.sketchi.app" }],
+      custom_domain: true,
       vars: {
         SKETCHI_AI_GATEWAY_ID: "google-ai-studio",
       },
@@ -44,6 +62,7 @@ test("previewWranglerConfig isolates preview worker settings", () => {
   assert.equal(previewConfig.route, undefined);
   assert.equal(previewConfig.routes, undefined);
   assert.equal(previewConfig.domains, undefined);
+  assert.equal(previewConfig.custom_domain, undefined);
   assert.deepEqual(previewConfig.vars, {
     SKETCHI_AI_GATEWAY_ID: "google-ai-studio",
   });
@@ -66,6 +85,7 @@ test("extractPreviewUrl prefers the URL for the requested worker", () => {
 test("previewCommentBody includes ready preview details", () => {
   assert.equal(
     previewCommentBody({
+      app: "playground",
       previewUrl: "https://sketchi-playground-pr-42.account.workers.dev",
       runUrl:
         "https://github.com/anand-testcompare/sketchi-v2-lab/actions/runs/1",
@@ -90,6 +110,7 @@ test("previewCommentBody includes ready preview details", () => {
 test("previewCommentBody marks deleted previews", () => {
   assert.match(
     previewCommentBody({
+      app: "icons",
       status: "deleted",
       workerName: "sketchi-playground-pr-42",
     }),

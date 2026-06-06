@@ -8,6 +8,8 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 
 - Nx workspace for package boundaries, affected checks, and Storybook wiring.
 - TanStack Start playground app, prepared for optional Cloudflare deployment.
+- TanStack Start app surfaces for `sketchi.app`, `excalidraw.sketchi.app`,
+  and `icons.sketchi.app`.
 - Typed diagram intermediate representation in `packages/diagram-core`.
 - Deterministic scene renderer in `packages/diagram-renderer`.
 - Real Excalidraw conversion and validation in `packages/diagram-excalidraw`.
@@ -20,9 +22,12 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 ```sh
 pnpm install
 pnpm nx run-many -t typecheck,test,build
-pnpm nx build-storybook diagram-studio-ui
+pnpm nx run-many -t build-storybook
 pnpm dev
 pnpm nx dev playground
+pnpm nx dev web
+pnpm nx dev excalidraw
+pnpm nx dev icons
 pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition --fixture --out .memory/pharma-batch.excalidraw
 SKETCHI_GENERATOR_COMMAND="your-llm-command" pnpm nx scenario diagram-scenarios -- --scenario pharma-batch-disposition
 ```
@@ -39,14 +44,27 @@ pnpm nx g @sketchi/generators:diagram-type mindmap --title "Sketchi mindmap fixt
 
 ## Preview Deploys
 
-Pull requests deploy the playground to a PR-specific Cloudflare Worker and update
-one sticky PR comment with the URL when Cloudflare credentials are configured.
+Pull requests deploy each app to PR-specific Cloudflare Workers and update one
+sticky PR comment per app with the URL when Cloudflare credentials are
+configured.
 See [docs/preview-deploys.md](docs/preview-deploys.md).
+
+Production Worker deploy targets are app-scoped:
+
+```sh
+pnpm deploy:playground
+pnpm deploy:web
+pnpm deploy:excalidraw
+pnpm deploy:icons
+```
 
 ## Workspace Shape
 
 ```text
 apps/playground                  TanStack Start playground
+apps/web                         Sketchi public home and docs
+apps/excalidraw                  No-auth Excalidraw product shell
+apps/icons                       Standalone curated icon output browser
 packages/diagram-core            Diagram IR, validation, fixtures
 packages/diagram-renderer        Deterministic scene generation
 packages/diagram-excalidraw      Real Excalidraw conversion and validation

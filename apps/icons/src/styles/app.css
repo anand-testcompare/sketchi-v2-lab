@@ -1,0 +1,217 @@
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #f6f8fb;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.sketchi-icons,
+.sketchi-icons-not-found {
+  color: #111827;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.sketchi-icons-not-found {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+}
+
+.sketchi-icons {
+  display: grid;
+  gap: 12px;
+  min-height: 100vh;
+  padding: 12px;
+}
+
+.sketchi-icons__header,
+.sketchi-icons__toolbar,
+.sketchi-icons__grid {
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+}
+
+.sketchi-icons__header {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.sketchi-icons__title {
+  display: grid;
+  gap: 3px;
+}
+
+.sketchi-icons__eyebrow {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.sketchi-icons h1 {
+  font-size: 22px;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.sketchi-icons__summary {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.sketchi-icons__summary span {
+  background: #f8fafc;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.sketchi-icons__toolbar {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) minmax(190px, 260px) auto;
+  padding: 12px;
+}
+
+.sketchi-icons__field {
+  color: #475569;
+  display: grid;
+  font-size: 12px;
+  font-weight: 900;
+  gap: 6px;
+}
+
+.sketchi-icons__field input,
+.sketchi-icons__field select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #111827;
+  font: inherit;
+  min-height: 40px;
+  padding: 9px 10px;
+}
+
+.sketchi-icons__toggle {
+  align-items: center;
+  color: #334155;
+  display: flex;
+  font-size: 13px;
+  font-weight: 900;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.sketchi-icons__status {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  color: #475569;
+  display: grid;
+  min-height: 260px;
+  place-items: center;
+  text-align: center;
+}
+
+.sketchi-icons__grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  padding: 12px;
+}
+
+.sketchi-icons__item {
+  background: #f8fafc;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-rows: 96px auto auto;
+  min-width: 0;
+  padding: 10px;
+}
+
+.sketchi-icons__preview {
+  align-items: center;
+  background:
+    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+  background-color: #ffffff;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+  background-size: 16px 16px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.sketchi-icons__preview img {
+  display: block;
+  max-height: 64px;
+  max-width: 76px;
+}
+
+.sketchi-icons__item strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.sketchi-icons__item span {
+  color: #64748b;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .sketchi-icons__header,
+  .sketchi-icons__toolbar {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .sketchi-icons__header {
+    display: grid;
+  }
+
+  .sketchi-icons__summary {
+    justify-content: flex-start;
+  }
+}

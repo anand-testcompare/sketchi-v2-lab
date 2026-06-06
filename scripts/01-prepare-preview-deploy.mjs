@@ -9,6 +9,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import {
+  previewAppConfig,
   previewWorkerName,
   previewWranglerConfig,
 } from "./lib/preview-deploy.mjs";
@@ -49,12 +50,16 @@ export function preparePreviewDeploy(args = process.argv.slice(2)) {
     "--config",
     "dist/server/wrangler.json",
   );
+  const app = previewAppConfig(
+    readFlag(args, "--app", process.env.PREVIEW_APP),
+  );
   const previewConfigPath = readFlag(
     args,
     "--out",
-    "dist/server/wrangler.preview.json",
+    `dist/server/wrangler.${app.appId}.preview.json`,
   );
   const workerName = previewWorkerName({
+    app: app.appId,
     prNumber,
     workerPrefix: readFlag(
       args,
@@ -72,6 +77,7 @@ export function preparePreviewDeploy(args = process.argv.slice(2)) {
   );
 
   writeOutputs({
+    app: app.appId,
     preview_config_path: previewConfigPath,
     worker_name: workerName,
   });

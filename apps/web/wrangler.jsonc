@@ -1,0 +1,23 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sketchi-web",
+  "compatibility_date": "2026-06-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": {
+    "enabled": true,
+  },
+  "routes": [
+    {
+      "pattern": "sketchi.app",
+      "custom_domain": true,
+    },
+    {
+      "pattern": "www.sketchi.app",
+      "custom_domain": true,
+    },
+  ],
+  "vars": {
+    "SKETCHI_APP_SURFACE": "web",
+  },
+}

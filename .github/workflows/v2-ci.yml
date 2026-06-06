@@ -65,8 +65,7 @@ jobs:
             echo "storybook=false" >> "$GITHUB_OUTPUT"
           fi
       - run: pnpm nx affected -t typecheck,test,build --base="${{ steps.nx-refs.outputs.base }}" --head="${{ steps.nx-refs.outputs.head }}"
-      - if: ${{ steps.affected.outputs.storybook == 'true' }}
-        run: pnpm nx build-storybook diagram-studio-ui
+      - run: pnpm nx affected -t build-storybook --base="${{ steps.nx-refs.outputs.base }}" --head="${{ steps.nx-refs.outputs.head }}"
       - name: Publish Storybook to Chromatic
         if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' && steps.affected.outputs.storybook == 'true' }}
         run: pnpm nx chromatic diagram-studio-ui -- --branch-name "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" --repository-slug "$GITHUB_REPOSITORY" --exit-zero-on-changes

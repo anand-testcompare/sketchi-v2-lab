@@ -1,5 +1,40 @@
-const DEFAULT_WORKER_PREFIX = "sketchi-playground-pr";
 const MAX_WORKER_NAME_LENGTH = 63;
+
+export const previewApps = {
+  excalidraw: {
+    commentMarker: "<!-- sketchi-excalidraw-preview -->",
+    title: "Sketchi Excalidraw",
+    workerPrefix: "sketchi-excalidraw-pr",
+  },
+  icons: {
+    commentMarker: "<!-- sketchi-icons-preview -->",
+    title: "Sketchi Icons",
+    workerPrefix: "sketchi-icons-pr",
+  },
+  playground: {
+    commentMarker: "<!-- sketchi-playground-preview -->",
+    title: "Sketchi Playground",
+    workerPrefix: "sketchi-playground-pr",
+  },
+  web: {
+    commentMarker: "<!-- sketchi-web-preview -->",
+    title: "Sketchi Web",
+    workerPrefix: "sketchi-web-pr",
+  },
+};
+
+export function previewAppConfig(app = "playground") {
+  const appId = String(app ?? "playground").trim();
+  const config = previewApps[appId];
+
+  if (!config) {
+    throw new Error(
+      `Unknown preview app "${appId}". Expected one of ${Object.keys(previewApps).join(", ")}.`,
+    );
+  }
+
+  return { appId, ...config };
+}
 
 export function normalizePrNumber(value) {
   const prNumber = Number.parseInt(String(value ?? ""), 10);
@@ -13,7 +48,8 @@ export function normalizePrNumber(value) {
 
 export function previewWorkerName(input) {
   const prNumber = normalizePrNumber(input.prNumber);
-  const rawPrefix = (input.workerPrefix ?? DEFAULT_WORKER_PREFIX).trim();
+  const appConfig = previewAppConfig(input.app);
+  const rawPrefix = (input.workerPrefix ?? appConfig.workerPrefix).trim();
   const prefix = rawPrefix
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
@@ -67,15 +103,16 @@ export function extractPreviewUrl(logText, workerName = "") {
 }
 
 export function previewCommentBody(input) {
+  const appConfig = previewAppConfig(input.app);
   const status = (input.status ?? "ready").trim().toLowerCase();
   const runUrl = input.runUrl?.trim();
   const previewUrl = input.previewUrl?.trim();
   const workerName = input.workerName?.trim();
   const sha = input.sha?.trim();
-  const marker = input.marker?.trim() || "<!-- sketchi-playground-preview -->";
+  const marker = input.marker?.trim() || appConfig.commentMarker;
   const lines = [
     marker,
-    "### Sketchi Playground Preview",
+    `### ${appConfig.title} Preview`,
     "",
     `Status: \`${status}\``,
   ];
