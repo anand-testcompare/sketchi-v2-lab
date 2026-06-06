@@ -1,0 +1,19 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sketchi-excalidraw",
+  "compatibility_date": "2026-06-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": {
+    "enabled": true,
+  },
+  "routes": [
+    {
+      "pattern": "excalidraw.sketchi.app",
+      "custom_domain": true,
+    },
+  ],
+  "vars": {
+    "SKETCHI_APP_SURFACE": "excalidraw",
+  },
+}

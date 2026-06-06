@@ -1,17 +1,21 @@
-# Playground Preview Deploys
+# App Preview Deploys
 
-Pull requests to `main` deploy the playground to a PR-specific Cloudflare
-Worker named `sketchi-playground-pr-<number>`.
+Pull requests to `main` deploy each app to a PR-specific Cloudflare Worker:
+
+- `sketchi-playground-pr-<number>`
+- `sketchi-web-pr-<number>`
+- `sketchi-excalidraw-pr-<number>`
+- `sketchi-icons-pr-<number>`
 
 The preview workflow:
 
 - uses the same pnpm 11.5.0, Node 24, `pnpm install --frozen-lockfile` setup as
   `v2-ci`;
-- builds the `playground` Nx app;
-- writes a generated `dist/server/wrangler.preview.json` with the preview Worker
-  name and no custom production routes;
+- builds each Nx app in an isolated matrix job;
+- writes a generated `dist/server/wrangler.<app>.preview.json` with the preview
+  Worker name and no custom production routes;
 - runs `wrangler deploy --keep-vars`;
-- writes or updates one sticky PR comment with the preview URL.
+- writes or updates one sticky PR comment per app with the preview URL.
 
 Required GitHub Actions configuration:
 
@@ -48,3 +52,6 @@ The deploy command scripts are numbered because they are operational steps:
 - `scripts/02-extract-preview-url.mjs`
 - `scripts/03-upsert-preview-comment.mjs`
 - `scripts/04-delete-preview-worker.mjs`
+
+Pass `--app playground`, `--app web`, `--app excalidraw`, or `--app icons` to
+the prepare and cleanup scripts when running them manually.

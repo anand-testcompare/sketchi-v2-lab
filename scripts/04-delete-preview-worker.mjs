@@ -2,7 +2,7 @@
 import { appendFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
-import { previewWorkerName } from "./lib/preview-deploy.mjs";
+import { previewAppConfig, previewWorkerName } from "./lib/preview-deploy.mjs";
 
 function readFlag(args, name, fallback) {
   const index = args.indexOf(name);
@@ -43,9 +43,13 @@ function writeOutputs(outputs) {
 
 export async function deletePreviewWorker(args = process.argv.slice(2)) {
   const dryRun = args.includes("--dry-run");
+  const app = previewAppConfig(
+    readFlag(args, "--app", process.env.PREVIEW_APP),
+  );
   const workerName =
     readFlag(args, "--worker-name", undefined) ??
     previewWorkerName({
+      app: app.appId,
       prNumber: readFlag(args, "--pr-number", process.env.PR_NUMBER),
       workerPrefix: readFlag(
         args,

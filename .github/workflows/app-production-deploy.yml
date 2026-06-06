@@ -1,0 +1,94 @@
+name: app-production-deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "nx.json"
+      - "tsconfig.base.json"
+  workflow_dispatch:
+    inputs:
+      app:
+        description: App to deploy.
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - playground
+          - web
+          - excalidraw
+          - icons
+
+env:
+  NX_DAEMON: "false"
+  NX_TUI: "false"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - playground
+          - web
+          - excalidraw
+          - icons
+    concurrency:
+      group: app-production-${{ matrix.app }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+        if: ${{ github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app }}
+
+      - uses: pnpm/action-setup@v5
+        if: ${{ github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app }}
+        with:
+          version: 11.5.0
+
+      - uses: actions/setup-node@v6
+        if: ${{ github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app }}
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - if: ${{ github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app }}
+        run: pnpm install --frozen-lockfile
+
+      - if: ${{ github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app }}
+        run: pnpm run test:deploy-scripts
+
+      - if: ${{ github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app }}
+        run: pnpm nx build ${{ matrix.app }}
+
+      - name: Check Cloudflare credentials
+        id: credentials
+        if: ${{ github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ] && [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "configured=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::Cloudflare production deploy credentials are not configured. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN."
+
+      - name: Deploy production Worker
+        if: ${{ steps.credentials.outputs.configured == 'true' && (github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app) }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler deploy --config dist/server/wrangler.json

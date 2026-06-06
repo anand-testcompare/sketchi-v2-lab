@@ -6,7 +6,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [
     cloudflare({
-      configPath: "apps/playground/wrangler.jsonc",
+      configPath: new URL("./wrangler.jsonc", import.meta.url).pathname,
       viteEnvironment: {
         name: "ssr",
       },

@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url";
 
-import { previewCommentBody } from "./lib/preview-deploy.mjs";
-
-const DEFAULT_MARKER = "<!-- sketchi-playground-preview -->";
+import { previewAppConfig, previewCommentBody } from "./lib/preview-deploy.mjs";
 
 function requiredEnv(name) {
   const value = process.env[name]?.trim();
@@ -40,7 +38,9 @@ async function githubRequest(path, options = {}) {
 export async function upsertPreviewComment() {
   const repository = requiredEnv("GITHUB_REPOSITORY");
   const prNumber = requiredEnv("PR_NUMBER");
-  const marker = process.env.PREVIEW_COMMENT_MARKER?.trim() || DEFAULT_MARKER;
+  const app = previewAppConfig(process.env.PREVIEW_APP);
+  const marker =
+    process.env.PREVIEW_COMMENT_MARKER?.trim() || app.commentMarker;
   const runId = process.env.GITHUB_RUN_ID?.trim();
   const serverUrl =
     process.env.GITHUB_SERVER_URL?.trim() || "https://github.com";
@@ -48,6 +48,7 @@ export async function upsertPreviewComment() {
     ? `${serverUrl}/${repository}/actions/runs/${runId}`
     : "";
   const body = previewCommentBody({
+    app: app.appId,
     marker,
     previewUrl: process.env.PREVIEW_URL,
     runUrl,
