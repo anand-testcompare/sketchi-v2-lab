@@ -8,8 +8,15 @@ export interface FlowchartScenarioAssertions {
   minEdgeCount: number;
   minNodeCount: number;
   requiredBranchLabels: string[];
+  requiredEdges: FlowchartScenarioRequiredEdge[];
   requiredNodeKinds: FlowchartNodeKind[];
   requiredNodeLabels: string[];
+}
+
+export interface FlowchartScenarioRequiredEdge {
+  label?: string;
+  sourceLabel: string;
+  targetLabel: string;
 }
 
 export type DiagramScenarioDifficulty = "smoke" | "standard" | "challenge";
@@ -107,6 +114,7 @@ function buildAssertions(
   const requiredNodeKinds = FLOWCHART_NODE_KIND_ORDER.filter((kind) =>
     nodeKinds.has(kind),
   );
+  const nodesById = new Map(diagram.nodes.map((node) => [node.id, node]));
 
   return {
     minEdgeCount: diagram.edges.length,
@@ -116,6 +124,22 @@ function buildAssertions(
         .map((edge) => edge.label)
         .filter((label): label is string => Boolean(label)),
     ),
+    requiredEdges: diagram.edges.map((edge) => {
+      const source = nodesById.get(edge.source);
+      const target = nodesById.get(edge.target);
+
+      if (!source || !target) {
+        throw new Error(
+          `Scenario "${diagram.id}" has unresolved assertion edge "${edge.id}".`,
+        );
+      }
+
+      return {
+        sourceLabel: source.label,
+        targetLabel: target.label,
+        ...(edge.label ? { label: edge.label } : {}),
+      };
+    }),
     requiredNodeKinds,
     requiredNodeLabels: diagram.nodes.map((node) => node.label),
   };

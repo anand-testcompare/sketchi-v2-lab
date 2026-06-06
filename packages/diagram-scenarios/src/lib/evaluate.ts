@@ -41,6 +41,40 @@ function hasLabel(labels: readonly string[], expected: string): boolean {
   return labels.some((label) => normalizeLabel(label).includes(normalized));
 }
 
+function edgeMatchesExpected(
+  diagram: FlowchartDiagram,
+  expected: DiagramScenario["assertions"]["requiredEdges"][number],
+): boolean {
+  const nodesById = new Map(diagram.nodes.map((node) => [node.id, node]));
+  const expectedSourceLabel = normalizeLabel(expected.sourceLabel);
+  const expectedTargetLabel = normalizeLabel(expected.targetLabel);
+  const expectedBranchLabel = expected.label
+    ? normalizeLabel(expected.label)
+    : null;
+
+  return diagram.edges.some((edge) => {
+    const source = nodesById.get(edge.source);
+    const target = nodesById.get(edge.target);
+
+    if (!source || !target) {
+      return false;
+    }
+
+    const sourceMatches = normalizeLabel(source.label).includes(
+      expectedSourceLabel,
+    );
+    const targetMatches = normalizeLabel(target.label).includes(
+      expectedTargetLabel,
+    );
+    const branchMatches =
+      expectedBranchLabel === null
+        ? true
+        : normalizeLabel(edge.label ?? "").includes(expectedBranchLabel);
+
+    return sourceMatches && targetMatches && branchMatches;
+  });
+}
+
 function flowchartChecks(
   scenario: DiagramScenario,
   diagram: FlowchartDiagram,
@@ -76,6 +110,15 @@ function flowchartChecks(
       id: `branch-label:${label}`,
       passed: hasLabel(branchLabels, label),
       message: `Expected a decision branch label like "${label}".`,
+    })),
+    ...scenario.assertions.requiredEdges.map((edge) => ({
+      id: `edge:${edge.sourceLabel}->${edge.targetLabel}${
+        edge.label ? `:${edge.label}` : ""
+      }`,
+      passed: edgeMatchesExpected(diagram, edge),
+      message: `Expected an edge from "${edge.sourceLabel}" to "${
+        edge.targetLabel
+      }"${edge.label ? ` labeled like "${edge.label}"` : ""}.`,
     })),
   ];
 }
