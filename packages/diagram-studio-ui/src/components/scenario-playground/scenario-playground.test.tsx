@@ -68,6 +68,7 @@ vi.mock("../json-code-editor/index.js", () => ({
 import {
   ScenarioPlayground,
   type ScenarioGenerationRequest,
+  type ScenarioGenerationResult,
 } from "./scenario-playground";
 
 describe("ScenarioPlayground", () => {
@@ -103,6 +104,41 @@ describe("ScenarioPlayground", () => {
     expect(
       screen.getAllByText("Model output did not contain a JSON object.").length,
     ).toBeGreaterThan(0);
+  });
+
+  it("shows a running status while API generation is pending", async () => {
+    const scenario = getScenario("sketchi-onboarding-decision-flow");
+    let resolveGeneration:
+      | ((result: ScenarioGenerationResult) => void)
+      | undefined;
+    const onGenerateScenario = vi.fn(
+      () =>
+        new Promise<ScenarioGenerationResult>((resolve) => {
+          resolveGeneration = resolve;
+        }),
+    );
+
+    render(<ScenarioPlayground onGenerateScenario={onGenerateScenario} />);
+    fireEvent.click(screen.getByRole("tab", { name: "LLM evals" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    expect(screen.getAllByText("Running").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Needs attention")).toBeNull();
+
+    resolveGeneration?.({
+      candidates: [
+        {
+          diagnostics: [],
+          diagramValid: true,
+          model: "google/gemini-3.1-flash-lite",
+          provider: "cloudflare-google-ai-studio",
+          text: JSON.stringify(scenario.expectedDiagram, null, 2),
+        },
+      ],
+      scenarioId: scenario.id,
+    });
+
+    await waitFor(() => expect(screen.getByText("Passing")).toBeTruthy());
   });
 
   it("shows system and user prompt parts separately", () => {

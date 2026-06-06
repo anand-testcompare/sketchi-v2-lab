@@ -285,17 +285,19 @@ export function ScenarioPlayground({
       : Boolean(fixtureEvaluation?.ok);
   const hasCandidateText = state.candidateText.trim().length > 0;
   const statusLabel =
-    state.mode === "llm" &&
-    !hasCandidateText &&
-    state.generationStatus === "idle"
-      ? "Ready"
-      : statusOk
-        ? "Passing"
-        : "Needs attention";
+    state.mode === "llm" && state.generationStatus === "running"
+      ? "Running"
+      : state.mode === "llm" &&
+          !hasCandidateText &&
+          state.generationStatus === "idle"
+        ? "Ready"
+        : statusOk
+          ? "Passing"
+          : "Needs attention";
   const statusClass =
     statusLabel === "Passing"
       ? "sketchi-scenario-playground__status"
-      : statusLabel === "Ready"
+      : statusLabel === "Ready" || statusLabel === "Running"
         ? "sketchi-scenario-playground__status sketchi-scenario-playground__status--ready"
         : "sketchi-scenario-playground__status sketchi-scenario-playground__status--failed";
   const inspectorTabs: Array<{ id: InspectorPanel; label: string }> =
