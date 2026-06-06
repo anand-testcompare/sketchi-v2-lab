@@ -11,6 +11,7 @@ function usage() {
     "Requires CLOUDFLARE_ACCOUNT_ID and a token with AI Gateway Read permission.",
     "Use CLOUDFLARE_AI_GATEWAY_API_TOKEN for log inspection, or CLOUDFLARE_API_TOKEN if it has that scope.",
     "SKETCHI_AI_GATEWAY_ID is used when --gateway-id is omitted.",
+    "Wrangler does not expose AI Gateway logs; this script calls the same Cloudflare API endpoints shown by `cf schema ai-gateway logs list`.",
   ].join("\n");
 }
 

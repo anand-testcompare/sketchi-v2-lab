@@ -199,6 +199,25 @@ describe("ScenarioPlayground", () => {
     expect(excalidrawJson.value).toContain('"x": 123');
   });
 
+  it("updates the open Excalidraw JSON inspector after visual edits", async () => {
+    render(<ScenarioPlayground />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Excalidraw JSON" }));
+
+    const excalidrawJson = screen.getByLabelText(
+      "Excalidraw JSON",
+    ) as HTMLTextAreaElement;
+
+    expect(excalidrawJson.value).not.toContain('"node:draft": true');
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Mock visual edit" }),
+    );
+
+    expect(excalidrawJson.value).toContain('"node:draft": true');
+    expect(excalidrawJson.value).toContain('"x": 123');
+  });
+
   it("loads a generated candidate into the deterministic IR editor", async () => {
     const generatedDiagram = {
       ...flowchartFixture,

@@ -620,7 +620,16 @@ export function ScenarioPlayground({
           )}
         </main>
 
-        <aside className="sketchi-scenario-playground__inspector">
+        <aside
+          className={[
+            "sketchi-scenario-playground__inspector",
+            state.mode === "llm"
+              ? "sketchi-scenario-playground__inspector--with-suite"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           <div
             aria-label="Inspector"
             className="sketchi-scenario-playground__tabs"
@@ -658,8 +667,8 @@ export function ScenarioPlayground({
               <JsonCodeEditor
                 id={state.mode === "llm" ? "candidate-ir" : "fixture-ir"}
                 label={state.mode === "llm" ? "Candidate IR" : "Fixture IR"}
-                maxHeight="100%"
-                minHeight="100%"
+                maxHeight="min(640px, calc(100vh - 250px))"
+                minHeight="180px"
                 {...(state.mode === "llm"
                   ? {
                       onChange: (value: string) =>
@@ -692,8 +701,8 @@ export function ScenarioPlayground({
               <JsonCodeEditor
                 id="excalidraw-json"
                 label="Excalidraw JSON"
-                maxHeight="100%"
-                minHeight="100%"
+                maxHeight="min(640px, calc(100vh - 250px))"
+                minHeight="180px"
                 readOnly
                 value={formatJson(displayedScene ?? {})}
               />

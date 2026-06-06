@@ -104,9 +104,13 @@ account/token values used by CI are available locally:
 infisical run --env staging --path /github -- pnpm ai-gateway:logs -- --include-payload --limit 3
 ```
 
-The token used for this command must include Cloudflare `AI Gateway Read`. If
-the deploy token is intentionally narrower, provide a separate
-`CLOUDFLARE_AI_GATEWAY_API_TOKEN` for this script.
+The token used for this command must include Cloudflare `AI Gateway Read`. The
+Cloudflare `cf` CLI can introspect the relevant AI Gateway log schemas with
+`cf agent-context ai-gateway` and `cf schema ai-gateway logs list`, but this
+repo currently keeps the executable path in this script because the installed
+`cf` CLI does not execute `cf ai-gateway logs ...` commands and Wrangler's `ai`
+commands do not expose Gateway logs. If the deploy token is intentionally
+narrower, provide a separate `CLOUDFLARE_AI_GATEWAY_API_TOKEN` for this script.
 
 The script calls Cloudflare's AI Gateway Logs API endpoints for list, detail,
 request payload, and response payload inspection.
