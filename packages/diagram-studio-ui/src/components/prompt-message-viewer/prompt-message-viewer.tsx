@@ -9,12 +9,20 @@ export interface PromptMessageViewerProps {
 }
 
 function roleLabel(role: string): string {
+  if (role === "system") {
+    return "System instructions";
+  }
+
+  if (role === "user") {
+    return "User request";
+  }
+
   return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
 export function PromptMessageViewer({
   messages,
-  title = "Prompt",
+  title = "Prompt messages",
 }: PromptMessageViewerProps) {
   return (
     <section className="sketchi-prompt-message-viewer">

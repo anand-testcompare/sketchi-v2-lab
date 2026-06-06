@@ -77,3 +77,30 @@ an implementation, test, story, local export, and package export.
 The playground is scaffolded for Cloudflare Workers through Vite and Wrangler.
 Deployment should remain independent from the product app and can be skipped
 when the playground is only needed as a local scenario/eval surface.
+
+## AI Gateway Observability
+
+The live playground uses the Cloudflare AI Gateway Worker binding with
+`collectLog: true` and scenario metadata on each request. Cloudflare stores
+Gateway logs and can retain request/response payloads for prompt tuning when
+the gateway is configured to keep payloads.
+
+Inspect and summarize logs through the Cloudflare API MCP instead of keeping
+repo-local Cloudflare API scripts. Configure Codex or another MCP client with
+Cloudflare's Code Mode server:
+
+```json
+{
+  "mcpServers": {
+    "cloudflare-api": {
+      "url": "https://mcp.cloudflare.com/mcp"
+    }
+  }
+}
+```
+
+Use the repo-local `$sketchi-log-analysis` skill in
+[.agents/skills/sketchi-log-analysis/SKILL.md](../.agents/skills/sketchi-log-analysis/SKILL.md)
+for reusable analysis. The skill keeps the operational behavior read-only, asks
+for payload inspection only when retained by the Gateway, and turns model
+failures into scenario or prompt-tuning follow-up.

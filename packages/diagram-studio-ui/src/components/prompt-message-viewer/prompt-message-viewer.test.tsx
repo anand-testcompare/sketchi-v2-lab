@@ -16,11 +16,13 @@ describe("PromptMessageViewer", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Prompt parts" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "System" })).toBeTruthy();
-    expect(screen.getByLabelText("System prompt").textContent).toContain(
-      "Return only JSON.",
-    );
-    expect(screen.getByLabelText("User prompt").textContent).toContain(
+    expect(
+      screen.getByRole("heading", { name: "System instructions" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText("System instructions prompt").textContent,
+    ).toContain("Return only JSON.");
+    expect(screen.getByLabelText("User request prompt").textContent).toContain(
       "Create a flowchart.",
     );
   });

@@ -45,6 +45,7 @@ describe("diagram generation prompt mapping", () => {
     expect(prompt.messages[0].content).toContain("Flowchart IR rules");
     expect(prompt.messages[1]).toMatchObject({ role: "user" });
     expect(prompt.messages[1].content).toContain(scenario.prompt);
+    expect(prompt.messages[1].content).not.toContain("Flowchart IR rules");
   });
 
   it("maps flowchart prompts into Gemini REST system instruction and contents", () => {
@@ -59,6 +60,9 @@ describe("diagram generation prompt mapping", () => {
       "Flowchart IR rules",
     );
     expect(body.contents[0]?.parts[0]?.text).toContain(scenario.prompt);
+    expect(body.contents[0]?.parts[0]?.text).not.toContain(
+      "Flowchart IR rules",
+    );
     expect(body.generationConfig).toEqual({
       maxOutputTokens: 512,
       response_mime_type: "application/json",

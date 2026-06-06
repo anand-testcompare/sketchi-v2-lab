@@ -19,7 +19,7 @@ const meta = {
         usage: { totalTokens: 681 },
       },
     ],
-    title: "LLM run",
+    title: "Live run",
   },
 } satisfies Meta<typeof GenerationRunPanel>;
 

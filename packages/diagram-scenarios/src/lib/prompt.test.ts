@@ -20,7 +20,12 @@ describe("scenario prompts", () => {
       }),
     ]);
     expect(prompt.system).not.toContain(scenario.prompt);
+    expect(prompt.system).toContain("Every node must have id, label, and kind");
     expect(prompt.user).toContain(scenario.prompt);
+    expect(prompt.user).not.toContain("Flowchart IR rules:");
+    expect(prompt.user).not.toContain(
+      "Every node must have id, label, and kind",
+    );
     expect(prompt.user).toContain("Required node labels:");
     expect(prompt.user).toContain("- QA Manager final review");
     expect(prompt.user).toContain("Required decision branch labels:");

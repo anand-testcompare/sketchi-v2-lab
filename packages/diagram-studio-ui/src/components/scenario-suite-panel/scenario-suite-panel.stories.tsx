@@ -12,6 +12,7 @@ const meta = {
   title: "Diagram Studio/Components/ScenarioSuitePanel",
   component: ScenarioSuitePanel,
   args: {
+    activeScenarioId: "support",
     results: [
       {
         durationMs: 812,
