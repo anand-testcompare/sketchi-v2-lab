@@ -447,6 +447,8 @@ body {
 .sketchi-json-code-editor {
   align-content: start;
   align-self: start;
+  --sketchi-json-editor-max-height: min(560px, 62vh);
+  --sketchi-json-editor-min-height: 220px;
   display: grid;
   grid-template-rows: auto auto;
   max-width: 100%;
@@ -693,6 +695,7 @@ body {
 }
 
 .sketchi-json-code-editor__editor {
+  max-height: var(--sketchi-json-editor-max-height);
   max-width: 100%;
   min-height: 0;
   min-width: 0;
@@ -704,13 +707,16 @@ body {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   height: auto;
-  max-height: inherit;
+  max-height: var(--sketchi-json-editor-max-height);
   max-width: 100%;
+  min-height: var(--sketchi-json-editor-min-height);
   min-width: 0;
   width: 100%;
 }
 
 .sketchi-json-code-editor__editor .cm-scroller {
+  max-height: var(--sketchi-json-editor-max-height);
+  min-height: var(--sketchi-json-editor-min-height);
   min-width: 0;
   overflow: auto;
   width: 100%;
@@ -765,8 +771,8 @@ body {
 
 .sketchi-scenario-playground__layout {
   grid-template-columns:
-    minmax(260px, 300px) minmax(520px, 1fr)
-    minmax(420px, 540px);
+    minmax(260px, 300px) minmax(560px, 1fr)
+    minmax(360px, 480px);
   height: calc(100vh - 78px);
 }
 
@@ -1170,18 +1176,17 @@ body {
 
 @media (max-width: 1280px) {
   .sketchi-scenario-playground__layout {
-    grid-template-columns:
-      minmax(240px, 260px) minmax(540px, 1fr)
-      minmax(360px, 420px);
-    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+    grid-template-rows: minmax(420px, 1fr) minmax(300px, 420px);
   }
 
   .sketchi-scenario-playground__controls {
-    grid-row: auto;
+    grid-row: 1 / span 2;
   }
 
   .sketchi-scenario-playground__inspector {
-    grid-column: auto;
+    grid-column: 2;
+    grid-row: 2;
   }
 }
 
@@ -1193,7 +1198,7 @@ body {
 
   .sketchi-scenario-playground__layout {
     grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-    grid-template-rows: minmax(440px, 62vh) minmax(360px, 54vh);
+    grid-template-rows: minmax(380px, 1fr) minmax(300px, 420px);
     height: auto;
   }
 
