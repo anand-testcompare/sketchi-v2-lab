@@ -99,7 +99,8 @@ Cloudflare's Code Mode server:
 }
 ```
 
-Use [docs/prompts/ai-gateway-log-analysis.md](./prompts/ai-gateway-log-analysis.md)
-as the reusable analysis prompt. The prompt keeps the operational behavior
-read-only, asks for payload inspection only when retained by the Gateway, and
-turns model failures into scenario or prompt-tuning follow-up.
+Use the repo-local `$sketchi-log-analysis` skill in
+[.agents/skills/sketchi-log-analysis/SKILL.md](../.agents/skills/sketchi-log-analysis/SKILL.md)
+for reusable analysis. The skill keeps the operational behavior read-only, asks
+for payload inspection only when retained by the Gateway, and turns model
+failures into scenario or prompt-tuning follow-up.
