@@ -608,7 +608,7 @@ export function ScenarioPlayground({
             <ExcalidrawSceneCanvas
               onChange={handleExcalidrawChange}
               revision={state.canvasRevision}
-              scene={activeResult.excalidrawScene}
+              scene={displayedScene}
               title={activeResult.diagram.title}
             />
           ) : (
@@ -667,7 +667,7 @@ export function ScenarioPlayground({
               <JsonCodeEditor
                 id={state.mode === "llm" ? "candidate-ir" : "fixture-ir"}
                 label={state.mode === "llm" ? "Candidate IR" : "Fixture IR"}
-                maxHeight="min(640px, calc(100vh - 250px))"
+                maxHeight="min(340px, calc(100vh - 420px))"
                 minHeight="180px"
                 {...(state.mode === "llm"
                   ? {
@@ -701,7 +701,7 @@ export function ScenarioPlayground({
               <JsonCodeEditor
                 id="excalidraw-json"
                 label="Excalidraw JSON"
-                maxHeight="min(640px, calc(100vh - 250px))"
+                maxHeight="min(340px, calc(100vh - 420px))"
                 minHeight="180px"
                 readOnly
                 value={formatJson(displayedScene ?? {})}

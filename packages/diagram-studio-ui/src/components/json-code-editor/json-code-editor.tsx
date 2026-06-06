@@ -7,6 +7,7 @@ import type {
   ReactCodeMirrorProps,
   ReactCodeMirrorRef,
 } from "@uiw/react-codemirror";
+import type { CSSProperties } from "react";
 import { useCallback, useMemo, useRef } from "react";
 
 export interface JsonCodeEditorProps {
@@ -89,9 +90,17 @@ export function JsonCodeEditor({
     editable: !readOnly,
     readOnly,
   };
+  const editorSizeStyle = {
+    "--sketchi-json-editor-max-height": maxHeight,
+    "--sketchi-json-editor-min-height": minHeight,
+  } as CSSProperties;
 
   return (
-    <section className="sketchi-json-code-editor" ref={shellRef}>
+    <section
+      className="sketchi-json-code-editor"
+      ref={shellRef}
+      style={editorSizeStyle}
+    >
       <div className="sketchi-json-code-editor__header">
         <label {...(id ? { htmlFor: id } : {})}>{label}</label>
         <button
