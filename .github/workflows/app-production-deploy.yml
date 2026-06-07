@@ -26,6 +26,11 @@ on:
           - web
           - excalidraw
           - icons
+      attach_domains:
+        description: Attach sketchi.app production domains after deploying Workers.
+        required: true
+        default: false
+        type: boolean
 
 env:
   NX_DAEMON: "false"
@@ -87,8 +92,50 @@ jobs:
           echo "::warning::Cloudflare production deploy credentials are not configured. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN."
 
       - name: Deploy production Worker
+        id: deploy
         if: ${{ steps.credentials.outputs.configured == 'true' && (github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app) }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm exec wrangler deploy --config dist/server/wrangler.json
+        run: |
+          set -euo pipefail
+          mkdir -p .memory
+          pnpm exec wrangler deploy \
+            --config dist/server/wrangler.json \
+            --message "${{ matrix.app }} production Worker ${{ github.sha }}" \
+            2>&1 | tee ".memory/wrangler-${{ matrix.app }}-production-deploy.log"
+
+      - name: Extract workers.dev URL
+        id: workers-dev-url
+        if: ${{ steps.credentials.outputs.configured == 'true' && (github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app) }}
+        run: |
+          node scripts/02-extract-preview-url.mjs \
+            ".memory/wrangler-${{ matrix.app }}-production-deploy.log" \
+            --worker-name "sketchi-${{ matrix.app }}"
+
+      - name: Summarize production Worker
+        if: ${{ steps.credentials.outputs.configured == 'true' && (github.event_name == 'push' || inputs.app == 'all' || inputs.app == matrix.app) }}
+        run: |
+          {
+            echo "### ${{ matrix.app }} production Worker"
+            echo ""
+            echo "- Worker: \`sketchi-${{ matrix.app }}\`"
+            echo "- workers.dev URL: ${{ steps.workers-dev-url.outputs.preview_url }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare production domain Wrangler config
+        id: domains
+        if: ${{ steps.credentials.outputs.configured == 'true' && github.event_name == 'workflow_dispatch' && inputs.attach_domains && (inputs.app == 'all' || inputs.app == matrix.app) }}
+        env:
+          APP: ${{ matrix.app }}
+        run: node scripts/05-prepare-production-domain-deploy.mjs --app "$APP"
+
+      - name: Attach production domains
+        if: ${{ steps.credentials.outputs.configured == 'true' && github.event_name == 'workflow_dispatch' && inputs.attach_domains && (inputs.app == 'all' || inputs.app == matrix.app) }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          pnpm exec wrangler deploy \
+            --config "${{ steps.domains.outputs.domain_config_path }}" \
+            --message "${{ matrix.app }} production domain attach ${{ github.sha }}"

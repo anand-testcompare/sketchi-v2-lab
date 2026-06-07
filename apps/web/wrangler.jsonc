@@ -7,16 +7,7 @@
   "observability": {
     "enabled": true,
   },
-  "routes": [
-    {
-      "pattern": "sketchi.app",
-      "custom_domain": true,
-    },
-    {
-      "pattern": "www.sketchi.app",
-      "custom_domain": true,
-    },
-  ],
+  "workers_dev": true,
   "vars": {
     "SKETCHI_APP_SURFACE": "web",
   },
