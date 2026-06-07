@@ -42,14 +42,18 @@ pnpm nx g @sketchi/generators:ui-component StatusBadge
 pnpm nx g @sketchi/generators:diagram-type mindmap --title "Sketchi mindmap fixture"
 ```
 
-## Preview Deploys
+## Deploys
 
 Pull requests deploy each app to PR-specific Cloudflare Workers and update one
 sticky PR comment per app with the URL when Cloudflare credentials are
 configured.
 See [docs/preview-deploys.md](docs/preview-deploys.md).
 
-Production Worker deploy targets are app-scoped:
+Merges to `main` deploy production Workers to their `workers.dev` URLs without
+claiming the final `sketchi.app` domains. Domain assignment is a manual
+`app-production-deploy` workflow dispatch with `attach_domains` enabled.
+
+Local production Worker deploy targets are app-scoped:
 
 ```sh
 pnpm deploy:playground

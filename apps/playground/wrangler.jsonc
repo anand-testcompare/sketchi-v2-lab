@@ -11,12 +11,7 @@
   "observability": {
     "enabled": true,
   },
-  "routes": [
-    {
-      "pattern": "playground.sketchi.app",
-      "custom_domain": true,
-    },
-  ],
+  "workers_dev": true,
   "vars": {
     "SKETCHI_APP_SURFACE": "playground",
     "SKETCHI_AI_GATEWAY_ID": "google-ai-studio",

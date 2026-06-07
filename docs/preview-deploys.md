@@ -52,6 +52,27 @@ The deploy command scripts are numbered because they are operational steps:
 - `scripts/02-extract-preview-url.mjs`
 - `scripts/03-upsert-preview-comment.mjs`
 - `scripts/04-delete-preview-worker.mjs`
+- `scripts/05-prepare-production-domain-deploy.mjs`
 
 Pass `--app playground`, `--app web`, `--app excalidraw`, or `--app icons` to
 the prepare and cleanup scripts when running them manually.
+
+## Production Worker Deploys
+
+The `app-production-deploy` workflow runs on pushes to `main` and deploys the
+four production Workers without assigning the final custom domains:
+
+- `sketchi-playground`
+- `sketchi-web`
+- `sketchi-excalidraw`
+- `sketchi-icons`
+
+Those deploys keep `workers_dev` enabled so the app can be verified from
+Cloudflare-owned `workers.dev` URLs before any DNS or registrar cutover.
+
+Assigning `sketchi.app`, `www.sketchi.app`, `playground.sketchi.app`,
+`excalidraw.sketchi.app`, and `icons.sketchi.app` is intentionally manual. Run
+the `app-production-deploy` workflow with `attach_domains` enabled only when the
+new site is ready to own those hostnames. The manual step writes a generated
+domain Wrangler config from `scripts/05-prepare-production-domain-deploy.mjs`
+and deploys that route-bearing config.
