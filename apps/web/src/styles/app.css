@@ -1,11 +1,54 @@
-html,
-body {
-  margin: 0;
-  min-height: 100%;
-}
+/* =====================================================================
+   Sketchi v2 — "Drafting Studio" design language (web surface)
+   Precision of a drafting table (graph paper, hairlines, mono labels)
+   fused with editorial warmth (vellum, ink, a vermilion accent).
+   Fonts loaded via <link> in routes/__root.tsx.
+   ===================================================================== */
 
-body {
-  background: #f7f8fb;
+:root {
+  --font-display: "Bricolage Grotesque", "Hanken Grotesk", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* surfaces */
+  --paper: #f6f1e7;
+  --paper-2: #fbf7ee;
+  --card: #fffdf8;
+  --ink: #1a1712;
+  --ink-2: #4c4639;
+  --ink-3: #8a8270;
+
+  /* lines */
+  --line: #e7ddc9;
+  --line-2: #d8ccb1;
+  --line-ink: rgba(26, 23, 18, 0.12);
+
+  /* accent — drafting-pencil vermilion */
+  --accent: #e5431d;
+  --accent-strong: #c4360f;
+  --accent-ink: #a82f0c;
+  --accent-wash: #fbe6dd;
+
+  /* secondary — blueprint (validated / technical) */
+  --blueprint: #1f44c9;
+  --blueprint-ink: #1a39a8;
+  --blueprint-wash: #e6eafb;
+
+  --ok: #1c7a4d;
+  --ok-wash: #def0e5;
+
+  --grid-dot: rgba(26, 23, 18, 0.06);
+
+  --shadow-sm: 0 1px 2px rgba(40, 31, 12, 0.06), 0 2px 6px rgba(40, 31, 12, 0.05);
+  --shadow-md: 0 6px 18px rgba(40, 31, 12, 0.08), 0 2px 6px rgba(40, 31, 12, 0.05);
+  --shadow-lg: 0 24px 60px rgba(40, 31, 12, 0.16), 0 6px 18px rgba(40, 31, 12, 0.08);
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+
+  --shell: 1180px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 *,
@@ -14,263 +57,1164 @@ body {
   box-sizing: border-box;
 }
 
-.sketchi-web,
-.sketchi-not-found {
-  color: #111827;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-}
-
-.sketchi-not-found {
-  align-items: center;
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-}
-
-.sketchi-not-found h1 {
-  font-size: 24px;
+html,
+body {
   margin: 0;
+  min-height: 100%;
 }
 
-.sketchi-web a {
+body {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(58rem 30rem at 82% -12%, rgba(229, 67, 29, 0.07), transparent 60%),
+    radial-gradient(48rem 26rem at -8% 8%, rgba(31, 68, 201, 0.05), transparent 55%),
+    radial-gradient(var(--grid-dot) 1px, transparent 1px);
+  background-size: auto, auto, 24px 24px;
+  background-position: 0 0, 0 0, -1px -1px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+a {
   color: inherit;
 }
 
-.sketchi-web__nav {
-  align-items: center;
-  display: flex;
-  gap: 20px;
-  justify-content: space-between;
+img {
+  max-width: 100%;
+}
+
+/* ---- motion ---------------------------------------------------------- */
+@keyframes sk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sk-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.sk-rise {
+  animation: sk-rise 0.7s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---- shared atoms ---------------------------------------------------- */
+.sk-shell {
   margin: 0 auto;
-  max-width: 1180px;
-  padding: 18px 24px;
+  max-width: var(--shell);
+  padding-inline: 24px;
+  width: 100%;
 }
 
-.sketchi-web__brand {
-  font-size: 18px;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.sketchi-web__links {
+.sk-eyebrow {
   align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.sketchi-web__links a,
-.sketchi-web__actions a {
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1;
-  min-height: 36px;
-  padding: 11px 12px;
-  text-decoration: none;
-}
-
-.sketchi-web__links a {
-  color: #475569;
-}
-
-.sketchi-web__hero {
-  display: grid;
-  gap: 34px;
-  grid-template-columns: minmax(280px, 0.8fr) minmax(360px, 1.2fr);
-  margin: 0 auto;
-  max-width: 1180px;
-  min-height: min(720px, calc(100vh - 132px));
-  padding: 54px 24px 44px;
-}
-
-.sketchi-web__hero-copy {
-  align-self: center;
-}
-
-.sketchi-web__eyebrow {
-  color: #0f766e;
-  font-size: 13px;
-  font-weight: 900;
-  margin: 0 0 12px;
+  color: var(--accent-ink);
+  display: inline-flex;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  gap: 9px;
+  letter-spacing: 0.16em;
+  margin: 0;
   text-transform: uppercase;
 }
 
-.sketchi-web h1 {
-  font-size: clamp(48px, 8vw, 86px);
-  letter-spacing: 0;
-  line-height: 0.95;
-  margin: 0;
+.sk-eyebrow::before {
+  background: var(--accent);
+  block-size: 9px;
+  content: "";
+  inline-size: 9px;
+  rotate: 45deg;
 }
 
-.sketchi-web__lead {
-  color: #334155;
-  font-size: 19px;
+.sk-btn {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  gap: 8px;
+  justify-content: center;
+  line-height: 1;
+  min-height: 46px;
+  padding: 0 20px;
+  text-decoration: none;
+  transition:
+    transform 0.18s var(--ease),
+    box-shadow 0.18s var(--ease),
+    background 0.18s var(--ease),
+    border-color 0.18s var(--ease);
+  white-space: nowrap;
+}
+
+.sk-btn:hover {
+  transform: translateY(-2px);
+}
+
+.sk-btn:active {
+  transform: translateY(0);
+}
+
+.sk-btn:focus-visible {
+  outline: 2px solid var(--blueprint);
+  outline-offset: 2px;
+}
+
+.sk-btn--primary {
+  background: var(--ink);
+  box-shadow: var(--shadow-md);
+  color: var(--paper-2);
+}
+
+.sk-btn--primary:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.sk-btn--accent {
+  background: var(--accent-strong);
+  box-shadow: 0 8px 20px rgba(196, 54, 15, 0.28);
+  color: #fff;
+}
+
+.sk-btn--ghost {
+  background: transparent;
+  border-color: var(--line-2);
+  color: var(--ink);
+}
+
+.sk-btn--ghost:hover {
+  background: var(--card);
+  border-color: var(--ink);
+}
+
+.sk-pill {
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  color: var(--ink-2);
+  display: inline-flex;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  gap: 8px;
+  letter-spacing: 0.02em;
+  padding: 6px 13px;
+}
+
+.sk-pill__dot {
+  block-size: 7px;
+  border-radius: 999px;
+  inline-size: 7px;
+}
+
+.sk-pill__dot--ok {
+  background: var(--ok);
+  box-shadow: 0 0 0 3px var(--ok-wash);
+}
+
+.sk-pill__dot--accent {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+.sk-pill__dot--blueprint {
+  background: var(--blueprint);
+  box-shadow: 0 0 0 3px var(--blueprint-wash);
+}
+
+/* ===================================================================== */
+/* Site header                                                           */
+/* ===================================================================== */
+.site-header {
+  backdrop-filter: saturate(1.2) blur(8px);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.site-header__bar {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  min-height: 68px;
+  padding-block: 12px;
+}
+
+.site-header__brand {
+  align-items: center;
+  display: inline-flex;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 800;
+  gap: 10px;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.site-header__mark {
+  align-items: center;
+  background: var(--ink);
+  border-radius: 7px;
+  color: var(--paper-2);
+  display: inline-flex;
+  block-size: 30px;
+  inline-size: 30px;
+  justify-content: center;
+}
+
+.site-header__mark svg {
+  display: block;
+}
+
+.site-header__nav {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+}
+
+.site-header__link {
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  font-size: 14.5px;
+  font-weight: 600;
+  padding: 9px 12px;
+  position: relative;
+  text-decoration: none;
+  transition: color 0.16s var(--ease), background 0.16s var(--ease);
+}
+
+.site-header__link:hover {
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  color: var(--ink);
+}
+
+.site-header__link[aria-current="page"] {
+  color: var(--ink);
+}
+
+.site-header__link[aria-current="page"]::after {
+  background: var(--accent);
+  block-size: 2px;
+  border-radius: 2px;
+  bottom: 2px;
+  content: "";
+  inset-inline: 12px;
+  position: absolute;
+}
+
+.site-header__actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.site-header__cta {
+  font-size: 14px;
+  min-height: 40px;
+  padding: 0 15px;
+}
+
+.site-header__burger {
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  cursor: pointer;
+  display: none;
+  block-size: 42px;
+  inline-size: 42px;
+  justify-content: center;
+}
+
+.site-header__sheet {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .site-header__nav,
+  .site-header__actions {
+    display: none;
+  }
+
+  .site-header__burger {
+    display: inline-flex;
+  }
+
+  .site-header__sheet {
+    border-top: 1px solid var(--line);
+    display: grid;
+    gap: 4px;
+    padding: 12px 0 18px;
+  }
+
+  .site-header__sheet .site-header__link {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .site-header__sheet-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .site-header__sheet-actions .sk-btn {
+    width: 100%;
+  }
+}
+
+/* ===================================================================== */
+/* Home hero                                                             */
+/* ===================================================================== */
+.home-hero {
+  overflow: hidden;
+  position: relative;
+}
+
+.home-hero__inner {
+  align-items: center;
+  display: grid;
+  gap: 48px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  padding-block: clamp(48px, 8vw, 92px);
+}
+
+.home-hero__copy {
+  min-width: 0;
+}
+
+.home-hero__title {
+  font-size: clamp(40px, 6vw, 68px);
+  line-height: 1;
+  margin: 20px 0 0;
+}
+
+.home-hero__title em {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-position: 0 94%;
+  background-repeat: no-repeat;
+  background-size: 100% 4px;
+  color: var(--accent-ink);
+  font-style: normal;
+  padding-bottom: 0.04em;
+}
+
+.home-hero__lead {
+  color: var(--ink-2);
+  font-size: clamp(17px, 2.1vw, 20px);
   line-height: 1.55;
   margin: 22px 0 0;
-  max-width: 620px;
+  max-width: 36ch;
 }
 
-.sketchi-web__actions {
+.home-hero__actions {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.home-hero__meta {
+  border-top: 1px dashed var(--line-2);
+  color: var(--ink-3);
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  gap: 8px 22px;
+  margin-top: 34px;
+  padding-top: 18px;
+}
+
+.home-hero__meta b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* hero visual — a framed drafting panel with a sketched flowchart */
+.home-hero__visual {
+  min-width: 0;
+  position: relative;
+}
+
+.hero-frame {
+  background:
+    linear-gradient(180deg, var(--card), var(--paper-2));
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  position: relative;
+}
+
+.hero-frame::before {
+  background-image: radial-gradient(rgba(26, 23, 18, 0.05) 1px, transparent 1px);
+  background-size: 18px 18px;
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.hero-frame__bar {
+  align-items: center;
+  background: color-mix(in srgb, var(--card) 86%, transparent);
+  border-bottom: 1px solid var(--line);
+  display: flex;
   gap: 10px;
-  margin-top: 28px;
+  justify-content: space-between;
+  padding: 12px 16px;
+  position: relative;
 }
 
-.sketchi-web__actions a:first-child {
-  background: #111827;
-  color: #ffffff;
+.hero-frame__dots {
+  display: inline-flex;
+  gap: 6px;
 }
 
-.sketchi-web__actions a:last-child {
-  background: #e0f2fe;
-  color: #075985;
+.hero-frame__dots span {
+  background: var(--line-2);
+  block-size: 9px;
+  border-radius: 999px;
+  inline-size: 9px;
 }
 
-.sketchi-web__hero-visual {
-  align-self: center;
+.hero-frame__dots span:first-child {
+  background: var(--accent);
+}
+
+.hero-frame__tag {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+}
+
+.hero-frame__stage {
+  display: block;
+  padding: 22px;
+  position: relative;
+}
+
+.hero-frame__stage svg {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.hero-diagram__edge {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  stroke-width: 1.6;
+  animation: sk-draw 1s var(--ease) forwards;
+}
+
+.hero-diagram__edge--a {
+  animation-delay: 0.35s;
+}
+.hero-diagram__edge--b {
+  animation-delay: 0.55s;
+}
+.hero-diagram__edge--c {
+  animation-delay: 0.7s;
+}
+.hero-diagram__edge--d {
+  animation-delay: 0.85s;
+}
+
+.hero-diagram__node {
+  fill: var(--card);
+  stroke: var(--ink);
+  stroke-width: 1.8;
+}
+
+.hero-diagram__node--accent {
+  fill: var(--accent-wash);
+  stroke: var(--accent-strong);
+}
+
+.hero-diagram__node--ok {
+  fill: var(--ok-wash);
+  stroke: var(--ok);
+}
+
+.hero-diagram__label {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.hero-diagram__branch {
+  fill: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-frame__ticks {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  position: absolute;
+}
+
+/* ===================================================================== */
+/* Generic section scaffolding                                           */
+/* ===================================================================== */
+.sk-section {
+  border-top: 1px solid var(--line);
+  padding-block: clamp(52px, 7vw, 88px);
+}
+
+.sk-section__head {
+  max-width: 60ch;
+}
+
+.sk-section__title {
+  font-size: clamp(28px, 3.6vw, 40px);
+  line-height: 1.08;
+  margin: 14px 0 0;
+}
+
+.sk-section__lead {
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 14px 0 0;
+}
+
+/* ===================================================================== */
+/* Pipeline flow                                                         */
+/* ===================================================================== */
+.pipeline-flow {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 38px;
+  position: relative;
+}
+
+.pipeline-flow__stage {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 16px 20px;
+  position: relative;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.pipeline-flow__stage:hover {
+  border-color: var(--line-2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.pipeline-flow__stage::after {
+  align-items: center;
+  color: var(--ink-3);
+  content: "→";
+  display: flex;
+  font-family: var(--font-mono);
+  inset-block: 0;
+  inset-inline-end: -12px;
+  position: absolute;
+  z-index: 1;
+}
+
+.pipeline-flow__stage:last-child::after {
+  content: none;
+}
+
+.pipeline-flow__index {
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.pipeline-flow__name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
   margin: 0;
 }
 
-.sketchi-web__hero-visual img {
-  aspect-ratio: 16 / 9;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  box-shadow: 0 28px 70px rgb(15 23 42 / 18%);
+.pipeline-flow__desc {
+  color: var(--ink-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.pipeline-flow__pkg {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+/* ===================================================================== */
+/* Surface cards                                                         */
+/* ===================================================================== */
+.surface-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 36px;
+}
+
+.surface-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  padding: 22px;
+  position: relative;
+  text-decoration: none;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.surface-card::before {
+  background: var(--accent);
+  content: "";
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 3px;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 0.2s var(--ease);
+}
+
+.surface-card:hover {
+  border-color: var(--line-2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.surface-card:hover::before {
+  opacity: 1;
+}
+
+.surface-card__top {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.surface-card__glyph {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--accent-ink);
+  display: inline-flex;
+  block-size: 42px;
+  inline-size: 42px;
+  justify-content: center;
+}
+
+.surface-card__domain {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.surface-card__name {
+  font-size: 19px;
+  margin: 0;
+}
+
+.surface-card__desc {
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.surface-card__foot {
+  align-items: center;
+  color: var(--ink);
+  display: flex;
+  font-weight: 700;
+  gap: 7px;
+  margin-top: auto;
+}
+
+.surface-card__foot span {
+  transition: transform 0.18s var(--ease);
+}
+
+.surface-card:hover .surface-card__foot span {
+  transform: translateX(4px);
+}
+
+/* playground preview slab */
+.playground-preview {
+  align-items: center;
+  display: grid;
+  gap: 32px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  margin-top: 36px;
+}
+
+.playground-preview__shot {
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  display: block;
+  overflow: hidden;
+}
+
+.playground-preview__shot img {
+  aspect-ratio: 16 / 10;
   display: block;
   object-fit: cover;
   object-position: top left;
   width: 100%;
 }
 
-.sketchi-web__section {
-  border-top: 1px solid #dbe3ef;
-}
-
-.sketchi-web__section-inner {
-  margin: 0 auto;
-  max-width: 1180px;
-  padding: 54px 24px;
-}
-
-.sketchi-web__section h2 {
-  font-size: 30px;
-  line-height: 1.15;
-  margin: 0;
-}
-
-.sketchi-web__section-lead {
-  color: #475569;
-  font-size: 16px;
-  line-height: 1.6;
-  margin: 12px 0 0;
-  max-width: 760px;
-}
-
-.sketchi-web__feature-grid,
-.sketchi-web__doc-grid {
+.playground-preview__list {
   display: grid;
   gap: 14px;
-  margin-top: 24px;
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
 }
 
-.sketchi-web__feature-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.playground-preview__list li {
+  border-left: 2px solid var(--line-2);
+  color: var(--ink-2);
+  font-size: 14.5px;
+  padding-left: 14px;
 }
 
-.sketchi-web__doc-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.playground-preview__list b {
+  color: var(--ink);
+  display: block;
+  font-family: var(--font-display);
+  font-size: 15.5px;
 }
 
-.sketchi-web__feature,
-.sketchi-web__doc {
-  background: #ffffff;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
-  padding: 18px;
+/* ===================================================================== */
+/* Docs view                                                             */
+/* ===================================================================== */
+.docs-view {
+  align-items: start;
+  display: grid;
+  gap: 44px;
+  grid-template-columns: 220px minmax(0, 1fr);
+  padding-block: clamp(40px, 6vw, 72px);
 }
 
-.sketchi-web__feature h3,
-.sketchi-web__doc h3 {
-  font-size: 17px;
+.docs-nav {
+  position: sticky;
+  top: 92px;
+}
+
+.docs-nav__label {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.docs-nav__list {
+  border-left: 1px solid var(--line);
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.docs-nav__list a {
+  border-left: 2px solid transparent;
+  color: var(--ink-2);
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: -1px;
+  padding: 7px 14px;
+  text-decoration: none;
+  transition: color 0.16s var(--ease), border-color 0.16s var(--ease);
+}
+
+.docs-nav__list a:hover {
+  border-left-color: var(--accent);
+  color: var(--ink);
+}
+
+.docs-article {
+  max-width: 72ch;
+}
+
+.docs-article__intro {
+  color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.docs-section {
+  border-top: 1px solid var(--line);
+  margin-top: 36px;
+  padding-top: 32px;
+  scroll-margin-top: 92px;
+}
+
+.docs-section:first-of-type {
+  border-top: 0;
+  margin-top: 28px;
+  padding-top: 0;
+}
+
+.docs-section > h2 {
+  align-items: baseline;
+  display: flex;
+  font-size: 24px;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.docs-section > h2 .docs-section__idx {
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.docs-section p {
+  color: var(--ink-2);
+  line-height: 1.7;
+  margin: 0 0 14px;
+}
+
+.docs-section code {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 1px 6px;
+}
+
+.docs-callout {
+  background: var(--blueprint-wash);
+  border: 1px solid color-mix(in srgb, var(--blueprint) 30%, transparent);
+  border-radius: var(--r-md);
+  color: var(--blueprint-ink);
+  display: flex;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 14px 16px;
+}
+
+.docs-callout__k {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.docs-codeblock {
+  background: var(--ink);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+  color: #ece6d8;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 18px 0;
+  overflow-x: auto;
+  padding: 16px 18px;
+}
+
+.docs-codeblock .tok-c {
+  color: #b6ad97;
+}
+
+.docs-defs {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  display: grid;
+  margin: 16px 0;
+  overflow: hidden;
+}
+
+.docs-defs__row {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 4px 18px;
+  grid-template-columns: 180px minmax(0, 1fr);
+  padding: 14px 16px;
+}
+
+.docs-defs__row:first-child {
+  border-top: 0;
+}
+
+.docs-defs__row dt {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.docs-defs__row dd {
+  color: var(--ink-2);
+  font-size: 14px;
   margin: 0;
 }
 
-.sketchi-web__feature p,
-.sketchi-web__doc p,
-.sketchi-web__doc li {
-  color: #475569;
-  font-size: 14px;
-  line-height: 1.55;
+/* ===================================================================== */
+/* Footer                                                                */
+/* ===================================================================== */
+.site-footer {
+  background: var(--ink);
+  color: #d8d1c2;
+  margin-top: 12px;
 }
 
-.sketchi-web__feature p,
-.sketchi-web__doc p {
-  margin: 10px 0 0;
-}
-
-.sketchi-web__doc ol {
+.site-footer__inner {
   display: grid;
-  gap: 8px;
-  margin: 14px 0 0;
-  padding-left: 20px;
+  gap: 36px;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  padding-block: 52px;
 }
 
-.sketchi-web__footer {
-  background: #111827;
-  color: #e5e7eb;
-}
-
-.sketchi-web__footer-inner {
+.site-footer__brand {
   align-items: center;
+  color: var(--paper-2);
+  display: inline-flex;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  gap: 10px;
+  letter-spacing: -0.02em;
+}
+
+.site-footer__mark {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 7px;
+  block-size: 30px;
+  color: #fff;
+  display: inline-flex;
+  inline-size: 30px;
+  justify-content: center;
+}
+
+.site-footer__tagline {
+  color: #a9a294;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 14px 0 0;
+  max-width: 32ch;
+}
+
+.site-footer__col h3 {
+  color: #a9a294;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+}
+
+.site-footer__col ul {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-footer__col a {
+  color: #d8d1c2;
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.16s var(--ease);
+}
+
+.site-footer__col a:hover {
+  color: #fff;
+}
+
+.site-footer__base {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.site-footer__base-inner {
+  align-items: center;
+  color: #8c8474;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  gap: 10px 18px;
   justify-content: space-between;
-  margin: 0 auto;
-  max-width: 1180px;
+  padding-block: 18px;
+}
+
+/* ===================================================================== */
+/* Marketing home composition                                            */
+/* ===================================================================== */
+.sketchi-web {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.sketchi-web > main {
+  flex: 1;
+}
+
+.sketchi-not-found {
+  align-items: center;
+  display: grid;
+  font-family: var(--font-body);
+  gap: 10px;
+  min-height: 100vh;
   padding: 24px;
+  place-items: center;
+  text-align: center;
 }
 
-.sketchi-web__footer a {
-  color: #a7f3d0;
-  font-weight: 800;
-  text-decoration: none;
+.sketchi-not-found h1 {
+  font-size: clamp(40px, 8vw, 72px);
+  margin: 0;
 }
 
-@media (max-width: 860px) {
-  .sketchi-web__hero,
-  .sketchi-web__feature-grid,
-  .sketchi-web__doc-grid {
+/* ===================================================================== */
+/* Responsive                                                            */
+/* ===================================================================== */
+@media (max-width: 980px) {
+  .home-hero__inner {
+    gap: 36px;
     grid-template-columns: 1fr;
   }
 
-  .sketchi-web__hero {
-    gap: 22px;
-    min-height: auto;
-    padding: 24px 24px 28px;
+  .home-hero__visual {
+    order: -1;
   }
 
-  .sketchi-web__lead {
-    font-size: 17px;
+  .pipeline-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .sketchi-web__hero-visual img {
-    max-height: 220px;
+  .pipeline-flow__stage::after {
+    content: none;
   }
 
-  .sketchi-web__nav {
-    align-items: flex-start;
-    flex-direction: column;
+  .playground-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-view {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-nav {
+    position: static;
+  }
+
+  .docs-nav__list {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    border-left: 0;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .docs-nav__list a {
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .site-footer__inner {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .surface-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pipeline-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero__lead {
+    max-width: none;
+  }
+
+  .site-footer__inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .docs-defs__row {
+    grid-template-columns: 1fr;
   }
 }

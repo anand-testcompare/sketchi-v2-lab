@@ -16,9 +16,27 @@ export const Route = createRootRoute({
         name: "viewport",
         content: "width=device-width, initial-scale=1",
       },
-      { title: "Sketchi Excalidraw" },
+      {
+        name: "description",
+        content:
+          "A no-auth Sketchi workspace: switch sample diagrams and inspect the typed IR, validated scene, and live Excalidraw canvas.",
+      },
+      { name: "theme-color", content: "#f6f1e7" },
+      { title: "Sketchi Workspace" },
     ],
-    links: [{ rel: "stylesheet", href: appStyles }],
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Hanken+Grotesk:wght@400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+      },
+      { rel: "stylesheet", href: appStyles },
+    ],
   }),
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -41,7 +59,7 @@ function RootComponent() {
 function NotFoundComponent() {
   return (
     <main className="sketchi-excalidraw-not-found">
-      <h1>Not found</h1>
+      <h1>Workspace not found</h1>
     </main>
   );
 }

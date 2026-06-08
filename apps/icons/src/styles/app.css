@@ -1,11 +1,48 @@
-html,
-body {
-  margin: 0;
-  min-height: 100%;
-}
+/* =====================================================================
+   Sketchi v2 — "Drafting Studio" design language (icons gallery)
+   Shares the web/excalidraw tokens; adds a dense, searchable icon browser.
+   Fonts loaded via <link> in routes/__root.tsx.
+   ===================================================================== */
 
-body {
-  background: #f6f8fb;
+:root {
+  --font-display: "Bricolage Grotesque", "Hanken Grotesk", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --paper: #f6f1e7;
+  --paper-2: #fbf7ee;
+  --card: #fffdf8;
+  --ink: #1a1712;
+  --ink-2: #4c4639;
+  --ink-3: #8a8270;
+
+  --line: #e7ddc9;
+  --line-2: #d8ccb1;
+
+  --accent: #e5431d;
+  --accent-strong: #c4360f;
+  --accent-ink: #a82f0c;
+  --accent-wash: #fbe6dd;
+
+  --blueprint: #1f44c9;
+  --blueprint-ink: #1a39a8;
+  --blueprint-wash: #e6eafb;
+
+  --ok: #1c7a4d;
+  --grid-dot: rgba(26, 23, 18, 0.06);
+
+  --shadow-sm: 0 1px 2px rgba(40, 31, 12, 0.06), 0 2px 6px rgba(40, 31, 12, 0.05);
+  --shadow-md: 0 6px 18px rgba(40, 31, 12, 0.08), 0 2px 6px rgba(40, 31, 12, 0.05);
+  --shadow-lg: 0 24px 60px rgba(40, 31, 12, 0.16), 0 6px 18px rgba(40, 31, 12, 0.08);
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --checker: linear-gradient(45deg, var(--line) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--line) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--line) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--line) 75%);
 }
 
 *,
@@ -14,204 +51,548 @@ body {
   box-sizing: border-box;
 }
 
-.sketchi-icons,
-.sketchi-icons-not-found {
-  color: #111827;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 {
+  font-family: var(--font-display);
+}
+
+@keyframes sk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ===================================================================== */
+/* Page                                                                  */
+/* ===================================================================== */
+.sketchi-icons {
+  display: grid;
+  gap: 16px;
+  margin: 0 auto;
+  max-width: 1320px;
+  min-height: 100vh;
+  padding: 20px;
 }
 
 .sketchi-icons-not-found {
   align-items: center;
   display: grid;
+  font-family: var(--font-body);
   min-height: 100vh;
   place-items: center;
 }
 
-.sketchi-icons {
-  display: grid;
-  gap: 12px;
-  min-height: 100vh;
-  padding: 12px;
-}
-
-.sketchi-icons__header,
-.sketchi-icons__toolbar,
-.sketchi-icons__grid {
-  background: #ffffff;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
-}
-
 .sketchi-icons__header {
-  align-items: center;
+  align-items: flex-end;
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 16px;
   justify-content: space-between;
-  padding: 16px;
 }
 
 .sketchi-icons__title {
   display: grid;
-  gap: 3px;
+  gap: 4px;
 }
 
 .sketchi-icons__eyebrow {
-  color: #0f766e;
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   margin: 0;
   text-transform: uppercase;
 }
 
 .sketchi-icons h1 {
-  font-size: 22px;
-  line-height: 1.15;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.05;
   margin: 0;
 }
 
 .sketchi-icons__summary {
-  align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: flex-end;
 }
 
 .sketchi-icons__summary span {
-  background: #f8fafc;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
-  color: #334155;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 900;
-  padding: 8px 10px;
+  padding: 7px 12px;
   white-space: nowrap;
 }
 
+.sketchi-icons__summary strong {
+  color: var(--ink);
+}
+
+/* ---- toolbar --------------------------------------------------------- */
 .sketchi-icons__toolbar {
   align-items: end;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(220px, 1fr) minmax(190px, 260px) auto;
-  padding: 12px;
+  grid-template-columns: minmax(220px, 1fr) minmax(190px, 260px) auto auto;
+  padding: 14px;
 }
 
 .sketchi-icons__field {
-  color: #475569;
+  color: var(--ink-2);
   display: grid;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   gap: 6px;
 }
 
 .sketchi-icons__field input,
 .sketchi-icons__field select {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  color: #111827;
+  background: var(--paper-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink);
   font: inherit;
-  min-height: 40px;
-  padding: 9px 10px;
+  font-weight: 400;
+  min-height: 42px;
+  padding: 9px 11px;
+}
+
+.sketchi-icons__field input:focus-visible,
+.sketchi-icons__field select:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent-wash);
 }
 
 .sketchi-icons__toggle {
   align-items: center;
-  color: #334155;
+  color: var(--ink-2);
   display: flex;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
   gap: 8px;
-  min-height: 40px;
+  min-height: 42px;
 }
 
+.sketchi-icons__count {
+  align-self: center;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ---- status ---------------------------------------------------------- */
 .sketchi-icons__status {
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
-  color: #475569;
-  display: grid;
-  min-height: 260px;
-  place-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  min-height: 280px;
+  padding: 24px;
   text-align: center;
+}
+
+.sketchi-icons__spin {
+  animation: sk-spin 0.8s linear infinite;
+  block-size: 22px;
+  border: 3px solid var(--line-2);
+  border-radius: 999px;
+  border-top-color: var(--accent);
+  display: inline-block;
+  inline-size: 22px;
+}
+
+/* ---- body / grid ----------------------------------------------------- */
+.sketchi-icons__body {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.sketchi-icons__body[data-detail="open"] {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+.sketchi-icons__results {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
 .sketchi-icons__grid {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-  padding: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
 }
 
-.sketchi-icons__item {
-  background: #f8fafc;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
+.sketchi-icons__empty {
+  background: var(--card);
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-md);
   display: grid;
-  gap: 10px;
-  grid-template-rows: 96px auto auto;
-  min-width: 0;
-  padding: 10px;
+  gap: 12px;
+  justify-items: center;
+  padding: 48px 24px;
+  text-align: center;
 }
 
-.sketchi-icons__preview {
-  align-items: center;
-  background:
-    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
-    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
-    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
-  background-color: #ffffff;
-  background-position:
-    0 0,
-    0 8px,
-    8px -8px,
-    -8px 0;
-  background-size: 16px 16px;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
+.sketchi-icons__empty-title {
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.sketchi-icons__reset {
+  background: var(--ink);
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--paper-2);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 16px;
+}
+
+.sketchi-icons__more {
   display: flex;
   justify-content: center;
+  padding: 8px 0 4px;
+}
+
+.sketchi-icons__more-btn {
+  background: var(--card);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 22px;
+  transition: border-color 0.16s var(--ease), background 0.16s var(--ease);
+}
+
+.sketchi-icons__more-btn:hover {
+  background: var(--paper-2);
+  border-color: var(--ink);
+}
+
+/* ===================================================================== */
+/* Icon card                                                             */
+/* ===================================================================== */
+.icon-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 8px;
   min-width: 0;
+  padding: 12px;
+  text-align: center;
+  transition:
+    border-color 0.16s var(--ease),
+    box-shadow 0.16s var(--ease),
+    transform 0.16s var(--ease);
 }
 
-.sketchi-icons__preview img {
+.icon-card:hover {
+  border-color: var(--line-2);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.icon-card:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent-wash);
+}
+
+.icon-card[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.icon-card__preview {
+  align-items: center;
+  aspect-ratio: 1;
+  background-color: var(--card);
+  background-image: var(--checker);
+  background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+  background-size: 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.icon-card__preview img {
   display: block;
-  max-height: 64px;
-  max-width: 76px;
+  max-height: 56%;
+  max-width: 56%;
 }
 
-.sketchi-icons__item strong {
+.icon-card__flag {
+  background: var(--accent);
+  block-size: 9px;
+  border: 2px solid var(--card);
+  border-radius: 999px;
+  inline-size: 9px;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+}
+
+.icon-card__slug {
+  color: var(--ink);
   font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-card__collection {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===================================================================== */
+/* Icon detail                                                           */
+/* ===================================================================== */
+.sketchi-icons__detail {
+  align-self: start;
+  min-width: 0;
+  position: sticky;
+  top: 16px;
+}
+
+.icon-detail {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.icon-detail__head {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.icon-detail__eyebrow {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  margin: 0 0 3px;
+  text-transform: uppercase;
+}
+
+.icon-detail__slug {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 0;
   overflow-wrap: anywhere;
 }
 
-.sketchi-icons__item span {
-  color: #64748b;
-  font-size: 12px;
-  overflow-wrap: anywhere;
+.icon-detail__close {
+  align-items: center;
+  background: var(--paper-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  cursor: pointer;
+  display: inline-flex;
+  flex: none;
+  block-size: 34px;
+  inline-size: 34px;
+  justify-content: center;
 }
 
+.icon-detail__close:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.icon-detail__preview {
+  align-items: center;
+  aspect-ratio: 16 / 11;
+  background-color: var(--card);
+  background-image: var(--checker);
+  background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+  background-size: 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  display: flex;
+  justify-content: center;
+}
+
+.icon-detail__preview img {
+  max-height: 52%;
+  max-width: 52%;
+}
+
+.icon-detail__meta {
+  display: grid;
+  margin: 0;
+}
+
+.icon-detail__meta > div {
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 9px 0;
+}
+
+.icon-detail__meta > div:first-child {
+  border-top: 0;
+}
+
+.icon-detail__meta dt {
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.icon-detail__meta dd {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.icon-detail__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.icon-detail__flag {
+  background: var(--accent-wash);
+  border-radius: 999px;
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+}
+
+.icon-detail__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-detail__btn {
+  align-items: center;
+  background: var(--paper-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 1;
+  font: inherit;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 14px;
+  text-decoration: none;
+  transition: border-color 0.16s var(--ease), background 0.16s var(--ease);
+}
+
+.icon-detail__btn:hover {
+  border-color: var(--ink);
+}
+
+.icon-detail__btn--primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-2);
+}
+
+/* ===================================================================== */
+/* Responsive                                                            */
+/* ===================================================================== */
 @media (max-width: 760px) {
-  .sketchi-icons__header,
   .sketchi-icons__toolbar {
-    align-items: stretch;
     grid-template-columns: 1fr;
   }
 
-  .sketchi-icons__header {
-    display: grid;
+  .sketchi-icons__count {
+    text-align: left;
   }
 
-  .sketchi-icons__summary {
-    justify-content: flex-start;
+  .sketchi-icons__grid {
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  }
+
+  .sketchi-icons__body[data-detail="open"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sketchi-icons__detail {
+    bottom: 0;
+    left: 0;
+    max-height: 86vh;
+    overflow: auto;
+    position: fixed;
+    right: 0;
+    top: auto;
+    z-index: 50;
+  }
+
+  .sketchi-icons__detail .icon-detail {
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    box-shadow: 0 -18px 50px rgba(26, 23, 18, 0.28);
   }
 }

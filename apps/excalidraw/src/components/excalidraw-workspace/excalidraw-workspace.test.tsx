@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@sketchi/diagram-studio-ui", () => ({
@@ -7,20 +7,44 @@ vi.mock("@sketchi/diagram-studio-ui", () => ({
   ),
 }));
 
-import { flowchartFixture } from "@sketchi/diagram-core";
+import {
+  flowchartFixture,
+  mindmapFixture,
+  pharmaBatchDispositionFlowchart,
+} from "@sketchi/diagram-core";
 
 import { ExcalidrawWorkspace } from "./excalidraw-workspace";
 
 describe("ExcalidrawWorkspace", () => {
-  it("renders the app shell around a generated scene", () => {
-    render(<ExcalidrawWorkspace diagram={flowchartFixture} status="draft" />);
+  it("renders the active scene and switches diagrams", () => {
+    render(
+      <ExcalidrawWorkspace
+        diagrams={[
+          pharmaBatchDispositionFlowchart,
+          flowchartFixture,
+          mindmapFixture,
+        ]}
+      />,
+    );
 
     expect(
-      screen.getByRole("heading", { name: "Sketchi onboarding decision flow" }),
+      screen.getByLabelText("Pharma batch disposition flow canvas"),
     ).toBeTruthy();
-    expect(screen.getByText("Draft")).toBeTruthy();
-    expect(screen.getByLabelText("5 nodes")).toBeTruthy();
-    expect(screen.getByText("Nodes")).toBeTruthy();
-    expect(screen.getByTestId("mock-excalidraw-canvas")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Sketchi mindmap fixture/ }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Sketchi onboarding decision flow/ }),
+    );
+    expect(
+      screen.getByLabelText("Sketchi onboarding decision flow canvas"),
+    ).toBeTruthy();
+  });
+
+  it("renders an empty state without diagrams", () => {
+    render(<ExcalidrawWorkspace diagrams={[]} />);
+
+    expect(screen.getByText("No diagram selected")).toBeTruthy();
   });
 });

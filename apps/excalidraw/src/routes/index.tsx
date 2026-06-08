@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { pharmaBatchDispositionFlowchart } from "@sketchi/diagram-core";
-
 import { ExcalidrawWorkspace } from "../components/excalidraw-workspace/index.js";
 
 export const Route = createFileRoute("/")({
@@ -9,10 +7,5 @@ export const Route = createFileRoute("/")({
 });
 
 function HomeRoute() {
-  return (
-    <ExcalidrawWorkspace
-      diagram={pharmaBatchDispositionFlowchart}
-      status="ready"
-    />
-  );
+  return <ExcalidrawWorkspace />;
 }
