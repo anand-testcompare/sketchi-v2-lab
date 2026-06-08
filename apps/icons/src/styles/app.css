@@ -19,10 +19,10 @@
   --line: #e7ddc9;
   --line-2: #d8ccb1;
 
-  --accent: #e5431d;
-  --accent-strong: #c4360f;
-  --accent-ink: #a82f0c;
-  --accent-wash: #fbe6dd;
+  --accent: #8f707f;
+  --accent-strong: #6f5462;
+  --accent-ink: #6a4e5c;
+  --accent-wash: #efe6ec;
 
   --blueprint: #1f44c9;
   --blueprint-ink: #1a39a8;
@@ -113,6 +113,17 @@ h1 {
   flex-wrap: wrap;
   gap: 16px;
   justify-content: space-between;
+}
+
+.sketchi-icons__brand {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.sk-icon {
+  border-radius: 8px;
+  display: block;
 }
 
 .sketchi-icons__title {

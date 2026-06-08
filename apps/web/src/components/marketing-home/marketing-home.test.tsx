@@ -4,27 +4,20 @@ import { describe, expect, it } from "vitest";
 import { MarketingHome } from "./marketing-home";
 
 describe("MarketingHome", () => {
-  it("composes the hero, pipeline, surfaces, and playground proof", () => {
-    render(<MarketingHome previewImageSrc="/preview.png" />);
+  it("composes the hero, pipeline, and surfaces", () => {
+    render(<MarketingHome />);
 
     expect(
       screen.getByRole("heading", { name: /validated diagrams/i }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("heading", {
-        name: "Generation paths stay inspectable.",
-      }),
+      screen.getByRole("heading", { name: "Generation stays inspectable." }),
     ).toBeTruthy();
     expect(
       screen.getByRole("heading", { name: "Four surfaces, one pipeline." }),
     ).toBeTruthy();
     expect(
       screen.getByRole("heading", { name: "Excalidraw workspace" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByAltText(
-        "Sketchi playground showing a generated Excalidraw flowchart",
-      ),
     ).toBeTruthy();
   });
 });

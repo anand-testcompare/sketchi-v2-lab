@@ -19,10 +19,10 @@
   --line: #e7ddc9;
   --line-2: #d8ccb1;
 
-  --accent: #e5431d;
-  --accent-strong: #c4360f;
-  --accent-ink: #a82f0c;
-  --accent-wash: #fbe6dd;
+  --accent: #8f707f;
+  --accent-strong: #6f5462;
+  --accent-ink: #6a4e5c;
+  --accent-wash: #efe6ec;
 
   --blueprint: #1f44c9;
   --blueprint-ink: #1a39a8;
@@ -199,15 +199,9 @@ body {
 }
 
 .workspace-top-bar__mark {
-  align-items: center;
-  background: var(--ink);
   border-radius: 7px;
-  block-size: 30px;
-  color: var(--paper-2);
-  display: inline-flex;
+  display: block;
   flex: none;
-  inline-size: 30px;
-  justify-content: center;
 }
 
 .workspace-top-bar__heading {

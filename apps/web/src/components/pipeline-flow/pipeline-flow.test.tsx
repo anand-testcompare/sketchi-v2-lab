@@ -17,11 +17,7 @@ describe("PipelineFlow", () => {
   });
 
   it("renders custom stages when provided", () => {
-    render(
-      <PipelineFlow
-        stages={[{ desc: "Only stage", name: "Solo", pkg: "demo-pkg" }]}
-      />,
-    );
+    render(<PipelineFlow stages={[{ name: "Solo", pkg: "demo-pkg" }]} />);
 
     expect(screen.getByRole("heading", { name: "Solo" })).toBeTruthy();
     expect(screen.getByText("demo-pkg")).toBeTruthy();

@@ -9,6 +9,7 @@
   --font-display: "Bricolage Grotesque", "Hanken Grotesk", system-ui, sans-serif;
   --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-script: "Dancing Script", "Bricolage Grotesque", cursive;
 
   /* surfaces */
   --paper: #f6f1e7;
@@ -23,11 +24,11 @@
   --line-2: #d8ccb1;
   --line-ink: rgba(26, 23, 18, 0.12);
 
-  /* accent — drafting-pencil vermilion */
-  --accent: #e5431d;
-  --accent-strong: #c4360f;
-  --accent-ink: #a82f0c;
-  --accent-wash: #fbe6dd;
+  /* accent — Sketchi brand mauve (from sketchi.app icon) */
+  --accent: #8f707f;
+  --accent-strong: #6f5462;
+  --accent-ink: #6a4e5c;
+  --accent-wash: #efe6ec;
 
   /* secondary — blueprint (validated / technical) */
   --blueprint: #1f44c9;
@@ -280,28 +281,22 @@ img {
 
 .site-header__brand {
   align-items: center;
+  color: var(--ink);
   display: inline-flex;
-  font-family: var(--font-display);
-  font-size: 21px;
-  font-weight: 800;
-  gap: 10px;
-  letter-spacing: -0.02em;
+  gap: 9px;
   text-decoration: none;
 }
 
-.site-header__mark {
-  align-items: center;
-  background: var(--ink);
+.sk-icon {
   border-radius: 7px;
-  color: var(--paper-2);
-  display: inline-flex;
-  block-size: 30px;
-  inline-size: 30px;
-  justify-content: center;
+  display: block;
 }
 
-.site-header__mark svg {
-  display: block;
+.sk-wordmark {
+  font-family: var(--font-script);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .site-header__nav {
@@ -1043,22 +1038,10 @@ img {
   align-items: center;
   color: var(--paper-2);
   display: inline-flex;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
-  gap: 10px;
-  letter-spacing: -0.02em;
-}
-
-.site-footer__mark {
-  align-items: center;
-  background: var(--accent);
-  border-radius: 7px;
-  block-size: 30px;
-  color: #fff;
-  display: inline-flex;
-  inline-size: 30px;
-  justify-content: center;
+  font-family: var(--font-script);
+  font-size: 26px;
+  font-weight: 700;
+  gap: 9px;
 }
 
 .site-footer__tagline {

@@ -108,7 +108,7 @@ function HeroDiagram() {
 export function HomeHero({
   docsHref = "/docs",
   eyebrow = "Typed diagram generation",
-  lead = "Sketchi compiles a prompt into a typed, validated intermediate representation, then renders deterministic Excalidraw-ready scenes. Every step stays inspectable.",
+  lead = "Compile a prompt into typed, validated IR — then render deterministic, Excalidraw-ready scenes.",
   primaryHref = "https://excalidraw.sketchi.app",
 }: HomeHeroProps) {
   return (
@@ -135,17 +135,6 @@ export function HomeHero({
               Read the docs
             </a>
           </div>
-          <p className="home-hero__meta sk-rise" style={{ "--i": 4 } as never}>
-            <span>
-              <b>No sign-in</b> required
-            </span>
-            <span>
-              <b>Flowchart</b> contract live
-            </span>
-            <span>
-              <b>Deterministic</b> renderer
-            </span>
-          </p>
         </div>
 
         <div className="home-hero__visual sk-rise" style={{ "--i": 2 } as never}>

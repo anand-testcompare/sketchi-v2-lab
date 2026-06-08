@@ -25,6 +25,7 @@ export const Route = createRootRoute({
       { title: "Sketchi Workspace" },
     ],
     links: [
+      { rel: "icon", href: "/icon.svg", type: "image/svg+xml" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "preconnect",

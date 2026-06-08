@@ -92,9 +92,12 @@ export function IconLibrary({
   return (
     <main className="sketchi-icons">
       <header className="sketchi-icons__header">
-        <div className="sketchi-icons__title">
-          <p className="sketchi-icons__eyebrow">Sketchi icons</p>
-          <h1>Curated icon output</h1>
+        <div className="sketchi-icons__brand">
+          <img alt="" className="sk-icon" height="38" src="/icon.svg" width="38" />
+          <div className="sketchi-icons__title">
+            <p className="sketchi-icons__eyebrow">Sketchi icons</p>
+            <h1>Curated icon output</h1>
+          </div>
         </div>
         <div className="sketchi-icons__summary" aria-label="Icon summary">
           <span>

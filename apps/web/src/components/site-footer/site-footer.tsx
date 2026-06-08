@@ -10,19 +10,8 @@ export function SiteFooter({
       <div className="sk-shell site-footer__inner">
         <div className="site-footer__about">
           <span className="site-footer__brand">
-            <span className="site-footer__mark" aria-hidden="true">
-              <svg fill="none" height="16" viewBox="0 0 16 16" width="16">
-                <circle cx="3.5" cy="3.5" fill="currentColor" r="2.2" />
-                <circle cx="12.5" cy="12.5" fill="currentColor" r="2.2" />
-                <path
-                  d="M5 4.5 Q10 4 11 11"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </span>
-            Sketchi
+            <img alt="" className="sk-icon" height="30" src="/icon.svg" width="30" />
+            <span>Sketchi</span>
           </span>
           <p className="site-footer__tagline">
             Prompt-to-diagram tooling with validated IR, deterministic

@@ -16,27 +16,6 @@ const defaultNavItems: readonly SiteHeaderNavItem[] = [
   { href: "/docs", label: "Docs" },
 ];
 
-function BrandMark() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height="16"
-      viewBox="0 0 16 16"
-      width="16"
-    >
-      <circle cx="3.5" cy="3.5" fill="currentColor" r="2.2" />
-      <circle cx="12.5" cy="12.5" fill="currentColor" r="2.2" />
-      <path
-        d="M5 4.5 Q10 4 11 11"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.5"
-      />
-    </svg>
-  );
-}
-
 export function SiteHeader({
   activePath,
   navItems = defaultNavItems,
@@ -47,10 +26,14 @@ export function SiteHeader({
     <header className="site-header">
       <div className="sk-shell site-header__bar">
         <a aria-label="Sketchi home" className="site-header__brand" href="/">
-          <span className="site-header__mark">
-            <BrandMark />
-          </span>
-          Sketchi
+          <img
+            alt=""
+            className="sk-icon"
+            height="30"
+            src="/icon.svg"
+            width="30"
+          />
+          <span className="sk-wordmark">Sketchi</span>
         </a>
 
         <nav aria-label="Primary" className="site-header__nav">
