@@ -1,11 +1,57 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent } from "storybook/test";
 
-import { IconLibrary, type IconLibraryData } from "./icon-library";
+import type { IconLibraryData } from "../../lib/icon-data";
+import { IconLibrary } from "./icon-library";
 import "../../styles/app.css";
+
+const red =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='3' width='18' height='18' rx='5' fill='%23e5431d'/%3E%3C/svg%3E";
+const blue =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='%231f44c9'/%3E%3C/svg%3E";
 
 const fixtureData: IconLibraryData = {
   generatedAt: "2026-06-06T16:05:35.422Z",
+  icons: [
+    {
+      bytes: 1802,
+      collection: "ai-apps-agents",
+      fileName: "codex.svg",
+      flags: [],
+      id: "ai-apps-agents:codex",
+      slug: "codex",
+      urlPath: red,
+      viewBox: { height: 512, minX: 0, minY: 0, width: 512 },
+    },
+    {
+      bytes: 714,
+      collection: "ai-apps-agents",
+      fileName: "akashchat.svg",
+      flags: [],
+      id: "ai-apps-agents:akashchat",
+      slug: "akashchat",
+      urlPath: blue,
+    },
+    {
+      bytes: 1901,
+      collection: "auth-identity",
+      fileName: "workos.svg",
+      flags: ["duplicate-raster"],
+      id: "auth-identity:workos",
+      slug: "workos",
+      urlPath: red,
+      viewBox: { height: 512, minX: 0, minY: 0, width: 512 },
+    },
+    {
+      bytes: 1420,
+      collection: "frontend-frameworks",
+      fileName: "react.svg",
+      flags: [],
+      id: "frontend-frameworks:react",
+      slug: "react",
+      urlPath: blue,
+    },
+  ],
   summary: {
     collectionCounts: {
       "ai-apps-agents": 2,
@@ -17,44 +63,6 @@ const fixtureData: IconLibraryData = {
     },
     totalIcons: 4,
   },
-  icons: [
-    {
-      bytes: 1802,
-      collection: "ai-apps-agents",
-      fileName: "codex.svg",
-      flags: [],
-      id: "ai-apps-agents:codex",
-      slug: "codex",
-      urlPath: "/output/upload-ready/svg/ai-apps-agents/codex.svg",
-    },
-    {
-      bytes: 714,
-      collection: "ai-apps-agents",
-      fileName: "akashchat.svg",
-      flags: [],
-      id: "ai-apps-agents:akashchat",
-      slug: "akashchat",
-      urlPath: "/output/upload-ready/svg/ai-apps-agents/akashchat.svg",
-    },
-    {
-      bytes: 1901,
-      collection: "auth-identity",
-      fileName: "workos.svg",
-      flags: ["duplicate-raster"],
-      id: "auth-identity:workos",
-      slug: "workos",
-      urlPath: "/output/upload-ready/svg/auth-identity/workos.svg",
-    },
-    {
-      bytes: 1420,
-      collection: "frontend-frameworks",
-      fileName: "react.svg",
-      flags: [],
-      id: "frontend-frameworks:react",
-      slug: "react",
-      urlPath: "/output/upload-ready/svg/frontend-frameworks/react.svg",
-    },
-  ],
 };
 
 const meta = {
@@ -63,6 +71,9 @@ const meta = {
   args: {
     data: fixtureData,
     status: "ready",
+  },
+  parameters: {
+    layout: "fullscreen",
   },
   tags: ["test"],
 } satisfies Meta<typeof IconLibrary>;

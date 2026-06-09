@@ -37,13 +37,15 @@ const fixtureData: IconLibraryData = {
 };
 
 describe("IconLibrary", () => {
-  it("renders icon output summary and filters by query", () => {
+  it("renders the summary and filters by query", () => {
     render(<IconLibrary data={fixtureData} />);
 
     expect(
       screen.getByRole("heading", { name: "Curated icon output" }),
     ).toBeTruthy();
-    expect(screen.getByText("2 icons")).toBeTruthy();
+    expect(screen.getByLabelText("Icon summary").textContent).toContain(
+      "2 icons",
+    );
 
     fireEvent.change(screen.getByLabelText("Search icons"), {
       target: { value: "workos" },
@@ -51,6 +53,16 @@ describe("IconLibrary", () => {
 
     expect(screen.getByText("workos")).toBeTruthy();
     expect(screen.queryByText("codex")).toBeNull();
+  });
+
+  it("opens an icon's detail when selected", () => {
+    render(<IconLibrary data={fixtureData} />);
+
+    fireEvent.click(screen.getByText("workos"));
+
+    expect(screen.getByRole("heading", { name: "workos" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy SVG" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Download" })).toBeTruthy();
   });
 
   it("shows a loading state", () => {

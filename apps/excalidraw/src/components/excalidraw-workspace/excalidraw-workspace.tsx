@@ -1,86 +1,144 @@
-import type { IntermediateDiagram } from "@sketchi/diagram-core";
+import {
+  flowchartFixture,
+  type IntermediateDiagram,
+  mindmapFixture,
+  pharmaBatchDispositionFlowchart,
+} from "@sketchi/diagram-core";
 import { convertSceneToExcalidraw } from "@sketchi/diagram-excalidraw";
 import { renderIntermediateDiagram } from "@sketchi/diagram-renderer";
 import { ExcalidrawSceneCanvas } from "@sketchi/diagram-studio-ui";
+import { useMemo, useState } from "react";
+
+import { DiagramInspector } from "../diagram-inspector/index.js";
+import {
+  type DiagramOption,
+  DiagramSwitcher,
+} from "../diagram-switcher/index.js";
+import {
+  WorkspaceTopBar,
+  type WorkspaceStatus,
+} from "../workspace-top-bar/index.js";
+
+const defaultDiagrams: readonly IntermediateDiagram[] = [
+  pharmaBatchDispositionFlowchart,
+  flowchartFixture,
+  mindmapFixture,
+];
 
 export interface ExcalidrawWorkspaceProps {
-  diagram: IntermediateDiagram;
-  status?: "ready" | "draft" | "offline";
+  diagrams?: readonly IntermediateDiagram[];
+  errorMessage?: string;
+  initialDiagramId?: string;
+  status?: WorkspaceStatus;
 }
 
-const statusLabels = {
-  draft: "Draft",
-  offline: "Offline",
-  ready: "Ready",
-};
-
 export function ExcalidrawWorkspace({
-  diagram,
+  diagrams = defaultDiagrams,
+  errorMessage,
+  initialDiagramId,
   status = "ready",
 }: ExcalidrawWorkspaceProps) {
-  const scene = convertSceneToExcalidraw(renderIntermediateDiagram(diagram));
+  const [selectedId, setSelectedId] = useState(
+    initialDiagramId ?? diagrams[0]?.id ?? "",
+  );
+
+  const active = diagrams.find((item) => item.id === selectedId) ?? diagrams[0];
+
+  const scene = useMemo(
+    () =>
+      active
+        ? convertSceneToExcalidraw(renderIntermediateDiagram(active))
+        : null,
+    [active],
+  );
+
+  const options: DiagramOption[] = diagrams.map((item) => ({
+    edgeCount: item.edges.length,
+    id: item.id,
+    nodeCount: item.nodes.length,
+    title: item.title,
+    type: item.type,
+  }));
+
+  const effectiveStatus: WorkspaceStatus =
+    diagrams.length === 0 ? "empty" : status;
 
   return (
     <div className="sketchi-excalidraw-app">
-      <header className="sketchi-excalidraw-app__topbar">
-        <div className="sketchi-excalidraw-app__brand">
-          <p className="sketchi-excalidraw-app__eyebrow">Sketchi Excalidraw</p>
-          <h1>{diagram.title}</h1>
-        </div>
-        <span className="sketchi-excalidraw-app__status">
-          {statusLabels[status]}
-        </span>
-      </header>
+      <WorkspaceTopBar
+        diagramType={active?.type}
+        status={effectiveStatus}
+        title={active?.title ?? "No diagram"}
+      />
 
-      <main className="sketchi-excalidraw-app__body">
+      <div className="sketchi-excalidraw-app__body">
         <aside className="sketchi-excalidraw-app__sidebar">
-          <div>
-            <h2>Workspace</h2>
-            <p>
-              This no-auth shell uses the same validated diagram pipeline the
-              playground exercises.
-            </p>
-          </div>
-
-          <div className="sketchi-excalidraw-app__metrics">
-            <div
-              aria-label={`${diagram.nodes.length} nodes`}
-              className="sketchi-excalidraw-app__metric"
-            >
-              <strong>{diagram.nodes.length}</strong>
-              <span>Nodes</span>
-            </div>
-            <div
-              aria-label={`${diagram.edges.length} edges`}
-              className="sketchi-excalidraw-app__metric"
-            >
-              <strong>{diagram.edges.length}</strong>
-              <span>Edges</span>
-            </div>
-          </div>
-
-          <pre className="sketchi-excalidraw-app__prompt">
-            {JSON.stringify(
-              {
-                id: diagram.id,
-                layout: diagram.layout,
-                type: diagram.type,
-              },
-              null,
-              2,
-            )}
-          </pre>
+          {diagrams.length > 0 ? (
+            <DiagramSwitcher
+              activeId={active?.id ?? ""}
+              diagrams={options}
+              onSelect={setSelectedId}
+            />
+          ) : null}
+          {active && scene ? (
+            <DiagramInspector diagram={active} scene={scene} />
+          ) : null}
         </aside>
 
         <section className="sketchi-excalidraw-app__canvas">
-          <ExcalidrawSceneCanvas
-            scene={scene}
-            title={`${diagram.title} canvas`}
-            viewModeEnabled={false}
-            zenModeEnabled={false}
-          />
+          {effectiveStatus === "loading" ? (
+            <WorkspaceState kind="loading" />
+          ) : effectiveStatus === "error" ? (
+            <WorkspaceState kind="error" message={errorMessage} />
+          ) : active && scene ? (
+            <ExcalidrawSceneCanvas
+              scene={scene}
+              title={`${active.title} canvas`}
+              viewModeEnabled={false}
+              zenModeEnabled={false}
+            />
+          ) : (
+            <WorkspaceState kind="empty" />
+          )}
         </section>
-      </main>
+      </div>
+    </div>
+  );
+}
+
+interface WorkspaceStateProps {
+  kind: "empty" | "error" | "loading";
+  message?: string | undefined;
+}
+
+const stateCopy: Record<
+  WorkspaceStateProps["kind"],
+  { body: string; title: string }
+> = {
+  empty: {
+    body: "Pick a sample diagram to render a deterministic scene.",
+    title: "No diagram selected",
+  },
+  error: {
+    body: "The diagram could not be rendered into a scene.",
+    title: "Scene unavailable",
+  },
+  loading: {
+    body: "Validating the diagram and laying out the scene.",
+    title: "Generating scene",
+  },
+};
+
+function WorkspaceState({ kind, message }: WorkspaceStateProps) {
+  const copy = stateCopy[kind];
+
+  return (
+    <div className={`workspace-state workspace-state--${kind}`} role="status">
+      <span className="workspace-state__glyph" aria-hidden="true">
+        {kind === "loading" ? <span className="workspace-state__spin" /> : "◇"}
+      </span>
+      <h2 className="workspace-state__title">{copy.title}</h2>
+      <p className="workspace-state__body">{message ?? copy.body}</p>
     </div>
   );
 }

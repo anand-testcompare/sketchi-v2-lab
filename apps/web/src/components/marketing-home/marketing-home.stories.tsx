@@ -6,8 +6,8 @@ import "../../styles/app.css";
 const meta = {
   title: "Web/Components/MarketingHome",
   component: MarketingHome,
-  args: {
-    previewImageSrc: "/media/sketchi-playground-preview.png",
+  parameters: {
+    layout: "fullscreen",
   },
   tags: ["test"],
 } satisfies Meta<typeof MarketingHome>;

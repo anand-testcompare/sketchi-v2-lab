@@ -7,7 +7,5 @@ export const Route = createFileRoute("/")({
 });
 
 function HomeRoute() {
-  return (
-    <MarketingHome previewImageSrc="/media/sketchi-playground-preview.png" />
-  );
+  return <MarketingHome />;
 }
