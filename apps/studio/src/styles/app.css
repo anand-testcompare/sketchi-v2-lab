@@ -1,0 +1,490 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* shadcn tokens mapped to the Sketchi sketchbook palette */
+:root {
+  --radius: 0.75rem;
+
+  --background: #f6f1e7;
+  --foreground: #2b2723;
+  --card: #fffdf8;
+  --card-foreground: #2b2723;
+  --popover: #fffdf8;
+  --popover-foreground: #2b2723;
+  --primary: #8f707f;
+  --primary-foreground: #fffdf8;
+  --secondary: #efe7d7;
+  --secondary-foreground: #2b2723;
+  --muted: #efe7d7;
+  --muted-foreground: #8a7f70;
+  --accent: #ece1ef;
+  --accent-foreground: #4a3944;
+  --destructive: #b3503f;
+  --border: #e4dccd;
+  --input: #d8cfbf;
+  --ring: #8f707f;
+
+  /* sketchbook aliases used by hand-written chrome */
+  --paper: #f6f1e7;
+  --ink: #2b2723;
+  --muted-ink: #9a8f80;
+  --mauve: #8f707f;
+  --mauve-soft: #8f707f1a;
+  --line: #e4dccd;
+  --code-bg: #2b2723;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-script: "Dancing Script", cursive;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+/* ===================== Sketchbook chrome ===================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.studio {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  transition: max-width 0.5s ease;
+}
+
+.studio--build {
+  max-width: none;
+}
+
+.studio__body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.studio--build .studio__body {
+  grid-template-columns: clamp(340px, 32vw, 460px) minmax(0, 1fr);
+}
+
+.studio__chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.studio--build .studio__chat {
+  border-right: 1px solid var(--line);
+}
+
+.studio__conversation {
+  flex: 1;
+  min-height: 0;
+}
+
+.studio__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 16px 24px 10px;
+}
+
+.studio__mark {
+  font-family: var(--font-script);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--mauve);
+  line-height: 1;
+}
+
+.studio__sub {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-ink);
+}
+
+/* Empty state */
+.studio__empty-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.studio__empty {
+  text-align: center;
+  max-width: 540px;
+  padding: 40px 0;
+}
+
+.studio__empty-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.studio__empty-sub {
+  color: var(--muted-ink);
+  margin: 0 0 22px;
+}
+
+.studio__starters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.studio__thinking {
+  color: var(--mauve);
+  font-style: italic;
+  animation: studio-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes studio-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.studio__composer {
+  padding: 12px 24px 20px;
+}
+
+.studio__composer-hint {
+  font-size: 12px;
+  color: var(--muted-ink);
+}
+
+.studio__error {
+  margin: 0 24px 8px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--destructive) 35%, transparent);
+  background: color-mix(in srgb, var(--destructive) 8%, transparent);
+  color: var(--destructive);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+/* ===================== Diagram stage (build mode) ===================== */
+
+.studio__stage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 10px 28px 24px 20px;
+  min-width: 0;
+  min-height: 0;
+  animation: studio-stage-in 0.5s ease;
+}
+
+@keyframes studio-stage-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.studio__stage-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.studio__stage-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-ink);
+}
+
+.studio__stage-title {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.studio__stage-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.studio__stage-chip {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-ink);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--card);
+  white-space: nowrap;
+}
+
+.studio__stage-chip--grade {
+  color: var(--mauve);
+  border-color: color-mix(in srgb, var(--mauve) 40%, transparent);
+}
+
+.studio__stage-chip--draft {
+  color: #a06a32;
+  border-color: #e3c89f;
+  background: #fdf4e3;
+}
+
+.studio__stage-card {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background:
+    radial-gradient(rgb(143 112 127 / 10%) 1px, transparent 1.2px) 0 0 / 22px
+      22px,
+    var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgb(43 39 35 / 7%);
+  overflow: hidden;
+  display: flex;
+  padding: 18px;
+}
+
+.artifact {
+  width: 100%;
+  height: 100%;
+}
+
+.artifact__node {
+  fill: #fffdf8;
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+
+.artifact__node--terminal {
+  fill: #f3e9ee;
+}
+
+.artifact__node--decision {
+  fill: #f7f1e2;
+}
+
+.artifact__edge {
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.artifact__label {
+  fill: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.artifact__edge-label {
+  fill: var(--mauve);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+}
+
+.studio__stage-status {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+}
+
+.studio__stage-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mauve);
+  animation: studio-pulse 1.2s ease-in-out infinite;
+}
+
+.studio__stage-placeholder {
+  margin: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  max-width: 460px;
+}
+
+.studio__stage-placeholder-text {
+  color: var(--mauve);
+  font-style: italic;
+  animation: studio-pulse 1.4s ease-in-out infinite;
+  margin: 0;
+}
+
+.studio__ghosts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.studio__ghost {
+  font-size: 12.5px;
+  padding: 5px 11px;
+  border: 1.4px dashed color-mix(in srgb, var(--mauve) 45%, transparent);
+  color: var(--mauve);
+  border-radius: 10px;
+  background: rgb(143 112 127 / 5%);
+  animation: studio-ghost-in 0.35s ease;
+}
+
+@keyframes studio-ghost-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===================== Tool calls + grade reports in chat ===================== */
+
+.studio__tool {
+  background: var(--card);
+}
+
+.studio__reasoning {
+  width: 100%;
+}
+
+.studio__grade-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.studio__grade-score {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.studio__grade-score.is-accepted {
+  color: #4a7a4f;
+}
+
+.studio__grade-score.is-rejected {
+  color: #a06a32;
+}
+
+.studio__grade-summary {
+  color: var(--muted-ink);
+  font-size: 12.5px;
+}
+
+.studio__grade-issues {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 920px) {
+  .studio--build .studio__body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 44%) minmax(0, 1fr);
+  }
+
+  .studio--build .studio__stage {
+    order: -1;
+    padding: 6px 16px 10px;
+  }
+
+  .studio--build .studio__chat {
+    border-right: none;
+    border-top: 1px solid var(--line);
+  }
+}
+
+.studio-not-found {
+  padding: 48px;
+  text-align: center;
+}
