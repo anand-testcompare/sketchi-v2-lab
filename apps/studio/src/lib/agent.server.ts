@@ -11,6 +11,7 @@ import {
 } from "ai";
 
 import {
+  cleanToolString,
   DiagramToolInputSchema,
   gradeDiagram,
   normalizeDiagramInput,
@@ -54,6 +55,7 @@ DIAGRAM CRAFT
 - kind: "start"/"end" for entry and exit points, "decision" for branch points (every decision needs at least 2 outgoing edges, each labeled, e.g. "yes"/"no"), "data" for stores, "external" for third parties, "process" otherwise.
 - Connect every node into the flow. Label any edge whose meaning isn't obvious.
 - direction: "TB" for step-by-step flows, "LR" for pipelines and lifecycles.
+- Tool-call hygiene: every field is its own clean string — never weld keys into a value like "start-node,kind:". Edge source/target must exactly equal an existing node id.
 
 VOICE: warm, concise, concrete. Short paragraphs, markdown only where it clarifies. You are a sketchbook companion, not a form.`;
 
@@ -124,6 +126,8 @@ function createStudioModel(env: StudioEnv) {
   return provider(modelId);
 }
 
+const MAX_TOOL_ATTEMPTS = 3;
+
 function buildAgentTools() {
   let attempt = 0;
 
@@ -134,16 +138,31 @@ function buildAgentTools() {
       inputSchema: DiagramToolInputSchema,
       execute: (input) => {
         attempt += 1;
+        if (attempt > MAX_TOOL_ATTEMPTS) {
+          return Promise.resolve({
+            accepted: false,
+            grade: 0,
+            attempt,
+            issues: [
+              "error: attempt limit reached — stop calling create_diagram this turn and summarize the flow in chat instead",
+            ],
+            summary: "stopped",
+          });
+        }
         try {
           const diagram = normalizeDiagramInput(input);
           return Promise.resolve({ ...gradeDiagram(diagram), attempt });
         } catch (error) {
+          const nodeIds = input.nodes
+            .map((node) => cleanToolString(node.id))
+            .filter((id) => id.length > 0);
           return Promise.resolve({
             accepted: false,
             grade: 0,
             attempt,
             issues: [
               `error: ${error instanceof Error ? error.message : "invalid diagram structure"}`,
+              `the node ids you defined are: ${nodeIds.join(", ") || "(none)"} — every edge source/target must exactly match one of these`,
             ],
             summary: "did not validate",
           });

@@ -203,11 +203,19 @@ function userText(message: UIMessage): string {
     .trim();
 }
 
-function StagePlaceholder({ ghostLabels }: { ghostLabels: string[] }) {
+function StagePlaceholder({
+  generating,
+  ghostLabels,
+}: {
+  generating: boolean;
+  ghostLabels: string[];
+}) {
   return (
     <div className="studio__stage-placeholder">
       <p className="studio__stage-placeholder-text">
-        sketching the first draft…
+        {generating
+          ? "sketching the first draft…"
+          : "nothing on the canvas yet — ask for another pass"}
       </p>
       {ghostLabels.length > 0 ? (
         <div className="studio__ghosts">
@@ -266,7 +274,7 @@ function DiagramStage({
         {scene ? (
           <DiagramArtifact scene={scene} />
         ) : (
-          <StagePlaceholder ghostLabels={ghostLabels} />
+          <StagePlaceholder generating={generating} ghostLabels={ghostLabels} />
         )}
         {generating && scene ? (
           <div className="studio__stage-status">
