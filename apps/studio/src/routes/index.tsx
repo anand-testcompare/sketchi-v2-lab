@@ -1,5 +1,11 @@
+import { useChat } from "@ai-sdk/react";
+import {
+  renderIntermediateDiagram,
+  type RenderedDiagramScene,
+} from "@sketchi/diagram-renderer";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useRef, useState } from "react";
+import { DefaultChatTransport, type UIMessage } from "ai";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import {
   Conversation,
@@ -18,22 +24,31 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
 import { Suggestion } from "@/components/ai-elements/suggestion";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
+import { DiagramArtifact } from "@/components/diagram-artifact";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  normalizeDiagramInput,
+  type DiagramGradeReport,
+  type DiagramToolInput,
+} from "@/lib/diagram-tool";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   component: StudioRoute,
 });
-
-type ChatRole = "user" | "assistant";
-
-interface ChatMessage {
-  id: string;
-  role: ChatRole;
-  content: string;
-  streaming: boolean;
-  error?: boolean;
-}
 
 const STARTERS = [
   "Sketch a login flow with retries and a fraud check",
@@ -41,188 +56,407 @@ const STARTERS = [
   "Map the data flow for an AI chat app with streaming",
 ];
 
-function newId(): string {
-  return crypto.randomUUID();
+type MessagePart = UIMessage["parts"][number];
+
+interface DiagramToolPart {
+  type: "tool-create_diagram";
+  toolCallId: string;
+  state:
+    | "input-streaming"
+    | "input-available"
+    | "output-available"
+    | "output-error";
+  input?: unknown;
+  output?: unknown;
+  errorText?: string;
+}
+
+function isDiagramToolPart(part: MessagePart): part is DiagramToolPart & MessagePart {
+  return part.type === "tool-create_diagram";
+}
+
+function gradeReportOf(part: DiagramToolPart): DiagramGradeReport | undefined {
+  if (part.state !== "output-available") {
+    return undefined;
+  }
+  const output = part.output as Partial<DiagramGradeReport> | undefined;
+  return output && typeof output.grade === "number"
+    ? (output as DiagramGradeReport)
+    : undefined;
+}
+
+function GradeReport({ report }: { report: DiagramGradeReport }) {
+  return (
+    <div className="studio__grade">
+      <div className="studio__grade-row">
+        <span
+          className={cn(
+            "studio__grade-score",
+            report.accepted ? "is-accepted" : "is-rejected",
+          )}
+        >
+          {report.grade.toFixed(1)} / 10
+        </span>
+        <span className="studio__grade-summary">{report.summary}</span>
+        <span
+          className={cn(
+            "studio__stage-chip",
+            report.accepted
+              ? "studio__stage-chip--grade"
+              : "studio__stage-chip--draft",
+          )}
+        >
+          {report.accepted ? "accepted" : "revise"}
+        </span>
+      </div>
+      {report.issues.length > 0 ? (
+        <ul className="studio__grade-issues">
+          {report.issues.map((issue) => (
+            <li key={issue}>{issue}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function DiagramToolCard({
+  attempt,
+  part,
+}: {
+  attempt: number;
+  part: DiagramToolPart;
+}) {
+  const report = gradeReportOf(part);
+  const title =
+    part.state === "input-streaming"
+      ? `sketching diagram · attempt ${attempt}`
+      : part.state === "input-available"
+        ? `grading sketch · attempt ${attempt}`
+        : part.state === "output-error"
+          ? `sketch failed · attempt ${attempt}`
+          : report?.accepted
+            ? `sketch accepted · attempt ${attempt}`
+            : `needs another pass · attempt ${attempt}`;
+
+  return (
+    <Tool className="studio__tool" defaultOpen={false}>
+      <ToolHeader
+        state={part.state}
+        title={title}
+        type="tool-create_diagram"
+      />
+      <ToolContent>
+        {part.input === undefined ? null : <ToolInput input={part.input} />}
+        {report ? <GradeReport report={report} /> : null}
+        {part.state === "output-error" ? (
+          <ToolOutput errorText={part.errorText} output={undefined} />
+        ) : null}
+      </ToolContent>
+    </Tool>
+  );
+}
+
+function renderAssistantParts(message: UIMessage): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let attempt = 0;
+
+  message.parts.forEach((part, index) => {
+    if (part.type === "text" && part.text.trim().length > 0) {
+      nodes.push(
+        <MessageResponse key={`${message.id}-text-${index}`}>
+          {part.text}
+        </MessageResponse>,
+      );
+      return;
+    }
+
+    if (part.type === "reasoning" && part.text.trim().length > 0) {
+      nodes.push(
+        <Reasoning
+          className="studio__reasoning"
+          isStreaming={part.state === "streaming"}
+          key={`${message.id}-reasoning-${index}`}
+        >
+          <ReasoningTrigger />
+          <ReasoningContent>{part.text}</ReasoningContent>
+        </Reasoning>,
+      );
+      return;
+    }
+
+    if (isDiagramToolPart(part)) {
+      attempt += 1;
+      nodes.push(
+        <DiagramToolCard attempt={attempt} key={part.toolCallId} part={part} />,
+      );
+    }
+  });
+
+  return nodes;
+}
+
+function userText(message: UIMessage): string {
+  return message.parts
+    .map((part) => (part.type === "text" ? part.text : ""))
+    .join("")
+    .trim();
+}
+
+function StagePlaceholder({ ghostLabels }: { ghostLabels: string[] }) {
+  return (
+    <div className="studio__stage-placeholder">
+      <p className="studio__stage-placeholder-text">
+        sketching the first draft…
+      </p>
+      {ghostLabels.length > 0 ? (
+        <div className="studio__ghosts">
+          {ghostLabels.map((label) => (
+            <span className="studio__ghost" key={label}>
+              {label}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DiagramStage({
+  attemptCount,
+  generating,
+  ghostLabels,
+  report,
+  scene,
+}: {
+  attemptCount: number;
+  generating: boolean;
+  ghostLabels: string[];
+  report: DiagramGradeReport | undefined;
+  scene: RenderedDiagramScene | null;
+}) {
+  return (
+    <section className="studio__stage">
+      <header className="studio__stage-head">
+        <div>
+          <p className="studio__stage-kicker">canvas</p>
+          <h2 className="studio__stage-title">
+            {scene?.title ?? "Warming up the pencil"}
+          </h2>
+        </div>
+        <div className="studio__stage-meta">
+          {report ? (
+            <span className="studio__stage-chip studio__stage-chip--grade">
+              grade {report.grade.toFixed(1)}
+            </span>
+          ) : null}
+          {attemptCount > 1 ? (
+            <span className="studio__stage-chip">
+              sketch {attemptCount}
+            </span>
+          ) : null}
+          {report && !report.accepted ? (
+            <span className="studio__stage-chip studio__stage-chip--draft">
+              draft
+            </span>
+          ) : null}
+        </div>
+      </header>
+      <div className="studio__stage-card">
+        {scene ? (
+          <DiagramArtifact scene={scene} />
+        ) : (
+          <StagePlaceholder ghostLabels={ghostLabels} />
+        )}
+        {generating && scene ? (
+          <div className="studio__stage-status">
+            <span className="studio__stage-dot" />
+            redrawing…
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
 }
 
 function StudioRoute() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [busy, setBusy] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
+  const [transport] = useState(
+    () => new DefaultChatTransport({ api: "/api/chat" }),
+  );
+  const { error, messages, sendMessage, status, stop } = useChat({
+    transport,
+  });
 
-  const patch = useCallback((id: string, update: Partial<ChatMessage>) => {
-    setMessages((prev) =>
-      prev.map((message) =>
-        message.id === id ? { ...message, ...update } : message,
-      ),
-    );
-  }, []);
+  const busy = status === "submitted" || status === "streaming";
+
+  const toolParts = useMemo(
+    () => messages.flatMap((message) => message.parts.filter(isDiagramToolPart)),
+    [messages],
+  );
+  const buildMode = toolParts.length > 0;
+
+  const gradedParts = useMemo(
+    () => toolParts.filter((part) => gradeReportOf(part) !== undefined),
+    [toolParts],
+  );
+  const displayPart = useMemo(() => {
+    const reversed = [...gradedParts].reverse();
+    return reversed.find((part) => gradeReportOf(part)?.accepted) ?? reversed[0];
+  }, [gradedParts]);
+  const activePart = toolParts.find(
+    (part) =>
+      part.state === "input-streaming" || part.state === "input-available",
+  );
+
+  const scene = useMemo(() => {
+    if (!displayPart?.input) {
+      return null;
+    }
+    try {
+      return renderIntermediateDiagram(
+        normalizeDiagramInput(displayPart.input as DiagramToolInput),
+      );
+    } catch {
+      return null;
+    }
+  }, [displayPart]);
+
+  const ghostLabels = useMemo(() => {
+    const input = activePart?.input as
+      | { nodes?: { label?: unknown }[] }
+      | undefined;
+    if (!input?.nodes) {
+      return [];
+    }
+    return input.nodes
+      .map((node) =>
+        node && typeof node.label === "string" ? node.label.trim() : "",
+      )
+      .filter((label) => label.length > 0)
+      .slice(0, 24);
+  }, [activePart]);
 
   const send = useCallback(
-    async (raw: string) => {
-      const text = raw.trim();
-      if (!text || busy) {
-        return;
-      }
-
-      const userMessage: ChatMessage = {
-        id: newId(),
-        role: "user",
-        content: text,
-        streaming: false,
-      };
-      const assistantId = newId();
-      const history = [...messages, userMessage];
-
-      setMessages([
-        ...history,
-        { id: assistantId, role: "assistant", content: "", streaming: true },
-      ]);
-      setBusy(true);
-
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: history.map(({ role, content }) => ({ role, content })),
-          }),
-          signal: controller.signal,
-        });
-
-        if (!(response.ok && response.body)) {
-          const detail = await response.text().catch(() => "");
-          patch(assistantId, {
-            content: detail || `Request failed (HTTP ${response.status}).`,
-            streaming: false,
-            error: true,
-          });
-          return;
-        }
-
-        const reader = response.body
-          .pipeThrough(new TextDecoderStream())
-          .getReader();
-
-        let accumulated = "";
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) {
-            break;
-          }
-          if (value) {
-            accumulated += value;
-            patch(assistantId, { content: accumulated });
-          }
-        }
-        patch(assistantId, { streaming: false });
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          setMessages((prev) =>
-            prev.map((message) =>
-              message.id === assistantId
-                ? {
-                    ...message,
-                    streaming: false,
-                    content: message.content || "_(stopped)_",
-                  }
-                : message,
-            ),
-          );
-        } else {
-          patch(assistantId, {
-            content:
-              error instanceof Error ? error.message : "Something went wrong.",
-            streaming: false,
-            error: true,
-          });
-        }
-      } finally {
-        setBusy(false);
-        abortRef.current = null;
+    (text: string) => {
+      const trimmed = text.trim();
+      if (trimmed && !busy) {
+        void sendMessage({ text: trimmed });
       }
     },
-    [busy, messages, patch],
+    [busy, sendMessage],
   );
 
   const handleSubmit = useCallback(
     (message: { text?: string }) => {
       if (busy) {
-        abortRef.current?.abort();
+        void stop();
         return;
       }
       if (message.text) {
-        void send(message.text);
+        send(message.text);
       }
     },
-    [busy, send],
+    [busy, send, stop],
   );
 
   const isEmpty = messages.length === 0;
 
   return (
     <TooltipProvider delayDuration={300}>
-      <main className="studio">
+      <main className={cn("studio", buildMode && "studio--build")}>
         <header className="studio__head">
           <span className="studio__mark">sketchi</span>
           <span className="studio__sub">studio · ephemeral</span>
         </header>
 
-        {isEmpty ? (
-          <div className="studio__empty-wrap">
-            <div className="studio__empty">
-              <p className="studio__empty-title">What should we draw?</p>
-              <p className="studio__empty-sub">
-                Describe a system or flow and Sketchi will talk through the
-                diagram.
-              </p>
-              <div className="studio__starters">
-                {STARTERS.map((starter) => (
-                  <Suggestion
-                    key={starter}
-                    onClick={(value) => void send(value)}
-                    suggestion={starter}
-                  />
-                ))}
+        <div className="studio__body">
+          <section className="studio__chat">
+            {isEmpty ? (
+              <div className="studio__empty-wrap">
+                <div className="studio__empty">
+                  <p className="studio__empty-title">What should we draw?</p>
+                  <p className="studio__empty-sub">
+                    Describe a system or flow. Sketchi clarifies what matters,
+                    then sketches it onto the canvas — grading its own work
+                    until it holds up.
+                  </p>
+                  <div className="studio__starters">
+                    {STARTERS.map((starter) => (
+                      <Suggestion
+                        key={starter}
+                        onClick={(value) => send(value)}
+                        suggestion={starter}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          <Conversation>
-            <ConversationContent>
-              {messages.map((message) => (
-                <Message from={message.role} key={message.id}>
-                  <MessageContent>
-                    {message.role === "user" ? (
-                      message.content
-                    ) : message.streaming && message.content.length === 0 ? (
-                      <span className="studio__thinking">Sketching…</span>
-                    ) : (
-                      <MessageResponse>{message.content}</MessageResponse>
-                    )}
-                  </MessageContent>
-                </Message>
-              ))}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-        )}
+            ) : (
+              <Conversation className="studio__conversation">
+                <ConversationContent>
+                  {messages.map((message) => {
+                    if (message.role === "user") {
+                      const text = userText(message);
+                      return text ? (
+                        <Message from="user" key={message.id}>
+                          <MessageContent>{text}</MessageContent>
+                        </Message>
+                      ) : null;
+                    }
 
-        <div className="studio__composer">
-          <PromptInput onSubmit={handleSubmit}>
-            <PromptInputBody>
-              <PromptInputTextarea placeholder="Describe a diagram…" />
-            </PromptInputBody>
-            <PromptInputFooter>
-              <span className="studio__composer-hint">
-                Enter to send · Shift+Enter for a new line
-              </span>
-              <PromptInputSubmit status={busy ? "streaming" : "ready"} />
-            </PromptInputFooter>
-          </PromptInput>
+                    const parts = renderAssistantParts(message);
+                    return parts.length > 0 ? (
+                      <Message from="assistant" key={message.id}>
+                        <MessageContent>{parts}</MessageContent>
+                      </Message>
+                    ) : null;
+                  })}
+                  {status === "submitted" ? (
+                    <Message from="assistant" key="pending">
+                      <MessageContent>
+                        <span className="studio__thinking">Sketching…</span>
+                      </MessageContent>
+                    </Message>
+                  ) : null}
+                </ConversationContent>
+                <ConversationScrollButton />
+              </Conversation>
+            )}
+
+            {error ? (
+              <p className="studio__error">{error.message}</p>
+            ) : null}
+
+            <div className="studio__composer">
+              <PromptInput onSubmit={handleSubmit}>
+                <PromptInputBody>
+                  <PromptInputTextarea
+                    placeholder={
+                      buildMode
+                        ? "Ask for changes to the sketch…"
+                        : "Describe a diagram…"
+                    }
+                  />
+                </PromptInputBody>
+                <PromptInputFooter>
+                  <span className="studio__composer-hint">
+                    Enter to send · Shift+Enter for a new line
+                  </span>
+                  <PromptInputSubmit status={status} />
+                </PromptInputFooter>
+              </PromptInput>
+            </div>
+          </section>
+
+          {buildMode ? (
+            <DiagramStage
+              attemptCount={toolParts.length}
+              generating={Boolean(activePart)}
+              ghostLabels={ghostLabels}
+              report={displayPart ? gradeReportOf(displayPart) : undefined}
+              scene={scene}
+            />
+          ) : null}
         </div>
       </main>
     </TooltipProvider>
