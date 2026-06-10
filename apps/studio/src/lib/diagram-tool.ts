@@ -74,23 +74,46 @@ function slugify(value: string): string {
     .slice(0, 48);
 }
 
+/**
+ * gemini-flash-lite sometimes welds the next JSON key onto the previous
+ * string value inside tool-call args ("start-node,kind:", "pass,source:").
+ * Strip those trailing key fragments so one sloppy generation doesn't
+ * poison the whole attempt loop.
+ */
+const TRAILING_KEY_FRAGMENT =
+  /[,;]\s*(?:id|label|kind|group|source|target|title|direction|nodes|edges)\s*:?\s*$/i;
+
+export function cleanToolString(value: string): string {
+  let cleaned = value.trim();
+  for (;;) {
+    const next = cleaned.replace(TRAILING_KEY_FRAGMENT, "").trim();
+    if (next === cleaned) {
+      return cleaned;
+    }
+    cleaned = next;
+  }
+}
+
 export function normalizeDiagramInput(
   input: DiagramToolInput,
 ): IntermediateDiagram {
+  const title = cleanToolString(input.title);
   return parseIntermediateDiagram({
-    id: slugify(input.title) || "sketchi-diagram",
-    title: input.title,
+    id: slugify(title) || "sketchi-diagram",
+    title,
     type: "flowchart",
     nodes: input.nodes.map((node) => ({
-      id: node.id,
-      label: node.label,
+      id: cleanToolString(node.id),
+      label: cleanToolString(node.label),
       ...(node.kind ? { kind: node.kind } : {}),
     })),
     edges: input.edges.map((edge, index) => ({
       id: `edge-${index + 1}`,
-      source: edge.source,
-      target: edge.target,
-      ...(edge.label?.trim() ? { label: edge.label.trim() } : {}),
+      source: cleanToolString(edge.source),
+      target: cleanToolString(edge.target),
+      ...(edge.label && cleanToolString(edge.label)
+        ? { label: cleanToolString(edge.label) }
+        : {}),
     })),
     layout: {
       direction: input.direction ?? "TB",
@@ -258,9 +281,10 @@ export function gradeDiagram(
   }
 
   const grade = Math.max(0, Math.round((10 - penalty) * 10) / 10);
+  const hasError = issues.some((issue) => issue.startsWith("error:"));
 
   return {
-    accepted: grade >= ACCEPT_THRESHOLD,
+    accepted: grade >= ACCEPT_THRESHOLD && !hasError,
     grade,
     issues,
     summary: `${diagram.nodes.length} nodes · ${diagram.edges.length} edges`,
