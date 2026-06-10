@@ -1,0 +1,189 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* shadcn tokens mapped to the Sketchi sketchbook palette */
+:root {
+  --radius: 0.75rem;
+
+  --background: #f6f1e7;
+  --foreground: #2b2723;
+  --card: #fffdf8;
+  --card-foreground: #2b2723;
+  --popover: #fffdf8;
+  --popover-foreground: #2b2723;
+  --primary: #8f707f;
+  --primary-foreground: #fffdf8;
+  --secondary: #efe7d7;
+  --secondary-foreground: #2b2723;
+  --muted: #efe7d7;
+  --muted-foreground: #8a7f70;
+  --accent: #ece1ef;
+  --accent-foreground: #4a3944;
+  --destructive: #b3503f;
+  --border: #e4dccd;
+  --input: #d8cfbf;
+  --ring: #8f707f;
+
+  /* sketchbook aliases used by hand-written chrome */
+  --paper: #f6f1e7;
+  --ink: #2b2723;
+  --muted-ink: #9a8f80;
+  --mauve: #8f707f;
+  --mauve-soft: #8f707f1a;
+  --line: #e4dccd;
+  --code-bg: #2b2723;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-script: "Dancing Script", cursive;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+/* ===================== Sketchbook chrome ===================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.studio {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.studio__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 16px 24px 10px;
+}
+
+.studio__mark {
+  font-family: var(--font-script);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--mauve);
+  line-height: 1;
+}
+
+.studio__sub {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-ink);
+}
+
+/* Empty state */
+.studio__empty-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.studio__empty {
+  text-align: center;
+  max-width: 540px;
+  padding: 40px 0;
+}
+
+.studio__empty-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.studio__empty-sub {
+  color: var(--muted-ink);
+  margin: 0 0 22px;
+}
+
+.studio__starters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.studio__thinking {
+  color: var(--mauve);
+  font-style: italic;
+  animation: studio-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes studio-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.studio__composer {
+  padding: 12px 24px 20px;
+}
+
+.studio__composer-hint {
+  font-size: 12px;
+  color: var(--muted-ink);
+}
+
+.studio-not-found {
+  padding: 48px;
+  text-align: center;
+}
