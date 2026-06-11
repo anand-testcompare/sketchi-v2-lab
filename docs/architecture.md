@@ -2,17 +2,42 @@
 
 Sketchi v2 should make diagram generation boring in the best way: inputs are validated, rendering is deterministic, and UI states are exercised outside the app shell.
 
+## At A Glance
+
+| Area                | Source of truth                                     | Proof                            |
+| ------------------- | --------------------------------------------------- | -------------------------------- |
+| Diagram contract    | `packages/diagram-core`                             | core tests and fixtures          |
+| Deterministic scene | `packages/diagram-renderer`                         | renderer tests and stories       |
+| Excalidraw output   | `packages/diagram-excalidraw`                       | real-scene validation            |
+| Agentic generation  | `packages/diagram-generation`, then `diagram-agent` | fixture/eval tests               |
+| Product surfaces    | `apps/*`                                            | Nx app builds and Worker deploys |
+
+```mermaid
+flowchart LR
+  Prompt["Prompt or revision"] --> Generation["diagram-generation<br/>model request + candidate"]
+  Generation --> Core["diagram-core<br/>typed IR validation"]
+  Core --> Renderer["diagram-renderer<br/>scene model"]
+  Renderer --> Excalidraw["diagram-excalidraw<br/>persistable scene"]
+  Excalidraw --> UI["apps + diagram-studio-ui"]
+```
+
 ## Package Boundaries
 
 - `diagram-core` owns the intermediate representation, semantic validation, and reusable fixtures.
 - `diagram-renderer` converts validated diagrams into a deterministic scene model.
 - `diagram-excalidraw` converts deterministic scenes into persisted Excalidraw elements and validates real-scene invariants.
 - `diagram-scenarios` owns maintained prompts, assertions, fixture evaluation, and local command-provider runs.
+- `diagram-generation` owns provider request/response mapping and candidate parsing.
 - `diagram-studio-ui` renders the scene model and owns user-facing component states.
 - `apps/playground` composes the packages in a TanStack Start testing ground.
+- `apps/studio` owns the current agentic generation spike and should become a
+  thin product adapter over shared generation packages.
 - `apps/web` owns the public home/docs surface and should stay free of diagram runtime dependencies unless docs become interactive.
 - `apps/excalidraw` owns the no-auth product shell for `excalidraw.sketchi.app` and composes the diagram packages into a real workspace.
 - `apps/icons` owns `icons.sketchi.app` and serves the copied pre-cleaned `sketchi-icons/output` tree from its app-local public assets.
+
+See [Agentic Generation](agentic-generation.md) for the intended Convex,
+Cloudflare Worker, MCP, AI SDK, Effect, and Nx boundaries.
 
 ## Diagram Pipeline
 
@@ -29,6 +54,26 @@ This makes defects local: invalid references fail in core tests, scene drift fai
 ## Flowchart First
 
 The first high-reliability path is decision-heavy flowchart generation. The LLM should produce typed flowchart IR: start/process/decision/end nodes, labeled decision branches, and explicit edges. Code owns layout, real Excalidraw conversion, arrow bindings, and text wrapping. The canonical evaluation fixture is the pharma batch disposition flow.
+
+## Agentic Generation
+
+The durable behavior is the generation runtime, not one chat surface. Keep the
+runtime importable by Convex actions, Cloudflare Workers, MCP routes, app routes,
+and local evals.
+
+```mermaid
+flowchart TB
+  Convex["Convex<br/>managed threads"] --> Runtime["shared generation runtime"]
+  Worker["Worker<br/>HTTP + MCP + AI Gateway"] --> Runtime
+  CLI["CLI/evals"] --> Runtime
+  Runtime --> IR["validated IR"]
+  Runtime --> Artifact["rendered artifact"]
+```
+
+AI SDK remains a thin adapter for model invocation, streaming, and tool-call
+plumbing. Effect can live inside the shared generation packages for schemas,
+typed errors, and pipeline composition. Nx still owns the project graph, builds,
+and affected checks.
 
 ## Playground
 
@@ -61,12 +106,29 @@ orchestration, and persistence.
 
 ## App Surfaces
 
-The v2 workspace now has four independently deployable TanStack Start apps:
+The v2 workspace has five TanStack Start app surfaces:
 
 - `playground`: scenario evaluation and prompt-output inspection.
+- `studio`: hosted agentic generation and diagram artifact review.
 - `web`: public home/docs for the Sketchi product direction.
 - `excalidraw`: the no-auth diagram workspace that will become the authenticated app later.
 - `icons`: a standalone browser for the curated Sketchi icon outputs.
+
+```mermaid
+flowchart LR
+  Workspace["Nx workspace"] --> Playground["playground"]
+  Workspace --> Studio["studio"]
+  Workspace --> Web["web"]
+  Workspace --> Excalidraw["excalidraw"]
+  Workspace --> Icons["icons"]
+
+  Playground --> Deploy["preview/prod Worker matrix"]
+  Web --> Deploy
+  Excalidraw --> Deploy
+  Icons --> Deploy
+  Studio -.-> StudioGap["deploy matrix not wired yet"]
+  StudioGap -.-> Deploy
+```
 
 Keep app-specific UI in the app that owns it. Generate those components with
 `@sketchi/generators:ui-component --projectRoot=apps/<app>` so stories and tests
@@ -91,15 +153,20 @@ an implementation, test, story, local export, and package export.
 ## Deployment Direction
 
 Each app is scaffolded for Cloudflare Workers through Vite and Wrangler. The
-production domains are:
+production domain direction is:
 
 - `playground.sketchi.app`
+- `studio.sketchi.app`
 - `sketchi.app` and `www.sketchi.app`
 - `excalidraw.sketchi.app`
 - `icons.sketchi.app`
 
 Preview deploys strip production routes and deploy app-specific Workers named
 `sketchi-<app>-pr-<number>`.
+
+Today the workflow matrix and deploy helper maps cover `playground`, `web`,
+`excalidraw`, and `icons`. Wire `studio` into those maps when the managed
+agentic surface is real enough to preview and release.
 
 ## AI Gateway Observability
 

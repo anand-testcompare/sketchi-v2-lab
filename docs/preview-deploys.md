@@ -1,13 +1,28 @@
 # App Preview Deploys
 
-Pull requests to `main` deploy each app to a PR-specific Cloudflare Worker:
+## Current Matrix
 
-- `sketchi-playground-pr-<number>`
-- `sketchi-web-pr-<number>`
-- `sketchi-excalidraw-pr-<number>`
-- `sketchi-icons-pr-<number>`
+| App          | Preview Worker                   | Production Worker    | Domain attach                    |
+| ------------ | -------------------------------- | -------------------- | -------------------------------- |
+| `playground` | `sketchi-playground-pr-<number>` | `sketchi-playground` | `playground.sketchi.app`         |
+| `web`        | `sketchi-web-pr-<number>`        | `sketchi-web`        | `sketchi.app`, `www.sketchi.app` |
+| `excalidraw` | `sketchi-excalidraw-pr-<number>` | `sketchi-excalidraw` | `excalidraw.sketchi.app`         |
+| `icons`      | `sketchi-icons-pr-<number>`      | `sketchi-icons`      | `icons.sketchi.app`              |
+| `studio`     | not wired yet                    | not wired yet        | `studio.sketchi.app` direction   |
 
-The preview workflow:
+```mermaid
+flowchart LR
+  PR["Pull request"] --> Matrix["preview matrix"]
+  Matrix --> Build["pnpm nx build <app>"]
+  Build --> Config["generated preview wrangler config"]
+  Config --> Deploy["wrangler deploy --keep-vars"]
+  Deploy --> Comment["sticky PR comment"]
+  Closed["PR closed"] --> Cleanup["delete preview Worker"]
+```
+
+## Preview Workflow
+
+Pull requests to `main` deploy matrix apps to PR-specific Cloudflare Workers.
 
 - uses the same pnpm 11.5.0, Node 24, `pnpm install --frozen-lockfile` setup as
   `v2-ci`;
@@ -17,13 +32,18 @@ The preview workflow:
 - runs `wrangler deploy --keep-vars`;
 - writes or updates one sticky PR comment per app with the preview URL.
 
-Required GitHub Actions configuration:
+## Required Configuration
 
 - `CHROMATIC_PROJECT_TOKEN`: `staging` environment secret for Storybook
   publish and visual checks.
 - `CLOUDFLARE_ACCOUNT_ID`: `staging` environment variable or secret.
 - `CLOUDFLARE_API_TOKEN`: `staging` environment secret with Workers
   edit/deploy access.
+
+| Source                                  | Target                          | Purpose                   |
+| --------------------------------------- | ------------------------------- | ------------------------- |
+| Infisical `sketchi` `/github` `staging` | GitHub `staging` environment    | CI and PR preview deploys |
+| Infisical `sketchi` `/github` `prod`    | GitHub `production` environment | production deploys        |
 
 The canonical source for those GitHub Actions values is the Infisical `sketchi`
 project under `/github`, synced to GitHub environment secrets:
@@ -38,6 +58,8 @@ from overwriting each other when the values eventually diverge.
 Cloudflare documents that non-interactive CI deploys require an API token and
 account ID. The token should stay in GitHub Secrets, not in source control.
 
+## Cleanup
+
 Cleanup runs automatically when a PR closes and deletes the PR-specific Worker.
 Manual cleanup is also available:
 
@@ -45,6 +67,8 @@ Manual cleanup is also available:
 CLOUDFLARE_ACCOUNT_ID=... CLOUDFLARE_API_TOKEN=... \
   node scripts/04-delete-preview-worker.mjs --pr-number 123
 ```
+
+## Operational Scripts
 
 The deploy command scripts are numbered because they are operational steps:
 
@@ -60,19 +84,15 @@ the prepare and cleanup scripts when running them manually.
 ## Production Worker Deploys
 
 The `app-production-deploy` workflow runs on pushes to `main` and deploys the
-four production Workers without assigning the final custom domains:
-
-- `sketchi-playground`
-- `sketchi-web`
-- `sketchi-excalidraw`
-- `sketchi-icons`
+four wired production Workers without assigning final custom domains.
 
 Those deploys keep `workers_dev` enabled so the app can be verified from
 Cloudflare-owned `workers.dev` URLs before any DNS or registrar cutover.
 
 Assigning `sketchi.app`, `www.sketchi.app`, `playground.sketchi.app`,
-`excalidraw.sketchi.app`, and `icons.sketchi.app` is intentionally manual. Run
-the `app-production-deploy` workflow with `attach_domains` enabled only when the
-new site is ready to own those hostnames. The manual step writes a generated
-domain Wrangler config from `scripts/05-prepare-production-domain-deploy.mjs`
-and deploys that route-bearing config.
+`excalidraw.sketchi.app`, `icons.sketchi.app`, and eventually
+`studio.sketchi.app` is intentionally manual. Run the `app-production-deploy`
+workflow with `attach_domains` enabled only when the new site is ready to own
+those hostnames. The manual step writes a generated domain Wrangler config from
+`scripts/05-prepare-production-domain-deploy.mjs` and deploys that
+route-bearing config.
