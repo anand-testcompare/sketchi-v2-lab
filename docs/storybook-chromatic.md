@@ -1,5 +1,25 @@
 # Storybook, Chromatic, and MCP
 
+## At A Glance
+
+| Need                    | Command or URL                                                 |
+| ----------------------- | -------------------------------------------------------------- |
+| Run local Storybook     | `pnpm nx storybook diagram-studio-ui -- --ci --host 127.0.0.1` |
+| Build Storybook         | `pnpm nx build-storybook diagram-studio-ui`                    |
+| Publish/check Chromatic | `pnpm nx chromatic diagram-studio-ui`                          |
+| Local MCP endpoint      | `http://127.0.0.1:6006/mcp`                                    |
+
+```mermaid
+flowchart LR
+  UI["diagram-studio-ui"] --> Storybook["Storybook"]
+  Storybook --> MCP["/mcp endpoint"]
+  Storybook --> Chromatic["Chromatic publish"]
+  CI["v2-ci"] --> Affected["Nx affected"]
+  Affected --> Storybook
+```
+
+## Targets
+
 `diagram-studio-ui` owns the reusable Studio component stories. The Storybook
 targets are Nx targets:
 
