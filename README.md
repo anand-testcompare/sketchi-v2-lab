@@ -27,6 +27,8 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 - Workspace Nx generators in `tools/sketchi-generators`.
 - Agentic generation route-surface notes in
   [docs/agentic-generation.md](docs/agentic-generation.md).
+- MCP-first non-Convex generation scope in
+  [docs/mcp-first-generation.md](docs/mcp-first-generation.md).
 
 ## Commands
 
@@ -98,4 +100,5 @@ packages/diagram-studio-ui       React components and Storybook
 tools/sketchi-generators         Workspace generators for components and diagram types
 docs/architecture.md             v2 architecture notes
 docs/agentic-generation.md       generation runtime and route-surface plan
+docs/mcp-first-generation.md     non-Convex MCP-first generation scope
 ```

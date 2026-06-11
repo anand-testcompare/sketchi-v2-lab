@@ -154,6 +154,9 @@ flowchart LR
 
 ## Next Slice
 
+The next implementation slice should be MCP-first and non-Convex. See
+[MCP-First Generation Scope](mcp-first-generation.md) for the concrete steps.
+
 ```mermaid
 flowchart TD
   A["Extract tool contract"] --> B["Move normalize + validate"]
