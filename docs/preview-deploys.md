@@ -5,10 +5,10 @@
 | App          | Preview Worker                   | Production Worker    | Domain attach                    |
 | ------------ | -------------------------------- | -------------------- | -------------------------------- |
 | `playground` | `sketchi-playground-pr-<number>` | `sketchi-playground` | `playground.sketchi.app`         |
+| `studio`     | `sketchi-studio-pr-<number>`     | `sketchi-studio`     | `studio.sketchi.app`             |
 | `web`        | `sketchi-web-pr-<number>`        | `sketchi-web`        | `sketchi.app`, `www.sketchi.app` |
 | `excalidraw` | `sketchi-excalidraw-pr-<number>` | `sketchi-excalidraw` | `excalidraw.sketchi.app`         |
 | `icons`      | `sketchi-icons-pr-<number>`      | `sketchi-icons`      | `icons.sketchi.app`              |
-| `studio`     | not wired yet                    | not wired yet        | `studio.sketchi.app` direction   |
 
 ```mermaid
 flowchart LR
@@ -78,21 +78,21 @@ The deploy command scripts are numbered because they are operational steps:
 - `scripts/04-delete-preview-worker.mjs`
 - `scripts/05-prepare-production-domain-deploy.mjs`
 
-Pass `--app playground`, `--app web`, `--app excalidraw`, or `--app icons` to
-the prepare and cleanup scripts when running them manually.
+Pass `--app playground`, `--app studio`, `--app web`, `--app excalidraw`, or
+`--app icons` to the prepare and cleanup scripts when running them manually.
 
 ## Production Worker Deploys
 
 The `app-production-deploy` workflow runs on pushes to `main` and deploys the
-four wired production Workers without assigning final custom domains.
+five wired production Workers without assigning final custom domains.
 
 Those deploys keep `workers_dev` enabled so the app can be verified from
 Cloudflare-owned `workers.dev` URLs before any DNS or registrar cutover.
 
 Assigning `sketchi.app`, `www.sketchi.app`, `playground.sketchi.app`,
-`excalidraw.sketchi.app`, `icons.sketchi.app`, and eventually
-`studio.sketchi.app` is intentionally manual. Run the `app-production-deploy`
-workflow with `attach_domains` enabled only when the new site is ready to own
-those hostnames. The manual step writes a generated domain Wrangler config from
-`scripts/05-prepare-production-domain-deploy.mjs` and deploys that
-route-bearing config.
+`studio.sketchi.app`, `excalidraw.sketchi.app`, and `icons.sketchi.app` is
+intentionally manual. Run the `app-production-deploy` workflow with
+`attach_domains` enabled only when the new site is ready to own those hostnames.
+The manual step writes a generated domain Wrangler config from
+`scripts/05-prepare-production-domain-deploy.mjs` and deploys that route-bearing
+config.

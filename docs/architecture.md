@@ -165,8 +165,8 @@ Preview deploys strip production routes and deploy app-specific Workers named
 `sketchi-<app>-pr-<number>`.
 
 Today the workflow matrix and deploy helper maps cover `playground`, `web`,
-`excalidraw`, and `icons`. Wire `studio` into those maps when the managed
-agentic surface is real enough to preview and release.
+`studio`, `web`, `excalidraw`, and `icons`, with custom domain attachment kept
+as an explicit manual workflow dispatch.
 
 ## AI Gateway Observability
 

@@ -14,6 +14,11 @@ export const productionApps = {
     title: "Sketchi Playground",
     workerName: "sketchi-playground",
   },
+  studio: {
+    domainPatterns: ["studio.sketchi.app"],
+    title: "Sketchi Studio",
+    workerName: "sketchi-studio",
+  },
   web: {
     domainPatterns: ["sketchi.app", "www.sketchi.app"],
     title: "Sketchi Web",

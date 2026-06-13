@@ -18,6 +18,15 @@ test("previewAppConfig returns app-scoped preview metadata", () => {
   });
 });
 
+test("previewAppConfig includes the studio preview Worker", () => {
+  assert.deepEqual(previewAppConfig("studio"), {
+    appId: "studio",
+    commentMarker: "<!-- sketchi-studio-preview -->",
+    title: "Sketchi Studio",
+    workerPrefix: "sketchi-studio-pr",
+  });
+});
+
 test("previewWorkerName creates a stable Cloudflare-safe PR worker name", () => {
   assert.equal(
     previewWorkerName({ prNumber: 42, workerPrefix: "Sketchi Playground PR" }),

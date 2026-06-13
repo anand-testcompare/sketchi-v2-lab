@@ -35,7 +35,7 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "vite dev --config apps/icons/vite.config.ts --host 127.0.0.1 --port 6203"
+        "command": "PORTLESS_PORT=443 portless run --name icons.sketchi vite dev --config apps/icons/vite.config.ts"
       }
     },
     "preview": {

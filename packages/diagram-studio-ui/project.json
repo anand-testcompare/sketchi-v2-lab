@@ -3,13 +3,6 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/diagram-studio-ui/src",
   "projectType": "library",
-  "implicitDependencies": [
-    "diagram-core",
-    "diagram-excalidraw",
-    "diagram-generation",
-    "diagram-renderer",
-    "diagram-scenarios"
-  ],
   "targets": {
     "build": {
       "executor": "nx:run-commands",

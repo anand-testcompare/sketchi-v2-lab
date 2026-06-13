@@ -23,6 +23,7 @@ on:
         options:
           - all
           - playground
+          - studio
           - web
           - excalidraw
           - icons
@@ -45,6 +46,7 @@ jobs:
       matrix:
         app:
           - playground
+          - studio
           - web
           - excalidraw
           - icons

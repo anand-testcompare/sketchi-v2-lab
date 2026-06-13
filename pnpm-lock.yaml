@@ -114,6 +114,9 @@ importers:
       playwright:
         specifier: ^1.60.0
         version: 1.60.0
+      portless:
+        specifier: 0.14.0
+        version: 0.14.0
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -8267,6 +8270,12 @@ packages:
   portfinder@1.0.38:
     resolution: {integrity: sha512-rEwq/ZHlJIKw++XtLAO8PPuOQA/zaPJOZJ37BVuN97nLpMJeuDVLVGRwbFoBgLudgdTMP2hdRJP++H+8QOA3vg==}
     engines: {node: '>= 10.12'}
+
+  portless@0.14.0:
+    resolution: {integrity: sha512-kKxmxB1DQ9gI8t+V13VhuwTXu31io5nbFubvZAE82AxzXBsvcJV7qQJbmomrQUpbVxo2UVHqs14iX4YK0BClmQ==}
+    engines: {node: '>=24'}
+    os: [darwin, linux, win32]
+    hasBin: true
 
   postcss-modules-extract-imports@3.1.0:
     resolution: {integrity: sha512-k3kNe0aNFQDAZGbin48pL2VNidTF0w4/eASDsxlyspobzU3wZQLOGj7L9gfRe0Jo9/4uud09DsjFNH7winGv8Q==}
@@ -18618,6 +18627,8 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
+
+  portless@0.14.0: {}
 
   postcss-modules-extract-imports@3.1.0(postcss@8.5.15):
     dependencies:

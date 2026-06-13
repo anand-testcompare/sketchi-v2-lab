@@ -16,6 +16,11 @@ export const previewApps = {
     title: "Sketchi Playground",
     workerPrefix: "sketchi-playground-pr",
   },
+  studio: {
+    commentMarker: "<!-- sketchi-studio-preview -->",
+    title: "Sketchi Studio",
+    workerPrefix: "sketchi-studio-pr",
+  },
   web: {
     commentMarker: "<!-- sketchi-web-preview -->",
     title: "Sketchi Web",

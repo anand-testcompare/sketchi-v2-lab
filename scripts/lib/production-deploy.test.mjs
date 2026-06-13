@@ -15,6 +15,15 @@ test("productionAppConfig returns app-scoped domain metadata", () => {
   });
 });
 
+test("productionAppConfig includes the studio production Worker", () => {
+  assert.deepEqual(productionAppConfig("studio"), {
+    appId: "studio",
+    domainPatterns: ["studio.sketchi.app"],
+    title: "Sketchi Studio",
+    workerName: "sketchi-studio",
+  });
+});
+
 test("productionAppConfig rejects unknown apps", () => {
   assert.throws(
     () => productionAppConfig("docs"),

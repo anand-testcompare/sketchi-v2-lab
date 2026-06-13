@@ -62,7 +62,7 @@ export function DocsView({ nav = defaultNav }: DocsViewProps) {
             <span className="docs-section__idx">02</span> App surfaces
           </h2>
           <p>
-            The workspace ships four independently deployable surfaces. Each one
+            The workspace ships five independently deployable surfaces. Each one
             owns its UI; shared diagram primitives stay in the studio package.
           </p>
           <dl className="docs-defs">
@@ -81,6 +81,12 @@ export function DocsView({ nav = defaultNav }: DocsViewProps) {
             <div className="docs-defs__row">
               <dt>playground.sketchi.app</dt>
               <dd>Scenario evaluation and prompt-output inspection.</dd>
+            </div>
+            <div className="docs-defs__row">
+              <dt>studio.sketchi.app</dt>
+              <dd>
+                The no-auth agentic generation and artifact review surface.
+              </dd>
             </div>
           </dl>
         </section>
@@ -113,7 +119,9 @@ export function DocsView({ nav = defaultNav }: DocsViewProps) {
           </dl>
           <p>Run the canonical fixture evaluation locally:</p>
           <pre className="docs-codeblock">
-            <span className="tok-c"># deterministic IR → Excalidraw, no model</span>
+            <span className="tok-c">
+              # deterministic IR → Excalidraw, no model
+            </span>
             {"\n"}
             pnpm nx scenario diagram-scenarios -- \{"\n"}
             {"  "}--scenario pharma-batch-disposition --fixture
@@ -125,10 +133,10 @@ export function DocsView({ nav = defaultNav }: DocsViewProps) {
             <span className="docs-section__idx">04</span> Diagram types
           </h2>
           <p>
-            Every registered diagram type is guarded by tests: it must have core,
-            renderer, and Storybook coverage. New types are scaffolded with the
-            workspace generator so they are previewable before being wired to
-            generation.
+            Every registered diagram type is guarded by tests: it must have
+            core, renderer, and Storybook coverage. New types are scaffolded
+            with the workspace generator so they are previewable before being
+            wired to generation.
           </p>
           <dl className="docs-defs">
             <div className="docs-defs__row">
@@ -144,7 +152,9 @@ export function DocsView({ nav = defaultNav }: DocsViewProps) {
             </div>
           </dl>
           <pre className="docs-codeblock">
-            <span className="tok-c"># scaffold a new generated diagram type</span>
+            <span className="tok-c">
+              # scaffold a new generated diagram type
+            </span>
             {"\n"}
             pnpm nx g @sketchi/generators:diagram-type mindmap
           </pre>
