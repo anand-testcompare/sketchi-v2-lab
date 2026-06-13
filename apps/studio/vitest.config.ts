@@ -9,14 +9,18 @@ export default defineConfig({
     coverage: {
       reportsDirectory: "../../coverage/apps/studio",
     },
-    include: [
-      "apps/studio/src/**/*.test.ts",
-      "apps/studio/src/**/*.test.tsx",
-    ],
+    include: ["apps/studio/src/**/*.test.ts", "apps/studio/src/**/*.test.tsx"],
     passWithNoTests: true,
   },
   resolve: {
     alias: [
+      {
+        find: "@sketchi/diagram-agent",
+        replacement: new URL(
+          "../../packages/diagram-agent/src/index.ts",
+          import.meta.url,
+        ).pathname,
+      },
       {
         find: "@sketchi/diagram-core",
         replacement: new URL(

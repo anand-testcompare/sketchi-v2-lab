@@ -1,6 +1,16 @@
 import "@tanstack/react-start/server-only";
 
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import {
+  CREATE_DIAGRAM_TOOL_DESCRIPTION,
+  CREATE_DIAGRAM_TOOL_NAME,
+  createDiagramToolSession,
+  DIAGRAM_AGENT_SYSTEM_PROMPT,
+  DIAGRAM_AGENT_TEMPERATURE,
+  DiagramToolInputSchema,
+  MAX_AGENT_OUTPUT_TOKENS,
+  MAX_AGENT_STEPS,
+} from "@sketchi/diagram-agent";
 import type { CloudflareAiGatewayProvider } from "@sketchi/diagram-generation";
 import {
   convertToModelMessages,
@@ -10,21 +20,15 @@ import {
   type UIMessage,
 } from "ai";
 
-import {
-  cleanToolString,
-  DiagramToolInputSchema,
-  gradeDiagram,
-  normalizeDiagramInput,
-} from "./diagram-tool";
-
 /**
- * Sketchi studio agent: AI SDK agent loop over the Cloudflare AI Gateway.
+ * Studio route adapter for the diagram agent. The generation runtime —
+ * prompt policy, tool contract, normalization, grading, attempt limits —
+ * lives in `@sketchi/diagram-agent`; this file only wires it into AI SDK
+ * streaming over the Cloudflare AI Gateway.
  *
  * The Workers `env.AI` binding stays the single auth path (gateway-stored
  * provider keys, no local secrets); a fetch shim translates the google
- * provider's HTTP requests into `gateway.run()` calls. The agent has two
- * jobs — requirement intake in chat, then building the diagram through the
- * graded `create_diagram` tool until accepted.
+ * provider's HTTP requests into `gateway.run()` calls.
  */
 
 export interface StudioEnv {
@@ -35,29 +39,9 @@ export interface StudioEnv {
 
 const DEFAULT_GATEWAY_ID = "google-ai-studio";
 const DEFAULT_MODEL = "google/gemini-3.1-flash-lite";
-const MAX_AGENT_STEPS = 8;
-const MAX_OUTPUT_TOKENS = 4_096;
 
 /** Never fetched — exists only so the shim can split off the request path. */
 const SHIM_BASE_URL = "https://sketchi-gateway.invalid/v1beta";
-
-const SYSTEM_PROMPT = `You are Sketchi, a diagramming agent with two jobs.
-
-JOB 1 — INTAKE. On a new request, decide whether you can already name the diagram's purpose, its audience, and the 4–12 things it must show. If not, ask at most 3 sharp clarifying questions in one short message and wait. If the request is already specific — or the user says to just draw — go straight to job 2. Never ask a second round of questions unless the user invites it.
-
-JOB 2 — BUILD. Say in one short sentence what you are about to sketch, then call create_diagram. The tool validates and grades your work and the result appears on the user's canvas — never paste the diagram into chat as JSON, mermaid, or ASCII art.
-- Accepted: close with 1–2 sentences on how to read the diagram, then offer exactly one concrete refinement.
-- Not accepted: say in one clause what you are fixing, fix every listed issue, and call create_diagram again. Hard limit of 3 attempts per turn; if still not accepted, keep the best version and say what you'd change with more guidance.
-- Later change requests: call create_diagram again with the complete revised diagram — it replaces the canvas.
-
-DIAGRAM CRAFT
-- Node ids: short kebab-case. Labels: 5 words max, specific ("Validate card details", never "Step 2").
-- kind: "start"/"end" for entry and exit points, "decision" for branch points (every decision needs at least 2 outgoing edges, each labeled, e.g. "yes"/"no"), "data" for stores, "external" for third parties, "process" otherwise.
-- Connect every node into the flow. Label any edge whose meaning isn't obvious.
-- direction: "TB" for step-by-step flows, "LR" for pipelines and lifecycles.
-- Tool-call hygiene: every field is its own clean string — never weld keys into a value like "start-node,kind:". Edge source/target must exactly equal an existing node id.
-
-VOICE: warm, concise, concrete. Short paragraphs, markdown only where it clarifies. You are a sketchbook companion, not a form.`;
 
 function envString(
   env: StudioEnv,
@@ -126,48 +110,14 @@ function createStudioModel(env: StudioEnv) {
   return provider(modelId);
 }
 
-const MAX_TOOL_ATTEMPTS = 3;
-
 function buildAgentTools() {
-  let attempt = 0;
+  const session = createDiagramToolSession();
 
   return {
-    create_diagram: tool({
-      description:
-        "Create or replace the diagram on the user's canvas. Validates the structure and returns a grade report; revise and call again until accepted.",
+    [CREATE_DIAGRAM_TOOL_NAME]: tool({
+      description: CREATE_DIAGRAM_TOOL_DESCRIPTION,
       inputSchema: DiagramToolInputSchema,
-      execute: (input) => {
-        attempt += 1;
-        if (attempt > MAX_TOOL_ATTEMPTS) {
-          return Promise.resolve({
-            accepted: false,
-            grade: 0,
-            attempt,
-            issues: [
-              "error: attempt limit reached — stop calling create_diagram this turn and summarize the flow in chat instead",
-            ],
-            summary: "stopped",
-          });
-        }
-        try {
-          const diagram = normalizeDiagramInput(input);
-          return Promise.resolve({ ...gradeDiagram(diagram), attempt });
-        } catch (error) {
-          const nodeIds = input.nodes
-            .map((node) => cleanToolString(node.id))
-            .filter((id) => id.length > 0);
-          return Promise.resolve({
-            accepted: false,
-            grade: 0,
-            attempt,
-            issues: [
-              `error: ${error instanceof Error ? error.message : "invalid diagram structure"}`,
-              `the node ids you defined are: ${nodeIds.join(", ") || "(none)"} — every edge source/target must exactly match one of these`,
-            ],
-            summary: "did not validate",
-          });
-        }
-      },
+      execute: (input) => Promise.resolve(session.evaluate(input).report),
     }),
   };
 }
@@ -178,12 +128,12 @@ export async function runStudioAgent(
 ): Promise<Response> {
   const result = streamText({
     model: createStudioModel(env),
-    system: SYSTEM_PROMPT,
+    system: DIAGRAM_AGENT_SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
     tools: buildAgentTools(),
     stopWhen: stepCountIs(MAX_AGENT_STEPS),
-    maxOutputTokens: MAX_OUTPUT_TOKENS,
-    temperature: 0.4,
+    maxOutputTokens: MAX_AGENT_OUTPUT_TOKENS,
+    temperature: DIAGRAM_AGENT_TEMPERATURE,
   });
 
   return result.toUIMessageStreamResponse({

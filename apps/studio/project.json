@@ -4,6 +4,7 @@
   "sourceRoot": "apps/studio/src",
   "projectType": "application",
   "implicitDependencies": [
+    "diagram-agent",
     "diagram-core",
     "diagram-excalidraw",
     "diagram-generation",

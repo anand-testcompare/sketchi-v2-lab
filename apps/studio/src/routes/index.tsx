@@ -1,5 +1,10 @@
 import { useChat } from "@ai-sdk/react";
 import {
+  normalizeDiagramInput,
+  type DiagramGradeReport,
+  type DiagramToolInput,
+} from "@sketchi/diagram-agent";
+import {
   renderIntermediateDiagram,
   type RenderedDiagramScene,
 } from "@sketchi/diagram-renderer";
@@ -39,11 +44,6 @@ import {
 } from "@/components/ai-elements/tool";
 import { DiagramArtifact } from "@/components/diagram-artifact";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import {
-  normalizeDiagramInput,
-  type DiagramGradeReport,
-  type DiagramToolInput,
-} from "@/lib/diagram-tool";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -71,7 +71,9 @@ interface DiagramToolPart {
   errorText?: string;
 }
 
-function isDiagramToolPart(part: MessagePart): part is DiagramToolPart & MessagePart {
+function isDiagramToolPart(
+  part: MessagePart,
+): part is DiagramToolPart & MessagePart {
   return part.type === "tool-create_diagram";
 }
 
@@ -141,11 +143,7 @@ function DiagramToolCard({
 
   return (
     <Tool className="studio__tool" defaultOpen={false}>
-      <ToolHeader
-        state={part.state}
-        title={title}
-        type="tool-create_diagram"
-      />
+      <ToolHeader state={part.state} title={title} type="tool-create_diagram" />
       <ToolContent>
         {part.input === undefined ? null : <ToolInput input={part.input} />}
         {report ? <GradeReport report={report} /> : null}
@@ -259,9 +257,7 @@ function DiagramStage({
             </span>
           ) : null}
           {attemptCount > 1 ? (
-            <span className="studio__stage-chip">
-              sketch {attemptCount}
-            </span>
+            <span className="studio__stage-chip">sketch {attemptCount}</span>
           ) : null}
           {report && !report.accepted ? (
             <span className="studio__stage-chip studio__stage-chip--draft">
@@ -298,7 +294,8 @@ function StudioRoute() {
   const busy = status === "submitted" || status === "streaming";
 
   const toolParts = useMemo(
-    () => messages.flatMap((message) => message.parts.filter(isDiagramToolPart)),
+    () =>
+      messages.flatMap((message) => message.parts.filter(isDiagramToolPart)),
     [messages],
   );
   const buildMode = toolParts.length > 0;
@@ -309,7 +306,9 @@ function StudioRoute() {
   );
   const displayPart = useMemo(() => {
     const reversed = [...gradedParts].reverse();
-    return reversed.find((part) => gradeReportOf(part)?.accepted) ?? reversed[0];
+    return (
+      reversed.find((part) => gradeReportOf(part)?.accepted) ?? reversed[0]
+    );
   }, [gradedParts]);
   const activePart = toolParts.find(
     (part) =>
@@ -431,9 +430,7 @@ function StudioRoute() {
               </Conversation>
             )}
 
-            {error ? (
-              <p className="studio__error">{error.message}</p>
-            ) : null}
+            {error ? <p className="studio__error">{error.message}</p> : null}
 
             <div className="studio__composer">
               <PromptInput onSubmit={handleSubmit}>

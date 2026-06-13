@@ -60,17 +60,17 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-  AgentServer["apps/studio/src/lib/agent.server.ts<br/>current spike"]
+  AgentServer["apps/studio/src/lib/agent.server.ts<br/>route adapter"]
 
   subgraph Packages["Shared Nx packages"]
     Core["diagram-core<br/>IR + semantic validation"]
     Renderer["diagram-renderer<br/>scene layout"]
     Excalidraw["diagram-excalidraw<br/>real Excalidraw conversion"]
     Generation["diagram-generation<br/>prompt contracts + candidates"]
-    Agent["diagram-agent<br/>planned orchestration"]
+    Agent["diagram-agent<br/>graded tool runtime"]
   end
 
-  AgentServer -.extract.-> Agent
+  AgentServer --> Agent
   Agent --> Generation
   Agent --> Core
   Agent --> Renderer

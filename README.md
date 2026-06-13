@@ -6,14 +6,14 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 
 ## Stack
 
-| Layer            | Owner                                                                    |
-| ---------------- | ------------------------------------------------------------------------ |
-| Workspace        | Nx boundaries, affected checks, generators, Storybook wiring             |
-| App shells       | TanStack Start apps in `apps/*`                                          |
-| Diagram contract | `packages/diagram-core`                                                  |
-| Rendering        | `packages/diagram-renderer`, `packages/diagram-excalidraw`               |
-| Generation       | `packages/diagram-generation`, then the planned agent runtime extraction |
-| UI states        | `packages/diagram-studio-ui`                                             |
+| Layer            | Owner                                                        |
+| ---------------- | ------------------------------------------------------------ |
+| Workspace        | Nx boundaries, affected checks, generators, Storybook wiring |
+| App shells       | TanStack Start apps in `apps/*`                              |
+| Diagram contract | `packages/diagram-core`                                      |
+| Rendering        | `packages/diagram-renderer`, `packages/diagram-excalidraw`   |
+| Generation       | `packages/diagram-generation`, `packages/diagram-agent`      |
+| UI states        | `packages/diagram-studio-ui`                                 |
 
 - Nx workspace for package boundaries, affected checks, and Storybook wiring.
 - TanStack Start playground app, prepared for optional Cloudflare deployment.
@@ -22,6 +22,7 @@ The original repository, `shpitdev/sketchi`, remains the star-bearing upstream. 
 - Typed diagram intermediate representation in `packages/diagram-core`.
 - Deterministic scene renderer in `packages/diagram-renderer`.
 - Real Excalidraw conversion and validation in `packages/diagram-excalidraw`.
+- Graded `create_diagram` agent runtime and prompt policy in `packages/diagram-agent`.
 - Maintained scenarios and local fixture/model-output evaluation in `packages/diagram-scenarios`.
 - Reusable React UI and Storybook in `packages/diagram-studio-ui`.
 - Workspace Nx generators in `tools/sketchi-generators`.
@@ -92,9 +93,11 @@ apps/studio                      Hosted agentic generation spike
 apps/web                         Sketchi public home and docs
 apps/excalidraw                  No-auth Excalidraw product shell
 apps/icons                       Standalone curated icon output browser
+packages/diagram-agent           Graded diagram tool runtime and agent policy
 packages/diagram-core            Diagram IR, validation, fixtures
 packages/diagram-renderer        Deterministic scene generation
 packages/diagram-excalidraw      Real Excalidraw conversion and validation
+packages/diagram-generation      Gemini request/response and candidate parsing
 packages/diagram-scenarios       Scenario prompts, checks, and CLI evals
 packages/diagram-studio-ui       React components and Storybook
 tools/sketchi-generators         Workspace generators for components and diagram types

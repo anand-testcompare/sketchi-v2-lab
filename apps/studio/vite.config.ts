@@ -26,6 +26,13 @@ export default defineConfig({
         replacement: new URL("./src/", import.meta.url).pathname,
       },
       {
+        find: "@sketchi/diagram-agent",
+        replacement: new URL(
+          "../../packages/diagram-agent/src/index.ts",
+          import.meta.url,
+        ).pathname,
+      },
+      {
         find: "@sketchi/diagram-core",
         replacement: new URL(
           "../../packages/diagram-core/src/index.ts",

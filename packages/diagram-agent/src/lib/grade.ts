@@ -1,142 +1,12 @@
-import {
-  type IntermediateDiagram,
-  parseIntermediateDiagram,
-} from "@sketchi/diagram-core";
-import { z } from "zod";
+import type { IntermediateDiagram } from "@sketchi/diagram-core";
+
+import type { DiagramGradeReport } from "./tool-contract.js";
 
 /**
- * Shared contract for the `create_diagram` agent tool.
- *
- * The input schema is a Gemini-friendly subset of the core IR (flat objects,
- * no records, no ids the model can get wrong); `normalizeDiagramInput` lifts
- * it into a full `IntermediateDiagram` with sketchbook styling, and
- * `gradeDiagram` produces the deterministic report that drives the agent's
- * revise loop. Imported by both the server route (validate + grade) and the
- * client (render exactly what was graded).
+ * Deterministic quality gate for one diagram attempt. The report drives the
+ * agent's revise loop: "error:" findings block acceptance outright, "warn:"
+ * findings only cost grade points against the accept threshold.
  */
-
-export const NODE_KINDS = [
-  "start",
-  "end",
-  "process",
-  "decision",
-  "data",
-  "external",
-] as const;
-
-export const DiagramToolInputSchema = z.object({
-  title: z
-    .string()
-    .min(1)
-    .describe("Short, specific diagram title shown above the canvas"),
-  direction: z
-    .enum(["TB", "LR"])
-    .optional()
-    .describe("TB for tall step-by-step flows, LR for pipelines"),
-  nodes: z
-    .array(
-      z.object({
-        id: z.string().min(1).describe("Short kebab-case unique id"),
-        label: z.string().min(1).describe("Specific label, 5 words max"),
-        kind: z
-          .enum(NODE_KINDS)
-          .optional()
-          .describe(
-            "start/end render as ovals, decision as a diamond, others as boxes",
-          ),
-      }),
-    )
-    .min(1),
-  edges: z
-    .array(
-      z.object({
-        source: z.string().min(1).describe("Source node id"),
-        target: z.string().min(1).describe("Target node id"),
-        label: z
-          .string()
-          .optional()
-          .describe("Edge label, e.g. decision branches: yes / no"),
-      }),
-    )
-    .default([]),
-});
-
-export type DiagramToolInput = z.infer<typeof DiagramToolInputSchema>;
-
-const SKETCHI_ACCENT = "#8f707f";
-const SKETCHI_PAPER = "#fffdf8";
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
-}
-
-/**
- * gemini-flash-lite sometimes welds the next JSON key onto the previous
- * string value inside tool-call args ("start-node,kind:", "pass,source:").
- * Strip those trailing key fragments so one sloppy generation doesn't
- * poison the whole attempt loop.
- */
-const TRAILING_KEY_FRAGMENT =
-  /[,;]\s*(?:id|label|kind|group|source|target|title|direction|nodes|edges)\s*:?\s*$/i;
-
-export function cleanToolString(value: string): string {
-  let cleaned = value.trim();
-  for (;;) {
-    const next = cleaned.replace(TRAILING_KEY_FRAGMENT, "").trim();
-    if (next === cleaned) {
-      return cleaned;
-    }
-    cleaned = next;
-  }
-}
-
-export function normalizeDiagramInput(
-  input: DiagramToolInput,
-): IntermediateDiagram {
-  const title = cleanToolString(input.title);
-  return parseIntermediateDiagram({
-    id: slugify(title) || "sketchi-diagram",
-    title,
-    type: "flowchart",
-    nodes: input.nodes.map((node) => ({
-      id: cleanToolString(node.id),
-      label: cleanToolString(node.label),
-      ...(node.kind ? { kind: node.kind } : {}),
-    })),
-    edges: input.edges.map((edge, index) => ({
-      id: `edge-${index + 1}`,
-      source: cleanToolString(edge.source),
-      target: cleanToolString(edge.target),
-      ...(edge.label && cleanToolString(edge.label)
-        ? { label: cleanToolString(edge.label) }
-        : {}),
-    })),
-    layout: {
-      direction: input.direction ?? "TB",
-      edgeRouting: "orthogonal",
-    },
-    style: {
-      accentColor: SKETCHI_ACCENT,
-      backgroundColor: SKETCHI_PAPER,
-    },
-  });
-}
-
-export interface DiagramGradeReport {
-  accepted: boolean;
-  /** 0–10, one decimal. */
-  grade: number;
-  /** 1-based attempt number within this agent turn. */
-  attempt: number;
-  /** Human-readable findings, prefixed "error:" or "warn:". */
-  issues: string[];
-  /** e.g. "8 nodes · 9 edges" */
-  summary: string;
-}
 
 const ACCEPT_THRESHOLD = 8;
 const GENERIC_LABEL = /^(node|step|item|box|thing|process|task)\s*\d*$/i;
@@ -256,7 +126,8 @@ export function gradeDiagram(
       );
     }
   }
-  penalty += Math.min(1.5 * underBranched, 4.5) + Math.min(unlabeledBranches, 3);
+  penalty +=
+    Math.min(1.5 * underBranched, 4.5) + Math.min(unlabeledBranches, 3);
 
   const longLabels = diagram.nodes.filter((node) => node.label.length > 42);
   if (longLabels.length > 0) {
@@ -276,7 +147,10 @@ export function gradeDiagram(
     );
   }
 
-  if (diagram.title.trim().length < 4 || GENERIC_TITLE.test(diagram.title.trim())) {
+  if (
+    diagram.title.trim().length < 4 ||
+    GENERIC_TITLE.test(diagram.title.trim())
+  ) {
     fault(0.5, "give the diagram a specific title");
   }
 
