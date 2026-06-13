@@ -44,32 +44,44 @@ flowchart LR
 | Account/team/rate-limit policy | Requires product state                          |
 | Confect/Convex refactor        | Useful later, not needed for MCP-first value    |
 
-## Target Tool Surface
+## Capability Surface
 
-These are product tools, not internal function names.
+These are product capabilities the shared runtime should own. They are not all
+external tools. The concrete external Code Mode contract is intentionally much
+smaller and is specified in [Sketchi Code Mode API Contract](mcp-tool-catalog.md).
 
 ```mermaid
 flowchart TB
-  Draft["draft_diagram"] --> Artifact["diagram artifact"]
-  Revise["revise_diagram"] --> Artifact
-  Normalize["normalize_diagram"] --> IR["valid or invalid IR"]
-  Validate["validate_diagram_ir"] --> Report["diagnostic report"]
-  Grade["grade_diagram"] --> Report
-  Render["render_diagram"] --> Preview["PNG or render evidence"]
-  Export["export_excalidraw"] --> File[".excalidraw JSON"]
-  Scenario["run_generation_scenario"] --> Report
+  External["external Code Mode API"] --> Build["buildFlowchart"]
+  External --> GetArtifact["getArtifact"]
+
+  Build --> Normalize["normalize"]
+  Normalize --> Validate["validate"]
+  Validate --> Grade["grade"]
+  Grade --> Render["render"]
+  Render --> Export["export Excalidraw"]
+  Export --> Artifact["stored artifact"]
+
+  Internal["internal/eval capabilities"] --> Draft["draft"]
+  Internal --> Revise["revise"]
+  Internal --> Scenario["run scenario"]
 ```
 
-| Tool                      | Input                             | Output                                                   |
-| ------------------------- | --------------------------------- | -------------------------------------------------------- |
-| `draft_diagram`           | prompt, optional scenario/profile | candidate IR, diagnostics, grade                         |
-| `revise_diagram`          | existing IR, revision request     | revised IR, diagnostics, grade                           |
-| `normalize_diagram`       | raw model/tool output             | normalized IR or structured errors                       |
-| `validate_diagram_ir`     | IR                                | validation result, defects, suggested repair hints       |
-| `grade_diagram`           | IR or rendered scene              | acceptance result, rubric scores, warnings               |
-| `render_diagram`          | IR or scene                       | render evidence, optional PNG when renderer is available |
-| `export_excalidraw`       | valid IR or scene                 | Excalidraw JSON                                          |
-| `run_generation_scenario` | scenario id, mode                 | scenario result and artifact evidence                    |
+| Capability              | First public shape                   | Notes                                                                |
+| ----------------------- | ------------------------------------ | -------------------------------------------------------------------- |
+| Build a flowchart spec  | `buildFlowchart`                     | One call folds normalize, validate, grade, render, export, and store |
+| Retrieve an artifact    | `getArtifact`                        | Uses artifact id, not diagram id alone                               |
+| Normalize model output  | internal to `buildFlowchart`         | Public callers get structured `Issue[]`                              |
+| Validate IR             | internal to `buildFlowchart`         | Not a standalone external tool                                       |
+| Grade artifact quality  | internal to `buildFlowchart`         | Returned as part of `BuildFlowchartResult`                           |
+| Render proof/export     | internal to `buildFlowchart`         | Scene and Excalidraw artifacts first                                 |
+| Draft from prompt       | later                                | Needs free-prompt generation contract                                |
+| Revise supplied diagram | later or internal eval               | Caller owns state in this phase                                      |
+| Run scenarios           | CLI/eval surface, not public MCP API | Useful for regression and examples                                   |
+
+Do not expose internal pipeline steps as public MCP tools just because Code Mode
+can call code. Code Mode is still an external API boundary; keep it product
+level.
 
 Do not add thread tools yet:
 
@@ -231,17 +243,18 @@ Acceptance:
 - tests cover success, validation failure, model-output failure, and repairable
   failure.
 
-### 3. Define MCP Tool Catalog
+### 3. Define Code Mode API Contract
 
-Document tool names, descriptions, input schemas, and output schemas before
-writing transport code.
+Document the external MCP shell, Code Mode functions, input schemas, output
+schemas, issue taxonomy, and artifact contract before writing transport code.
 
 Acceptance:
 
-- tools are discoverable by name;
-- descriptions explain when an agent should call each tool;
+- the public surface is product-level, not pipeline-level;
+- descriptions explain when an agent should call `buildFlowchart` and
+  `getArtifact`;
 - no managed thread tools are included;
-- MCP, HTTP, and CLI can use the same catalog.
+- host APIs, MCP, and CLI can reuse the same request/result contracts.
 
 ### 4. Add CLI/Eval Harness
 
