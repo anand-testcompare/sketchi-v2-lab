@@ -11,6 +11,23 @@ Claude Code, Codex, OpenCode, and similar harnesses build a correct flowchart
 artifact through one clear contract, get structured repair feedback when they
 are wrong, and retrieve the finished artifact.
 
+## TODO
+
+- [ ] Define shared contract types for `buildFlowchart`, `getArtifact`, and
+      `applyDiagramPatch`.
+- [ ] Implement the `buildFlowchart` pipeline for semantic flow and connectivity.
+- [ ] Store accepted scene and Excalidraw artifacts through one consistent
+      artifact manifest.
+- [ ] Implement `getArtifact` for format-specific retrieval and refreshed
+      artifact access.
+- [ ] Implement `applyDiagramPatch` for deterministic style, shape, text, and
+      layout codemods against accepted artifacts.
+- [ ] Add MCP `docs` and `search` entries that teach the connectivity-first,
+      styling-second agent loop.
+- [ ] Add `execute` examples that build the graph first and patch visual
+      requests after acceptance.
+- [ ] Pressure-test the contract through Codex, Claude Code, and OpenCode.
+
 ## Decisions
 
 - Use Code Mode for agent orchestration.
@@ -19,6 +36,10 @@ are wrong, and retrieve the finished artifact.
 - Use normal host APIs as the source of truth for request and response shapes.
 - Register curated Code Mode functions over those host APIs.
 - Start with `buildFlowchart` and `getArtifact`.
+- Define `applyDiagramPatch` up front as the first deterministic mutation
+  operation for styling, shape, text, and layout changes.
+- Agents must get the semantic flow and connectivity accepted before applying
+  styling or shape codemods.
 - Keep `draft` and managed threads out of this slice.
 - Keep Effect, storage, auth, rendering, and model credentials host-side.
 
@@ -31,13 +52,16 @@ flowchart LR
   HostApi["host APIs<br/>normal Worker routes"]
   Packages["shared diagram packages"]
   Artifact["artifact handle"]
+  Patch["patch artifact"]
 
   Harness --> McpServer
   McpServer --> Execute
   Execute --> Sandbox
   Sandbox -->|"sketchi.buildFlowchart(...)"| HostApi
+  Sandbox -->|"sketchi.applyDiagramPatch(...)"| HostApi
   HostApi --> Packages
   HostApi --> Artifact
+  Artifact --> Patch
 ```
 
 ## Boundary
@@ -144,6 +168,8 @@ interface DocsRequest {
     | "execute"
     | "buildFlowchart"
     | "getArtifact"
+    | "applyDiagramPatch"
+    | "agentSequence"
     | "issues"
     | "examples";
 }
@@ -214,6 +240,9 @@ Inside `execute`, the sandbox receives this namespace:
 declare const sketchi: {
   buildFlowchart(input: BuildFlowchartRequest): Promise<BuildFlowchartResult>;
   getArtifact(input: GetArtifactRequest): Promise<GetArtifactResult>;
+  applyDiagramPatch(
+    input: ApplyDiagramPatchRequest,
+  ): Promise<ApplyDiagramPatchResult>;
 };
 ```
 
@@ -231,25 +260,65 @@ flowchart LR
   Dispatcher["host dispatcher"]
   Build["POST /v1/flowcharts/build"]
   Artifact["GET /v1/artifacts/:artifactId"]
+  Patch["POST /v1/artifacts/:artifactId/patch"]
   Runtime["shared runtime"]
 
   Code --> Dispatcher
   Dispatcher --> Build
   Dispatcher --> Artifact
+  Dispatcher --> Patch
   Build --> Runtime
   Artifact --> Runtime
+  Patch --> Runtime
 ```
 
-| Host operation                  | Code Mode function              | Public now?           |
-| ------------------------------- | ------------------------------- | --------------------- |
-| `POST /v1/flowcharts/build`     | `sketchi.buildFlowchart(input)` | Yes                   |
-| `GET /v1/artifacts/:artifactId` | `sketchi.getArtifact(input)`    | Yes                   |
-| validate IR                     | none                            | No, internal to build |
-| grade quality                   | none                            | No, internal to build |
-| render scene                    | none                            | No, internal to build |
-| export Excalidraw               | none                            | No, internal to build |
-| draft from prompt               | none                            | No, later             |
-| managed thread                  | none                            | No, later             |
+| Host operation                         | Code Mode function                 | Public now?           |
+| -------------------------------------- | ---------------------------------- | --------------------- |
+| `POST /v1/flowcharts/build`            | `sketchi.buildFlowchart(input)`    | Yes                   |
+| `GET /v1/artifacts/:artifactId`        | `sketchi.getArtifact(input)`       | Yes                   |
+| `POST /v1/artifacts/:artifactId/patch` | `sketchi.applyDiagramPatch(input)` | Planned               |
+| validate IR                            | none                               | No, internal to build |
+| grade quality                          | none                               | No, internal to build |
+| render scene                           | none                               | No, internal to build |
+| export Excalidraw                      | none                               | No, internal to build |
+| draft from prompt                      | none                               | No, later             |
+| managed thread                         | none                               | No, later             |
+
+## Agent Sequencing
+
+Agents should handle user requests in two phases:
+
+1. Build and repair the semantic graph.
+2. Patch visual styling, shape, text, or layout details against the accepted
+   artifact.
+
+This matters even when the human request mixes structure and style in one
+sentence, such as "I want a circle connected to a decision diamond that is
+purple." The first call should still produce a valid flowchart with correct
+nodes and edges. Only after `buildFlowchart` returns `ok: true` should the agent
+use `applyDiagramPatch` to set the circle shape, diamond shape, color, or
+positioning.
+
+```mermaid
+flowchart LR
+  Request["human request<br/>flow + style mixed together"]
+  Spec["semantic FlowchartSpec<br/>nodes + edges"]
+  Build["buildFlowchart"]
+  Accepted["accepted artifact"]
+  Patch["applyDiagramPatch"]
+  Styled["styled artifact"]
+
+  Request --> Spec
+  Spec --> Build
+  Build --> Accepted
+  Accepted --> Patch
+  Patch --> Styled
+```
+
+Do not ask the model to directly edit native Excalidraw JSON for common style
+or shape changes. Native Excalidraw is intentionally treated as a noisy export
+format. Agents should prefer compact Sketchi specs, deterministic scene
+artifacts, and structured patch operations.
 
 ## `buildFlowchart`
 
@@ -315,7 +384,7 @@ Defaults:
 ```json
 {
   "artifactFormats": ["excalidraw", "scene"],
-  "inlineArtifacts": ["excalidraw"],
+  "inlineArtifacts": ["scene"],
   "minQualityScore": 8
 }
 ```
@@ -360,6 +429,10 @@ interface FlowchartStyle {
 
 type HexColor = `#${string}`;
 ```
+
+Default styling is intentionally plain: black stroke, black text, and no
+decorative fill unless the caller asks for styling. Agents should not spend
+repair attempts on visual polish until graph invariants pass.
 
 ### Required Flowchart Invariants
 
@@ -553,7 +626,12 @@ type IssueCode =
   | "arrow_binding_invalid"
   | "arrow_overlap"
   | "export_invalid_scene"
-  | "storage_write_failed";
+  | "storage_write_failed"
+  | "patch_source_unavailable"
+  | "unknown_patch_target"
+  | "unsupported_patch_operation"
+  | "patch_preserve_connectivity_failed"
+  | "patch_output_invalid";
 ```
 
 Example:
@@ -628,6 +706,11 @@ The first implementation should support:
 `png` is allowed in the contract for forward compatibility, but it should not be
 advertised as available until the hosted render proof adapter exists.
 
+Native Excalidraw JSON should not be inlined by default. It is large and noisy,
+and most agents should not inspect or rewrite it directly. Prefer inline
+`scene` data for agent inspection and signed or refreshed artifact access for
+native Excalidraw.
+
 ## `getArtifact`
 
 `getArtifact` retrieves a stored artifact format by `artifactId`. `diagramId`
@@ -673,10 +756,226 @@ interface GetArtifactFailure {
 }
 ```
 
+## `applyDiagramPatch`
+
+`applyDiagramPatch` is the codemod-style operation for deterministic visual
+changes after a flowchart artifact has already been accepted. It should handle
+common user requests such as changing colors, switching node shapes, shifting a
+group, replacing text, or rerouting edges without asking the agent to edit raw
+Excalidraw JSON.
+
+```mermaid
+flowchart TD
+  Source["accepted artifactId<br/>or inline scene"]
+  Decode["decode source artifact"]
+  Select["resolve selectors"]
+  Apply["apply patch operations"]
+  Preserve["verify connectivity is preserved"]
+  Render["render updated scene"]
+  Export["export updated Excalidraw"]
+  Store["store new artifact bundle"]
+  Success["ok: true"]
+  Failure["ok: false + Issue[]"]
+
+  Source --> Decode
+  Decode --> Select
+  Select --> Apply
+  Apply --> Preserve
+  Preserve --> Render
+  Render --> Export
+  Export --> Store
+  Store --> Success
+
+  Decode -.-> Failure
+  Select -.-> Failure
+  Apply -.-> Failure
+  Preserve -.-> Failure
+  Render -.-> Failure
+  Export -.-> Failure
+  Store -.-> Failure
+```
+
+Patch operations must be structured and executable. The optional `intent` field
+is only for traceability, docs, and debugging. It must not be the source of
+truth for what changes are applied.
+
+```ts
+interface ApplyDiagramPatchRequest {
+  requestId?: string;
+  source: DiagramPatchSource;
+  operations: DiagramPatchOperation[];
+  options?: ApplyDiagramPatchOptions;
+  intent?: string;
+}
+
+type DiagramPatchSource =
+  | {
+      artifactId: string;
+      format?: "scene" | "excalidraw";
+    }
+  | {
+      scene: unknown;
+    }
+  | {
+      excalidraw: unknown;
+    };
+
+interface ApplyDiagramPatchOptions {
+  artifactFormats?: ArtifactFormat[];
+  inlineArtifacts?: InlineArtifactFormat[];
+  preserveConnectivity?: boolean;
+}
+```
+
+Defaults:
+
+```json
+{
+  "artifactFormats": ["excalidraw", "scene"],
+  "inlineArtifacts": ["scene"],
+  "preserveConnectivity": true
+}
+```
+
+Initial operation set:
+
+```ts
+type DiagramPatchOperation =
+  | {
+      op: "setDefaultStyle";
+      style: DiagramStylePatch;
+    }
+  | {
+      op: "setStyle";
+      selector: DiagramSelector;
+      style: DiagramStylePatch;
+    }
+  | {
+      op: "setShape";
+      selector: DiagramSelector;
+      shape: DiagramShape;
+    }
+  | {
+      op: "translate";
+      selector: DiagramSelector;
+      dx: number;
+      dy: number;
+    }
+  | {
+      op: "replaceText";
+      selector: DiagramSelector;
+      text: string;
+    }
+  | {
+      op: "rerouteEdges";
+      selector?: DiagramSelector;
+    };
+
+interface DiagramSelector {
+  ids?: string[];
+  nodeIds?: string[];
+  edgeIds?: string[];
+  kinds?: FlowchartNode["kind"][];
+  labels?: string[];
+  scope?: "all" | "nodes" | "edges";
+}
+
+interface DiagramStylePatch {
+  strokeColor?: HexColor;
+  fillColor?: HexColor;
+  textColor?: HexColor;
+  backgroundColor?: HexColor;
+}
+
+type DiagramShape = "rectangle" | "diamond" | "ellipse" | "circle";
+```
+
+The first patch operation set is deliberately non-structural. It can restyle,
+reshape, move, rename, and reroute existing elements, but it cannot create or
+delete nodes or edges. If a user asks to change the graph itself, the agent
+should repair the `FlowchartSpec` and call `buildFlowchart` again.
+
+```ts
+type ApplyDiagramPatchResult =
+  | ApplyDiagramPatchSuccess
+  | ApplyDiagramPatchFailure;
+
+interface ApplyDiagramPatchSuccess {
+  ok: true;
+  status: "accepted";
+  patchId: string;
+  requestId?: string;
+  sourceArtifactId?: string;
+  artifact: ArtifactBundle;
+  issues: Issue[];
+}
+
+interface ApplyDiagramPatchFailure {
+  ok: false;
+  status:
+    | "invalid_input"
+    | "source_unavailable"
+    | "target_not_found"
+    | "unsupported_operation"
+    | "connectivity_changed"
+    | "render_failed"
+    | "export_failed"
+    | "storage_failed";
+  patchId?: string;
+  requestId?: string;
+  sourceArtifactId?: string;
+  partial?: PartialArtifactBundle;
+  issues: Issue[];
+}
+```
+
+Example:
+
+```js
+async () => {
+  const built = await sketchi.buildFlowchart({
+    spec: {
+      title: "Simple approval",
+      nodes: [
+        { id: "start", label: "Request", kind: "start" },
+        { id: "approve", label: "Approved?", kind: "decision" },
+        { id: "done", label: "Done", kind: "end" },
+        { id: "revise", label: "Revise", kind: "end" },
+      ],
+      edges: [
+        { source: "start", target: "approve" },
+        { source: "approve", target: "done", label: "yes" },
+        { source: "approve", target: "revise", label: "no" },
+      ],
+    },
+  });
+
+  if (!built.ok) return built;
+
+  return sketchi.applyDiagramPatch({
+    source: { artifactId: built.artifact.artifactId },
+    intent: "Make the decision diamond purple after the flow is accepted.",
+    operations: [
+      {
+        op: "setStyle",
+        selector: { nodeIds: ["approve"] },
+        style: { strokeColor: "#7c3aed", fillColor: "#ede9fe" },
+      },
+      {
+        op: "setShape",
+        selector: { nodeIds: ["approve"] },
+        shape: "diamond",
+      },
+    ],
+  });
+};
+```
+
 ## Expected Agent Loop
 
 The harness should write a spec, call `buildFlowchart`, inspect structured
-issues, patch the spec, and stop when `ok` is true.
+issues, patch the spec until graph acceptance, and then apply structured visual
+patches. Styling is never the first acceptance target.
 
 ```mermaid
 sequenceDiagram
@@ -684,6 +983,7 @@ sequenceDiagram
   participant E as execute tool
   participant S as sandbox code
   participant B as buildFlowchart
+  participant P as applyDiagramPatch
 
   H->>E: async repair-loop code
   E->>S: run code
@@ -696,7 +996,11 @@ sequenceDiagram
       S->>S: patch spec from Issue[]
     end
   end
-  E-->>H: artifact or final failure
+  opt visual request exists
+    S->>P: applyDiagramPatch({ artifactId, operations })
+    P-->>S: styled artifact or Issue[]
+  end
+  E-->>H: final artifact or final failure
 ```
 
 Example sandbox code:
@@ -751,6 +1055,7 @@ flowchart TB
     D["DynamicWorkerExecutor"]
     T["sketchi tool provider"]
     R["normal API route handlers"]
+    P["patch API route"]
   end
 
   subgraph Runtime["shared runtime"]
@@ -764,7 +1069,9 @@ flowchart TB
   M --> D
   D --> T
   T --> R
+  T --> P
   R --> E
+  P --> E
   E --> C
   E --> G
   E --> Render
@@ -780,10 +1087,11 @@ flowchart LR
   C["3. Convert thrown/string errors to Issue[]"]
   D["4. Store scene + Excalidraw artifacts"]
   E["5. Add getArtifact"]
-  F["6. Add docs/search/execute MCP shell"]
-  G["7. Pressure-test with harnesses"]
+  F["6. Add applyDiagramPatch"]
+  G["7. Add docs/search/execute MCP shell"]
+  H["8. Pressure-test with harnesses"]
 
-  A --> B --> C --> D --> E --> F --> G
+  A --> B --> C --> D --> E --> F --> G --> H
 ```
 
 ## Non-Goals
@@ -795,6 +1103,7 @@ flowchart TB
 
   Public --> Build["buildFlowchart"]
   Public --> Artifact["getArtifact"]
+  Public --> Patch["applyDiagramPatch"]
 
   Internal -. not public .-> Validate["validate"]
   Internal -. not public .-> Grade["grade"]
@@ -814,6 +1123,8 @@ Out of scope for this document:
 - Free-prompt drafting.
 - OpenAPI search/execute over a large generated spec.
 - Direct public tools for validation, grading, rendering, or export.
+- Agent-facing raw Excalidraw editing as the primary mutation contract.
+- Structural patch operations that add or delete nodes and edges.
 
 ## References
 
