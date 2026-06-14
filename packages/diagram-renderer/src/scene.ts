@@ -5,7 +5,7 @@ import {
   parseIntermediateDiagram,
 } from "@sketchi/diagram-core";
 
-export type NodeSceneShape = "rectangle" | "ellipse" | "diamond";
+export type NodeSceneShape = "rectangle" | "ellipse" | "diamond" | "circle";
 
 export type SceneElement =
   | NodeSceneElement
@@ -18,6 +18,9 @@ export interface NodeSceneElement {
   nodeId: string;
   kind?: string;
   shape: NodeSceneShape;
+  fillColor?: string;
+  strokeColor?: string;
+  textColor?: string;
   x: number;
   y: number;
   width: number;
@@ -29,6 +32,7 @@ export interface TextSceneElement {
   type: "text";
   id: string;
   containerId?: string;
+  textColor?: string;
   x: number;
   y: number;
   text: string;
@@ -42,6 +46,8 @@ export interface ArrowSceneElement {
   edgeId: string;
   sourceNodeId: string;
   targetNodeId: string;
+  strokeColor?: string;
+  textColor?: string;
   points: readonly [ScenePoint, ...ScenePoint[]];
   label?: string;
 }

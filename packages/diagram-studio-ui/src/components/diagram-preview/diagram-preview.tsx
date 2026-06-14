@@ -25,6 +25,10 @@ function lastArrowPoint(arrow: ArrowSceneElement) {
   return arrow.points[arrow.points.length - 1] ?? arrow.points[0];
 }
 
+function markerId(sceneId: string, arrowId: string): string {
+  return `${sceneId}-arrow-${arrowId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
 export function DiagramPreview({ scene }: DiagramPreviewProps) {
   const nodes = scene.elements.filter(isRectangle);
   const labels = scene.elements.filter(isText);
@@ -39,17 +43,23 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
       viewBox={`0 0 ${scene.width} ${scene.height}`}
     >
       <defs>
-        <marker
-          id={`${scene.diagramId}-arrow`}
-          markerHeight="8"
-          markerWidth="8"
-          orient="auto"
-          refX="7"
-          refY="4"
-          viewBox="0 0 8 8"
-        >
-          <path d="M0,0 L8,4 L0,8 Z" fill={scene.accentColor} />
-        </marker>
+        {arrows.map((arrow) => (
+          <marker
+            id={markerId(scene.diagramId, arrow.id)}
+            key={arrow.id}
+            markerHeight="8"
+            markerWidth="8"
+            orient="auto"
+            refX="7"
+            refY="4"
+            viewBox="0 0 8 8"
+          >
+            <path
+              d="M0,0 L8,4 L0,8 Z"
+              fill={arrow.strokeColor ?? scene.accentColor}
+            />
+          </marker>
+        ))}
       </defs>
 
       {arrows.map((arrow) => {
@@ -63,9 +73,9 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
           <g key={arrow.id}>
             <polyline
               fill="none"
-              markerEnd={`url(#${scene.diagramId}-arrow)`}
+              markerEnd={`url(#${markerId(scene.diagramId, arrow.id)})`}
               points={points}
-              stroke={scene.accentColor}
+              stroke={arrow.strokeColor ?? scene.accentColor}
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth="2"
@@ -73,6 +83,7 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
             {arrow.label ? (
               <text
                 className="sketchi-diagram-preview__edge-label"
+                fill={arrow.textColor}
                 textAnchor="middle"
                 x={(start.x + end.x) / 2}
                 y={(start.y + end.y) / 2 - 10}
@@ -85,7 +96,12 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
       })}
 
       {nodes.map((node) => {
-        if (node.shape === "ellipse") {
+        const style = {
+          fill: node.fillColor ?? undefined,
+          stroke: node.strokeColor ?? undefined,
+        };
+
+        if (node.shape === "ellipse" || node.shape === "circle") {
           return (
             <ellipse
               className="sketchi-diagram-preview__node"
@@ -94,6 +110,7 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
               key={node.id}
               rx={node.width / 2}
               ry={node.height / 2}
+              style={style}
             />
           );
         }
@@ -110,6 +127,7 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
               className="sketchi-diagram-preview__node"
               key={node.id}
               points={points}
+              style={style}
             />
           );
         }
@@ -120,6 +138,7 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
             height={node.height}
             key={node.id}
             rx="8"
+            style={style}
             width={node.width}
             x={node.x}
             y={node.y}
@@ -136,6 +155,7 @@ export function DiagramPreview({ scene }: DiagramPreviewProps) {
           <text
             className="sketchi-diagram-preview__label"
             dominantBaseline="middle"
+            fill={label.textColor}
             fontSize={label.fontSize}
             key={label.id}
             textAnchor="middle"

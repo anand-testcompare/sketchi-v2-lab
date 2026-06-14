@@ -8,79 +8,163 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as ApiChatRouteImport } from "./routes/api/chat";
+import { Route as ApiV1FlowchartsBuildRouteImport } from "./routes/api/v1/flowcharts/build";
+import { Route as ApiV1ArtifactsArtifactIdRouteImport } from "./routes/api/v1/artifacts/$artifactId";
+import { Route as ApiV1ArtifactsArtifactIdPatchRouteImport } from "./routes/api/v1/artifacts/$artifactId/patch";
 
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+  id: "/api/chat",
+  path: "/api/chat",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
+const ApiV1FlowchartsBuildRoute = ApiV1FlowchartsBuildRouteImport.update({
+  id: "/api/v1/flowcharts/build",
+  path: "/api/v1/flowcharts/build",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ApiV1ArtifactsArtifactIdRoute =
+  ApiV1ArtifactsArtifactIdRouteImport.update({
+    id: "/api/v1/artifacts/$artifactId",
+    path: "/api/v1/artifacts/$artifactId",
+    getParentRoute: () => rootRouteImport,
+  } as any);
+const ApiV1ArtifactsArtifactIdPatchRoute =
+  ApiV1ArtifactsArtifactIdPatchRouteImport.update({
+    id: "/patch",
+    path: "/patch",
+    getParentRoute: () => ApiV1ArtifactsArtifactIdRoute,
+  } as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/api/chat': typeof ApiChatRoute
+  "/": typeof IndexRoute;
+  "/api/chat": typeof ApiChatRoute;
+  "/api/v1/artifacts/$artifactId": typeof ApiV1ArtifactsArtifactIdRouteWithChildren;
+  "/api/v1/flowcharts/build": typeof ApiV1FlowchartsBuildRoute;
+  "/api/v1/artifacts/$artifactId/patch": typeof ApiV1ArtifactsArtifactIdPatchRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/api/chat': typeof ApiChatRoute
+  "/": typeof IndexRoute;
+  "/api/chat": typeof ApiChatRoute;
+  "/api/v1/artifacts/$artifactId": typeof ApiV1ArtifactsArtifactIdRouteWithChildren;
+  "/api/v1/flowcharts/build": typeof ApiV1FlowchartsBuildRoute;
+  "/api/v1/artifacts/$artifactId/patch": typeof ApiV1ArtifactsArtifactIdPatchRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/api/chat': typeof ApiChatRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/api/chat": typeof ApiChatRoute;
+  "/api/v1/artifacts/$artifactId": typeof ApiV1ArtifactsArtifactIdRouteWithChildren;
+  "/api/v1/flowcharts/build": typeof ApiV1FlowchartsBuildRoute;
+  "/api/v1/artifacts/$artifactId/patch": typeof ApiV1ArtifactsArtifactIdPatchRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/chat'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat'
-  id: '__root__' | '/' | '/api/chat'
-  fileRoutesById: FileRoutesById
+  fileRoutesByFullPath: FileRoutesByFullPath;
+  fullPaths:
+    | "/"
+    | "/api/chat"
+    | "/api/v1/artifacts/$artifactId"
+    | "/api/v1/flowcharts/build"
+    | "/api/v1/artifacts/$artifactId/patch";
+  fileRoutesByTo: FileRoutesByTo;
+  to:
+    | "/"
+    | "/api/chat"
+    | "/api/v1/artifacts/$artifactId"
+    | "/api/v1/flowcharts/build"
+    | "/api/v1/artifacts/$artifactId/patch";
+  id:
+    | "__root__"
+    | "/"
+    | "/api/chat"
+    | "/api/v1/artifacts/$artifactId"
+    | "/api/v1/flowcharts/build"
+    | "/api/v1/artifacts/$artifactId/patch";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  ApiChatRoute: typeof ApiChatRoute
+  IndexRoute: typeof IndexRoute;
+  ApiChatRoute: typeof ApiChatRoute;
+  ApiV1ArtifactsArtifactIdRoute: typeof ApiV1ArtifactsArtifactIdRouteWithChildren;
+  ApiV1FlowchartsBuildRoute: typeof ApiV1FlowchartsBuildRoute;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/api/chat": {
+      id: "/api/chat";
+      path: "/api/chat";
+      fullPath: "/api/chat";
+      preLoaderRoute: typeof ApiChatRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/api/v1/flowcharts/build": {
+      id: "/api/v1/flowcharts/build";
+      path: "/api/v1/flowcharts/build";
+      fullPath: "/api/v1/flowcharts/build";
+      preLoaderRoute: typeof ApiV1FlowchartsBuildRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/api/v1/artifacts/$artifactId": {
+      id: "/api/v1/artifacts/$artifactId";
+      path: "/api/v1/artifacts/$artifactId";
+      fullPath: "/api/v1/artifacts/$artifactId";
+      preLoaderRoute: typeof ApiV1ArtifactsArtifactIdRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/api/v1/artifacts/$artifactId/patch": {
+      id: "/api/v1/artifacts/$artifactId/patch";
+      path: "/patch";
+      fullPath: "/api/v1/artifacts/$artifactId/patch";
+      preLoaderRoute: typeof ApiV1ArtifactsArtifactIdPatchRouteImport;
+      parentRoute: typeof ApiV1ArtifactsArtifactIdRoute;
+    };
   }
 }
+
+interface ApiV1ArtifactsArtifactIdRouteChildren {
+  ApiV1ArtifactsArtifactIdPatchRoute: typeof ApiV1ArtifactsArtifactIdPatchRoute;
+}
+
+const ApiV1ArtifactsArtifactIdRouteChildren: ApiV1ArtifactsArtifactIdRouteChildren =
+  {
+    ApiV1ArtifactsArtifactIdPatchRoute: ApiV1ArtifactsArtifactIdPatchRoute,
+  };
+
+const ApiV1ArtifactsArtifactIdRouteWithChildren =
+  ApiV1ArtifactsArtifactIdRoute._addFileChildren(
+    ApiV1ArtifactsArtifactIdRouteChildren,
+  );
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiChatRoute: ApiChatRoute,
-}
+  ApiV1ArtifactsArtifactIdRoute: ApiV1ArtifactsArtifactIdRouteWithChildren,
+  ApiV1FlowchartsBuildRoute: ApiV1FlowchartsBuildRoute,
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+import type { getRouter } from "./router.tsx";
+import type { createStart } from "@tanstack/react-start";
+declare module "@tanstack/react-start" {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }

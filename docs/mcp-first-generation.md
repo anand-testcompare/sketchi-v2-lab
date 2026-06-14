@@ -54,6 +54,7 @@ smaller and is specified in [Sketchi Code Mode API Contract](mcp-tool-catalog.md
 flowchart TB
   External["external Code Mode API"] --> Build["buildFlowchart"]
   External --> GetArtifact["getArtifact"]
+  External --> Patch["applyDiagramPatch"]
 
   Build --> Normalize["normalize"]
   Normalize --> Validate["validate"]
@@ -61,6 +62,7 @@ flowchart TB
   Grade --> Render["render"]
   Render --> Export["export Excalidraw"]
   Export --> Artifact["stored artifact"]
+  Patch --> Artifact
 
   Internal["internal/eval capabilities"] --> Draft["draft"]
   Internal --> Revise["revise"]
@@ -71,6 +73,7 @@ flowchart TB
 | ----------------------- | ------------------------------------ | -------------------------------------------------------------------- |
 | Build a flowchart spec  | `buildFlowchart`                     | One call folds normalize, validate, grade, render, export, and store |
 | Retrieve an artifact    | `getArtifact`                        | Uses artifact id, not diagram id alone                               |
+| Patch an artifact       | `applyDiagramPatch`                  | Deterministic non-structural style, shape, text, and layout codemods |
 | Normalize model output  | internal to `buildFlowchart`         | Public callers get structured `Issue[]`                              |
 | Validate IR             | internal to `buildFlowchart`         | Not a standalone external tool                                       |
 | Grade artifact quality  | internal to `buildFlowchart`         | Returned as part of `BuildFlowchartResult`                           |

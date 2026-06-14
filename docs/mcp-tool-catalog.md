@@ -13,14 +13,14 @@ are wrong, and retrieve the finished artifact.
 
 ## TODO
 
-- [ ] Define shared contract types for `buildFlowchart`, `getArtifact`, and
+- [x] Define shared contract types for `buildFlowchart`, `getArtifact`, and
       `applyDiagramPatch`.
-- [ ] Implement the `buildFlowchart` pipeline for semantic flow and connectivity.
-- [ ] Store accepted scene and Excalidraw artifacts through one consistent
+- [x] Implement the `buildFlowchart` pipeline for semantic flow and connectivity.
+- [x] Store accepted scene and Excalidraw artifacts through one consistent
       artifact manifest.
-- [ ] Implement `getArtifact` for format-specific retrieval and refreshed
+- [x] Implement `getArtifact` for format-specific retrieval and refreshed
       artifact access.
-- [ ] Implement `applyDiagramPatch` for deterministic style, shape, text, and
+- [x] Implement `applyDiagramPatch` for deterministic style, shape, text, and
       layout codemods against accepted artifacts.
 - [ ] Add MCP `docs` and `search` entries that teach the connectivity-first,
       styling-second agent loop.
@@ -276,7 +276,7 @@ flowchart LR
 | -------------------------------------- | ---------------------------------- | --------------------- |
 | `POST /v1/flowcharts/build`            | `sketchi.buildFlowchart(input)`    | Yes                   |
 | `GET /v1/artifacts/:artifactId`        | `sketchi.getArtifact(input)`       | Yes                   |
-| `POST /v1/artifacts/:artifactId/patch` | `sketchi.applyDiagramPatch(input)` | Planned               |
+| `POST /v1/artifacts/:artifactId/patch` | `sketchi.applyDiagramPatch(input)` | Yes                   |
 | validate IR                            | none                               | No, internal to build |
 | grade quality                          | none                               | No, internal to build |
 | render scene                           | none                               | No, internal to build |
@@ -627,6 +627,7 @@ type IssueCode =
   | "arrow_overlap"
   | "export_invalid_scene"
   | "storage_write_failed"
+  | "unsupported_artifact_format"
   | "patch_source_unavailable"
   | "unknown_patch_target"
   | "unsupported_patch_operation"
@@ -703,6 +704,11 @@ The first implementation should support:
 - `scene`: rendered deterministic scene JSON.
 - `excalidraw`: portable Excalidraw scene JSON.
 
+The storage contract is consistent across environments: artifacts are written
+as a manifest plus one object per format. Local development and tests may use
+the in-memory store, but that is only a dev fallback. Worker deployments should
+use the same manifest/object layout through an R2-compatible binding.
+
 `png` is allowed in the contract for forward compatibility, but it should not be
 advertised as available until the hosted render proof adapter exists.
 
@@ -751,7 +757,12 @@ interface GetArtifactSuccess {
 
 interface GetArtifactFailure {
   ok: false;
-  status: "not_found" | "format_unavailable" | "expired" | "storage_failed";
+  status:
+    | "invalid_input"
+    | "not_found"
+    | "format_unavailable"
+    | "expired"
+    | "storage_failed";
   issues: Issue[];
 }
 ```

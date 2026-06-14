@@ -45,6 +45,7 @@ const FIT_TARGET_HEIGHT = 340;
 const MIN_INITIAL_ZOOM = 0.42;
 const SEGMENT_EPSILON = 0.001;
 const BOUNDS_EPSILON = 0.01;
+const DEFAULT_TEXT_COLOR = "#1e1e1e";
 
 type BindingKey = "startBinding" | "endBinding";
 
@@ -173,6 +174,7 @@ function textElement(input: {
   id: string;
   index: number;
   maxWidth: number;
+  textColor?: string;
   text: string;
   x: number;
   y: number;
@@ -198,7 +200,7 @@ function textElement(input: {
     lineHeight: TEXT_LINE_HEIGHT,
     originalText: input.text,
     roundness: null,
-    strokeColor: "#1e1e1e",
+    strokeColor: input.textColor ?? DEFAULT_TEXT_COLOR,
     text: input.text,
     textAlign: "center",
     verticalAlign: "middle",
@@ -217,6 +219,8 @@ function shapeElement(input: {
     ? textHeight(input.text.text, input.text.fontSize) + TEXT_VERTICAL_PADDING
     : 0;
   const height = Math.max(input.shape.height, labelHeight);
+  const shapeType =
+    input.shape.shape === "circle" ? "ellipse" : input.shape.shape;
   const boundElements = [
     ...(input.text ? [{ id: input.text.id, type: "text" }] : []),
     ...input.arrowIds.map((id) => ({ id, type: "arrow" })),
@@ -224,15 +228,15 @@ function shapeElement(input: {
 
   return {
     ...elementBase(input.shape.id, input.index),
-    type: input.shape.shape,
+    type: shapeType,
     x: input.shape.x,
     y: input.shape.y,
     width: input.shape.width,
     height,
-    backgroundColor: input.scene.backgroundColor,
+    backgroundColor: input.shape.fillColor ?? "transparent",
     boundElements: boundElements.length > 0 ? boundElements : null,
-    roundness: input.shape.shape === "rectangle" ? { type: 3 } : null,
-    strokeColor: input.scene.accentColor,
+    roundness: shapeType === "rectangle" ? { type: 3 } : null,
+    strokeColor: input.shape.strokeColor ?? input.scene.accentColor,
   };
 }
 
@@ -279,7 +283,7 @@ function arrowElement(input: {
     roundness: elbowed ? null : { type: 2 },
     startArrowhead: null,
     startBinding: bindingForShape(input.sourceShape, start),
-    strokeColor: input.scene.accentColor,
+    strokeColor: input.arrow.strokeColor ?? input.scene.accentColor,
   };
 }
 
@@ -299,6 +303,7 @@ function arrowLabelElement(input: {
     containerId: input.arrow.id,
     fontSize: 13,
     maxWidth: ARROW_LABEL_WIDTH,
+    ...(input.arrow.textColor ? { textColor: input.arrow.textColor } : {}),
     text: input.arrow.label,
     x: (start.x + end.x) / 2,
     y: (start.y + end.y) / 2 - 10,
@@ -379,6 +384,7 @@ export function convertSceneToExcalidraw(
         containerId: text.containerId,
         fontSize: text.fontSize,
         maxWidth: text.maxWidth ?? 160,
+        ...(text.textColor ? { textColor: text.textColor } : {}),
         text: text.text,
         x: text.x,
         y: text.y,
