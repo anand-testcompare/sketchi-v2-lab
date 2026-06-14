@@ -5,6 +5,7 @@ import {
   CREATE_DIAGRAM_TOOL_DESCRIPTION,
   CREATE_DIAGRAM_TOOL_NAME,
   createDiagramToolSession,
+  type CodeModeObjectBucket,
   DIAGRAM_AGENT_SYSTEM_PROMPT,
   DIAGRAM_AGENT_TEMPERATURE,
   DiagramToolInputSchema,
@@ -33,6 +34,7 @@ import {
 
 export interface StudioEnv {
   AI?: CloudflareAiGatewayProvider;
+  SKETCHI_ARTIFACTS?: CodeModeObjectBucket;
   SKETCHI_AI_GATEWAY_ID?: string;
   SKETCHI_AI_MODEL?: string;
 }

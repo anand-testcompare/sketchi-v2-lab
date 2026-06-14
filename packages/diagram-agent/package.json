@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@sketchi/diagram-core": "workspace:*",
+    "@sketchi/diagram-excalidraw": "workspace:*",
+    "@sketchi/diagram-renderer": "workspace:*",
     "effect": "3.21.3",
     "tslib": "^2.3.0",
     "zod": "4.4.3"

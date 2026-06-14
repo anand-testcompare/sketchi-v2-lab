@@ -281,6 +281,12 @@ importers:
       '@sketchi/diagram-core':
         specifier: workspace:*
         version: link:../diagram-core
+      '@sketchi/diagram-excalidraw':
+        specifier: workspace:*
+        version: link:../diagram-excalidraw
+      '@sketchi/diagram-renderer':
+        specifier: workspace:*
+        version: link:../diagram-renderer
       effect:
         specifier: 3.21.3
         version: 3.21.3
